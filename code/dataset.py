@@ -2,102 +2,85 @@
 # coding: utf-8
 import pandas as pd
 import sqlite3
-
-path_to_db = 'C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/physics_guided_nn/data/ProfoundData.sqlite'
-table = 'CLIMATEFLUXNET_master'
-
-
-
-#class ProfoundData():
+import numpy as np
+from scipy.optimize import leastsq
+import torch
+from torch.utils.data import Dataset, DataLoader
 
 
-def connect_to_db(path):
-    con = sqlite3.connect(path)
-    return con
+class ProfoundData(Dataset):
+    '''
+    Extract necessary data from Profound DataBase and preprocess it
+    '''
+    def __init__(self, dir=None):
+        if dir:
+            self.path_to_db = dir
+        else:
+            self.path_to_db = 'C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/physics_guided_nn/data/ProfoundData.sqlite'
+
+    def connect_to_db(self, path):
+        con = sqlite3.connect(path)
+        return con
 
 
-def get_table(table_name, connection):
-    df = pd.read_sql_query(''.join(('SELECT * FROM ', table_name)), connection)
-    return df
+    def get_table(self, table_name, connection):
+        df = pd.read_sql_query(''.join(('SELECT * FROM ', table_name)), connection)
+        return df
 
 
-def get_clim(path, station_id):
-    con = connect_to_db(path)
-    data = get_table('CLIMATEFLUXNET_master', con)
-    dat = data.loc[data['site_id'] == station_id, ['date', 'day', 'rad_Jcm2day', 'p_mm', 'tmean_degC']]
-    return dat
-
-def get_fapar(path, station_id):
-    con = connect_to_db(path)
-    datafpar = get_table('MODIS', con)
-    dat = datafpar.loc[datafpar['site_id'] == station_id, ['date', 'day', 'fpar_percent', 'gpp_gCm2d']]
-    return dat
+    def get_clim(self, path, station_id):
+        con = self.connect_to_db(path)
+        data = self.get_table('CLIMATEFLUXNET_master', con)
+        data = data.loc[data['site_id'] == station_id, ['date', 'rad_Jcm2day', 'p_mm', 'tmean_degC']]
+        data = data.set_index(pd.to_datetime(dat['date']))
+        data = data.drop(['date'], axis=1)
+        return data
 
 
-def get_vpd(path, station_id):
-    con = connect_to_db(path)
-    datavpd = get_table('METEOROLOGICAL', con)
-    dat = datavpd.loc[datavpd['site_id'] == station_id, ['date', 'year', 'mo', 'day', 'vpdFMDS_hPa']]
-    datn = dat.set_index(pd.to_datetime(dat['date']))
-    data = datn.drop(['year', 'mo'], axis=1)
-    data = data.resample('D').mean()
-    return data
+    def get_fapar(self, path, station_id):
+        con = self.connect_to_db(path)
+        datafpar = self.get_table('MODIS', con)
+        data = datafpar.loc[datafpar['site_id'] == station_id, ['date', 'fpar_percent']]
+        data = data.set_index(pd.to_datetime(data['date']))
+        data = data.drop(['date'], axis=1)
+        data['fapar'] = data['fpar_percent'].copy()
+        return data['fapar']
 
 
-def get_gpp(path, station_id):
-    con = connect_to_db(path)
-    datagpp = get_table('FLUX', con)
-    dat = datagpp.loc[datagpp['site_id'] == station_id, ['date', 'day', 'gppDtCutRef_umolCO2m2s1', 'gppNtCutRef_umolCO2m2s1', 'gppNtCutSe_umolCO2m2s1']]
-    datn = dat.set_index(pd.to_datetime(dat['date']))
-    data = datn.drop(['date'], axis=1)
-    data = data.resample('D').sum()
-    return data
-
-'''
-# Conversions acc. to github/bigleaf: https://github.com/cran/bigleaf/blob/master/R/unit_conversions.r
-
-C_flux <- CO2_flux * constants$umol2mol * constants$Cmol * constants$kg2g * constants$days2seconds
-umol2mol     = 1e-06
-Cmol       = 0.012011
-kg2g         = 1000
-days2seconds = 86400
-
-global radiation to ppfd
-PPFD <- Rg * frac_PAR * J_to_mol
-Rg = global radiation
-frac_PAR = fAPAR
-J_to_mol = 4.6 approximated from:  https://www.controlledenvironments.org/wp-content/uploads/sites/6/2017/06/Ch01.pdf
-ppfd in umol m-2 d-1
-'''
+    def get_vpd(self, path, station_id):
+        con = self.connect_to_db(path)
+        datavpd = self.get_table('METEOROLOGICAL', con)
+        dat = datavpd.loc[datavpd['site_id'] == station_id, ['date', 'year', 'mo', 'day', 'vpdFMDS_hPa']]
+        datn = dat.set_index(pd.to_datetime(dat['date']))
+        data = datn.drop(['year', 'mo'], axis=1)
+        data = data.resample('D').mean()
+        data['VPD'] = data['vpdFMDS_hPa'].copy()
+        return data['VPD'].copy()
 
 
-f = get_gpp(path_to_db, 12)
-f.info()
-print(f)
+    def get_gpp(self, path, station_id):
+        con = self.connect_to_db(path)
+        datagpp = self.get_table('FLUX', con)
+        dat = datagpp.loc[datagpp['site_id'] == station_id, ['date', 'day', 'gppDtCutRef_umolCO2m2s1', 'gppDtCutSe_umolCO2m2s1']]
+        datn = dat.set_index(pd.to_datetime(dat['date']))
+        data = datn.drop(['date'], axis=1)
+        data['GPP'] = data['gppDtCutRef_umolCO2m2s1'].values.copy() * 10 ** -6 * 0.012011 * 1000 * 86400
+        data = data.resample('D').mean()
+        return data['GPP'].copy()
+
+    def merge_dat(self, d1, d2):
+        out = d1.join(d2, how='outer')
+        return out
+
+    def normalize(self, var):
+        z = (var - np.nanmean(var))/np.nanstd(var)
+        return z
+
+    def __getitem__(self, split):
+        self.split = split
 
 
-fapar = get_fapar(path_to_db, 12)
-clim = get_clim(path_to_db, 12)
-vpd = get_vpd(path_to_db, 12)
-gpp = get_gpp(path_to_db, 12)
-
-print(vpd)
 
 
-oldb = pd.merge(fapar, clim, on=['date', 'day'], how='outer')
-bb = oldb.set_index(pd.to_datetime(oldb['date']))
-nb = bb.drop(['date'], axis=1)
-
-b = pd.merge(nb, gpp, on= ['date', 'day'], how='outer')
-bb = b.set_index(pd.to_datetime(b['date']))
-b = bb.drop(['date'], axis=1)
-a = pd.merge(b, vpd, on=['date', 'day'], how='outer')
 
 
-#global radiation to ppfd
-a['PPFD'] = a['rad_Jcm2day']*a['fpar_percent']*4.6
-
-#b = pd.merge(a, co2, on=['date', 'day'])
-
-#co2.info()
-#print(co2)
