@@ -11,7 +11,7 @@ c_path = "C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/physics
 
 
 # call function similar to preles.R
-def preles(par, tair, vpd, precip, co2, fapar, GPPmeas=np.nan, ETmeas=np.nan, SWmeas=np.nan, p=[np.nan] * 30, doy=[np.nan],
+def PRELES(par, tair, vpd, precip, co2, fapar, GPPmeas=np.nan, ETmeas=np.nan, SWmeas=np.nan, p=[np.nan] * 30, doy=[np.nan],
          logflag=0, control=0, pft="evergreen", parmodel=0, lat=np.nan, par0=np.nan):
     leng = len(tair)
     if np.isnan(GPPmeas):
@@ -196,13 +196,8 @@ df = [
 
 R = pd.read_csv(''.join((data_path,'resultsR.csv')))
 
-GPP, ET = preles(par = np.array(PAR),
-     tair = np.array(TAir),
-     vpd = np.array(VPD),
-     precip = np.array(Precip),
-     co2 = np.array(CO2, dtype = np.double),
-     fapar = np.array(fAPAR, dtype = np.double),
-     p = [float(pa) for pa in df])
+GPP, ET = PRELES(par=np.array(PAR), tair=np.array(TAir), vpd=np.array(VPD), precip=np.array(Precip),
+                 co2=np.array(CO2, dtype=np.double), fapar=np.array(fAPAR, dtype=np.double), p=[float(pa) for pa in df])
 
 plt.figure()
 plt.plot(data['Unnamed: 0'], data['GPPobs'], '.', label = 'Observed')
