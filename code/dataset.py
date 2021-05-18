@@ -26,7 +26,7 @@ class ProfoundData:
         df = pd.read_sql_query(''.join(('SELECT * FROM ', table_name)), connection)
         return df
 
-
+# implement conversion of units
     def get_clim(self, station_id):
         data = self.get_table('CLIMATEFLUXNET_master', self.con)
         data = data.loc[data['site_id'] == station_id, ['date', 'rad_Jcm2day', 'p_mm', 'tmean_degC']]
@@ -43,7 +43,7 @@ class ProfoundData:
         data['fapar'] = data['fpar_percent'].copy()
         return data['fapar']
 
-
+# calculate vpd
     def get_vpd(self, station_id):
         datavpd = self.get_table('METEOROLOGICAL', self.con)
         data = datavpd.loc[datavpd['site_id'] == station_id, ['date', 'year', 'mo', 'day', 'vpdFMDS_hPa']]
@@ -63,6 +63,9 @@ class ProfoundData:
         data = data.resample('D').mean()
         return data['GPP'].copy()
 
+    #def get_swc(self):
+
+
     def merge_dat(self, d1, d2):
         out = d1.join(d2, how='outer')
         return out
@@ -71,10 +74,16 @@ class ProfoundData:
         z = (var - np.nanmean(var))/np.nanstd(var)
         return z
 
-    def shorten_on_gpp(self, period=None):
+    def shorten(self, data, lack = None, period=None):
         if not period:
-            # shorten dataset on gpp availables
-            pass
+            period = ["2000-01-01", "2012-12-31"]# shorten dataset on gpp availables
+        out = data[period[0]:period[1]]
+        if lack:
+            pass #remove data of lack years
+        return out
+
+# where to get ET??
+
 
     def __getitem__(self):
         if self.split == 'validation':
@@ -91,13 +100,19 @@ class ProfoundData:
         vpd = self.get_vpd(self.sid)
         gpp = self.get_gpp(self.sid)
 
-        return fapar
+
+        return self.shorten(fapar), self.shorten(clim), self.shorten(vpd), self.shorten(gpp)
 
 
 
-#fapar, clim, vpd, \
-#gpp1 = ProfoundData('training').__getitem__()
-#gpp2 = ProfoundData('test').__getitem__()
+
+data1 = ProfoundData('test').__getitem__()
+for i in range(0,4):
+    print(data1[i])
+
+
+'''
+gpp2 = ProfoundData('test').__getitem__()
 gpp3 = ProfoundData('validation').__getitem__()
 gpp4 = ProfoundData('NAS').__getitem__()
 
@@ -107,6 +122,6 @@ plt.plot(gpp3, label='hyytiala')
 plt.plot(gpp4, label='le bray')
 plt.legend()
 plt.show()
-
+'''
 
 
