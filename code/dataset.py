@@ -56,10 +56,10 @@ class ProfoundData:
 
     def get_gpp(self, station_id):
         datagpp = self.get_table('FLUX', self.con)
-        data = datagpp.loc[datagpp['site_id'] == station_id, ['date', 'day', 'gppDtCutRef_umolCO2m2s1', 'gppDtCutSe_umolCO2m2s1']]
+        data = datagpp.loc[datagpp['site_id'] == station_id, ['date', 'day', 'gppDtVutRef_umolCO2m2s1', 'gppDtVutSe_umolCO2m2s1']]
         data = data.set_index(pd.to_datetime(data['date']))
         data = data.drop(['date'], axis=1)
-        data['GPP'] = data['gppDtCutRef_umolCO2m2s1'].values.copy() * 10 ** -6 * 0.012011 * 1000 * 86400
+        data['GPP'] = data['gppDtVutRef_umolCO2m2s1'].values.copy() * 10 ** -6 * 0.012011 * 1000 * 86400
         data = data.resample('D').mean()
         return data['GPP'].copy()
 
@@ -71,22 +71,41 @@ class ProfoundData:
         z = (var - np.nanmean(var))/np.nanstd(var)
         return z
 
+    def shorten_on_gpp(self, period=None):
+        if not period:
+            # shorten dataset on gpp availables
+            pass
+
     def __getitem__(self):
+        if self.split == 'validation':
+            self.sid = 12 #hyytiala
         if self.split == 'training':
-            self.sid = 12
+            self.sid = 3 #bily kriz
+        if self.split == 'test':
+            self.sid = 5 #collelongo
+        if self.split == 'NAS':
+            self.sid = 14 #le bray
 
         fapar = self.get_fapar(self.sid)
         clim = self.get_clim(self.sid)
         vpd = self.get_vpd(self.sid)
         gpp = self.get_gpp(self.sid)
 
-        return fapar, clim, vpd, gpp
+        return fapar
 
 
 
-fapar, clim, vpd, gpp = ProfoundData('training').__getitem__()
+#fapar, clim, vpd, \
+#gpp1 = ProfoundData('training').__getitem__()
+#gpp2 = ProfoundData('test').__getitem__()
+gpp3 = ProfoundData('validation').__getitem__()
+gpp4 = ProfoundData('NAS').__getitem__()
 
-plt.plot(gpp)
+plt.plot(gpp1, label='bily kriz')
+plt.plot(gpp2, label='collelongo')
+plt.plot(gpp3, label='hyytiala')
+plt.plot(gpp4, label='le bray')
+plt.legend()
 plt.show()
 
 
