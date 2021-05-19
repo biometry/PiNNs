@@ -13,14 +13,14 @@ class ProfoundData:
     '''
     Extract necessary data from Profound DataBase and preprocess it
     '''
-    def __init__(self, split, dir=None):
+    def __init__(self, split, handsoff=True, dir=None):
         self.split = split
         if dir:
             self.path_to_db = dir
         else:
             self.path_to_db = 'C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/physics_guided_nn/data/ProfoundData.sqlite'
         self.con = sqlite3.connect(self.path_to_db)
-
+        self.handsoff = handsoff
 
     def get_table(self, table_name, connection):
         df = pd.read_sql_query(''.join(('SELECT * FROM ', table_name)), connection)
@@ -34,6 +34,12 @@ class ProfoundData:
         data = data.drop(['date'], axis=1)
         return data
 
+    def get_relhum(self, station_id):
+        data = self.get_table('CLIMATE_LOCAL', self.con)
+        data = data.loc[data['site_id'] == station_id, ['date', 'rad_Jcm2day', 'p_mm', 'tmean_degC']]
+        data = data.set_index(pd.to_datetime(data['date']))
+        data = data.drop(['date'], axis=1)
+        return data
 
     def get_fapar(self, station_id):
         datafpar = self.get_table('MODIS', self.con)
@@ -46,17 +52,24 @@ class ProfoundData:
 # calculate vpd
     def get_vpd(self, station_id):
         datavpd = self.get_table('METEOROLOGICAL', self.con)
-        data = datavpd.loc[datavpd['site_id'] == station_id, ['date', 'year', 'mo', 'day', 'vpdFMDS_hPa']]
+        data = datavpd.loc[datavpd['site_id'] == station_id, ['date', 'vpdFMDS_hPa']]
         data = data.set_index(pd.to_datetime(data['date']))
-        data = data.drop(['year', 'mo'], axis=1)
         data = data.resample('D').mean()
         data['VPD'] = data['vpdFMDS_hPa'].copy()/10 #hPa to kPa
+        return data
+
+    def get_et(self, station_id):
+        dataet = self.get_table('ATMOSPHERICHEATCONDUCTION', self.con)
+        data = dataet.loc[dataet['site_id'] == station_id, ['date', 'leCORR_Wm2']]
+        data = data.set_index(pd.to_datetime(data['date']))
+        data = data.resample('D').mean()
+        data['ET'] = (data.leCORR_Wm2 / 2257) * 0.001 * 86400
         return data
 
 
     def get_gpp(self, station_id):
         datagpp = self.get_table('FLUX', self.con)
-        data = datagpp.loc[datagpp['site_id'] == station_id, ['date', 'day', 'gppDtVutRef_umolCO2m2s1', 'gppDtVutSe_umolCO2m2s1']]
+        data = datagpp.loc[datagpp['site_id'] == station_id, ['date', 'gppDtVutRef_umolCO2m2s1', 'gppDtVutSe_umolCO2m2s1']]
         data = data.set_index(pd.to_datetime(data['date']))
         data = data.drop(['date'], axis=1)
         data['GPP'] = data['gppDtVutRef_umolCO2m2s1'].values.copy() * 10 ** -6 * 0.012011 * 1000 * 86400
@@ -81,20 +94,13 @@ class ProfoundData:
         z = (var - np.nanmean(var))/np.nanstd(var)
         return z
 
-    def shorten_merge(self, GPP, Clim, VPD, fAPAR=None, lack = None, period=None):
+    def shorten_merge(self, GPP, ET, Clim, VPD, fAPAR=None, lack = None, period=None):
         if not period:
-            out = GPP.merge(Clim, left_index=True).merge(VPD, left_index=True)
+            out = GPP.merge(ET, how='inner', on=['date']).merge(Clim, how='inner', on=['date']).merge(VPD, how='inner', on=['date'])
         return out
 
 
-        '''
-        if not period:
-            period = ["2000-01-01", "2012-12-31"]# shorten dataset on gpp availables
-        out = data[period[0]:period[1]]
-        if lack:
-            pass #remove data of lack years
-        return out
-        '''
+
 # where to get ET??
 
 
@@ -112,17 +118,25 @@ class ProfoundData:
         clim = self.get_clim(self.sid)
         vpd = self.get_vpd(self.sid)
         gpp = self.get_gpp(self.sid)
+        et = self.get_et(self.sid)
         #swc = self.get_swc(self.sid)
 
-        output = self.shorten_merge(gpp, clim, vpd)
+        output = self.shorten_merge(gpp, et, clim, vpd)
+        if not self.handsoff:
+            #normalize
+            pass
 
         return output
 
 
-op = ProfoundData('validation').__getitem__()
+#op_hy = ProfoundData('validation').__getitem__()
+op = ProfoundData('NAS').__getitem__()
+
+
 print(op)
 print(op.info())
-
+plt.plot(op)
+plt.show()
 
 '''
 data1 = ProfoundData('test').__getitem__()
