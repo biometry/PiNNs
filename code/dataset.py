@@ -41,7 +41,7 @@ class ProfoundData:
         data = data.set_index(pd.to_datetime(data['date']))
         data = data.drop(['date'], axis=1)
         data['fapar'] = data['fpar_percent'].copy()
-        return data['fapar']
+        return data
 
 # calculate vpd
     def get_vpd(self, station_id):
@@ -50,8 +50,8 @@ class ProfoundData:
         data = data.set_index(pd.to_datetime(data['date']))
         data = data.drop(['year', 'mo'], axis=1)
         data = data.resample('D').mean()
-        data['VPD'] = data['vpdFMDS_hPa'].copy()
-        return data['VPD'].copy()
+        data['VPD'] = data['vpdFMDS_hPa'].copy()/10 #hPa to kPa
+        return data
 
 
     def get_gpp(self, station_id):
@@ -61,9 +61,16 @@ class ProfoundData:
         data = data.drop(['date'], axis=1)
         data['GPP'] = data['gppDtVutRef_umolCO2m2s1'].values.copy() * 10 ** -6 * 0.012011 * 1000 * 86400
         data = data.resample('D').mean()
-        return data['GPP'].copy()
+        return data
 
-    #def get_swc(self):
+    def get_swc(self, station_id):
+        dataswc = self.get_table('SOILTS', self.con)
+        data = dataswc.loc[dataswc['site_id'] == station_id, ['date', 'swcFMDS1_degC']]
+        data = data.set_index(pd.to_datetime(data['date']))
+        data = data.drop(['date'], axis=1)
+        data['SWC'] = data['swcFMDS1_degC'].values.copy()
+        data = data.resample('D').mean()
+        return data
 
 
     def merge_dat(self, d1, d2):
@@ -74,14 +81,20 @@ class ProfoundData:
         z = (var - np.nanmean(var))/np.nanstd(var)
         return z
 
-    def shorten(self, data, lack = None, period=None):
+    def shorten_merge(self, GPP, Clim, VPD, fAPAR=None, lack = None, period=None):
+        if not period:
+            out = GPP.merge(Clim, left_index=True).merge(VPD, left_index=True)
+        return out
+
+
+        '''
         if not period:
             period = ["2000-01-01", "2012-12-31"]# shorten dataset on gpp availables
         out = data[period[0]:period[1]]
         if lack:
             pass #remove data of lack years
         return out
-
+        '''
 # where to get ET??
 
 
@@ -95,23 +108,33 @@ class ProfoundData:
         if self.split == 'NAS':
             self.sid = 14 #le bray
 
-        fapar = self.get_fapar(self.sid)
+        #fapar = self.get_fapar(self.sid)
         clim = self.get_clim(self.sid)
         vpd = self.get_vpd(self.sid)
         gpp = self.get_gpp(self.sid)
+        #swc = self.get_swc(self.sid)
+
+        output = self.shorten_merge(gpp, clim, vpd)
+
+        return output
 
 
-        return self.shorten(fapar), self.shorten(clim), self.shorten(vpd), self.shorten(gpp)
-
-
-
-
-data1 = ProfoundData('test').__getitem__()
-for i in range(0,4):
-    print(data1[i])
+op = ProfoundData('validation').__getitem__()
+print(op)
+print(op.info())
 
 
 '''
+data1 = ProfoundData('test').__getitem__()
+data2 = ProfoundData('training').__getitem__()
+data3 = ProfoundData('NAS').__getitem__()
+data4 = ProfoundData('validation').__getitem__()
+plt.plot(data1, label='collelongo')
+plt.plot(data2, label='bily kriz')
+plt.plot(data3, label='le bray')
+plt.plot(data4, label='hyytiala')
+plt.show()
+
 gpp2 = ProfoundData('test').__getitem__()
 gpp3 = ProfoundData('validation').__getitem__()
 gpp4 = ProfoundData('NAS').__getitem__()
