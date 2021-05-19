@@ -64,6 +64,21 @@ class ProfoundData:
         data = data.set_index(pd.to_datetime(data['date']))
         data = data.resample('D').mean()
         data['ET'] = (data.leCORR_Wm2 / 2257) * 0.001 * 86400
+        # correct neg values
+        pos = data.loc[data['ET'] < 0.0]
+        print(pos)
+        bevor = data.shift(periods=1)
+        after = data.shift(periods=-1)
+        for p in pos.index:
+            if bevor['ET'][p] >= 0 and after['ET'][p] >= 0:
+                data['ET'][p] = np.mean([bevor['ET'][p], after['ET'][p]])
+            elif bevor['ET'][p] >= 0:
+                data['ET'][p] = bevor['ET'][p]
+            elif after['ET'][p] >= 0:
+                data['ET'][p] = after['ET'][p]
+            else:
+                data['ET'][p] = 0
+
         return data
 
 
