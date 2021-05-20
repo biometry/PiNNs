@@ -34,12 +34,6 @@ class ProfoundData:
         data = data.drop(['date'], axis=1)
         return data
 
-    def get_relhum(self, station_id):
-        data = self.get_table('CLIMATE_LOCAL', self.con)
-        data = data.loc[data['site_id'] == station_id, ['date', 'rad_Jcm2day', 'p_mm', 'tmean_degC']]
-        data = data.set_index(pd.to_datetime(data['date']))
-        data = data.drop(['date'], axis=1)
-        return data
 
     def get_fapar(self, station_id):
         datafpar = self.get_table('MODIS', self.con)
@@ -47,6 +41,29 @@ class ProfoundData:
         data = data.set_index(pd.to_datetime(data['date']))
         data = data.drop(['date'], axis=1)
         data['fapar'] = data['fpar_percent'].copy()
+        start = data.index[0]
+        end = data.index[-1]
+        data = data[data.index.isin(pd.date_range(start, end))]['fapar']
+        idx = data[np.isnan(data)].index
+        # mean bevor and after
+        for i in idx:
+            after = data.shift(periods=-1)
+            bevor = data.shift(periods=1)
+            if np.isfinite(bevor[i]) and np.isfinite(after[i]):
+                data[i] = np.nanmean([bevor[i], after[i]])
+            elif np.isfinite(bevor[i]):
+                data[i] = bevor[i]
+            elif np.isfinite(after[i]):
+                data[i] = after[i]
+
+        newdata = pd.DataFrame(data={'date': pd.date_range(start, end)})
+        newdata = newdata.set_index(pd.to_datetime(newdata['date'])).drop(['date'], axis=1)
+        fapar = newdata.join(data)
+        nans = np.where(np.isnan(fapar.fapar))[0]
+        # set value for days of resolution (usually 16 following days)
+        for i in nans:
+            fapar.iloc[i]['fapar'] = fapar.iloc[i - 1]['fapar']
+        data = fapar
         return data
 
 # calculate vpd
@@ -108,9 +125,9 @@ class ProfoundData:
         z = (var - np.nanmean(var))/np.nanstd(var)
         return z
 
-    def shorten_merge(self, GPP, ET, Clim, VPD, fAPAR=None, lack = None, period=None):
+    def shorten_merge(self, GPP, ET, Clim, VPD, fAPAR, lack = None, period=None):
         if not period:
-            out = GPP.merge(ET, how='inner', on=['date']).merge(Clim, how='inner', on=['date']).merge(VPD, how='inner', on=['date'])
+            out = GPP.merge(ET, how='inner', on=['date']).merge(Clim, how='inner', on=['date']).merge(VPD, how='inner', on=['date']).merge(fAPAR, how='inner', on=['date'])
         return out
 
 
@@ -125,14 +142,14 @@ class ProfoundData:
         if self.split == 'NAS':
             self.sid = 14 #le bray
 
-        #fapar = self.get_fapar(self.sid)
+        fapar = self.get_fapar(self.sid)
         clim = self.get_clim(self.sid)
         vpd = self.get_vpd(self.sid)
         gpp = self.get_gpp(self.sid)
         et = self.get_et(self.sid)
 
         # merge data
-        op = self.shorten_merge(gpp, et, clim, vpd)
+        op = self.shorten_merge(gpp, et, clim, vpd, fapar)
 
         # shorten to time slot with all variables available
         if self.sid == 12:
@@ -151,6 +168,11 @@ class ProfoundData:
             pass
 
         return output
+
+hyytiala = ProfoundData('validation').__getitem__()
+
+
+
 
 
 '''
@@ -171,3 +193,4 @@ col = ProfoundData('test').__getitem__()
 colindex = pd.date_range('1997-01-01', '2002-12-31').union(pd.date_range('2004-01-01', '2014-12-31'))
 collelongo = col[col.index.isin(colindex)]
 '''
+
