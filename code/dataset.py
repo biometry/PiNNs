@@ -31,7 +31,9 @@ class ProfoundData:
         data = self.get_table('CLIMATEFLUXNET_master', self.con)
         data = data.loc[data['site_id'] == station_id, ['date', 'rad_Jcm2day', 'p_mm', 'tmean_degC']]
         data = data.set_index(pd.to_datetime(data['date']))
-        data = data.drop(['date'], axis=1)
+        data['Precip'] = data['p_mm'].copy()
+        data['Tair'] = data['tmean_degC'].copy()
+        data = data.drop(['date', 'p_mm', 'tmean_degC'], axis=1)
         return data
 
 
@@ -39,8 +41,8 @@ class ProfoundData:
         datafpar = self.get_table('MODIS', self.con)
         data = datafpar.loc[datafpar['site_id'] == station_id, ['date', 'fpar_percent']]
         data = data.set_index(pd.to_datetime(data['date']))
-        data = data.drop(['date'], axis=1)
         data['fapar'] = data['fpar_percent'].copy()
+        data = data.drop(['date', 'fpar_percent'], axis=1)
         start = data.index[0]
         end = data.index[-1]
         data = data[data.index.isin(pd.date_range(start, end))]['fapar']
@@ -73,6 +75,7 @@ class ProfoundData:
         data = data.set_index(pd.to_datetime(data['date']))
         data = data.resample('D').mean()
         data['VPD'] = data['vpdFMDS_hPa'].copy()/10 #hPa to kPa
+        data = data.drop(['vpdFMDS_hPa'], axis=1)
         return data
 
     def get_et(self, station_id):
@@ -80,21 +83,21 @@ class ProfoundData:
         data = dataet.loc[dataet['site_id'] == station_id, ['date', 'leCORR_Wm2']]
         data = data.set_index(pd.to_datetime(data['date']))
         data = data.resample('D').mean()
-        data['ET'] = (data.leCORR_Wm2 / 2257) * 0.001 * 86400
+        data['LE'] = data['leCORR_Wm2'].copy()
+        data = data.drop(['leCORR_Wm2'], axis=1)
         # correct neg values
-        pos = data.loc[data['ET'] < 0.0]
+        pos = data.loc[data['LE'] < 0.0]
         bevor = data.shift(periods=1)
         after = data.shift(periods=-1)
         for p in pos.index:
-            if bevor['ET'][p] >= 0 and after['ET'][p] >= 0:
-                data['ET'][p] = np.mean([bevor['ET'][p], after['ET'][p]])
-            elif bevor['ET'][p] >= 0:
-                data['ET'][p] = bevor['ET'][p]
-            elif after['ET'][p] >= 0:
-                data['ET'][p] = after['ET'][p]
+            if bevor['LE'][p] >= 0 and after['LE'][p] >= 0:
+                data['LE'][p] = np.mean([bevor['LE'][p], after['LE'][p]])
+            elif bevor['LE'][p] >= 0:
+                data['LE'][p] = bevor['LE'][p]
+            elif after['LE'][p] >= 0:
+                data['LE'][p] = after['LE'][p]
             else:
-                data['ET'][p] = 0
-
+                data['LE'][p] = 0
         return data
 
 
@@ -102,8 +105,8 @@ class ProfoundData:
         datagpp = self.get_table('FLUX', self.con)
         data = datagpp.loc[datagpp['site_id'] == station_id, ['date', 'gppDtVutRef_umolCO2m2s1', 'gppDtVutSe_umolCO2m2s1']]
         data = data.set_index(pd.to_datetime(data['date']))
-        data = data.drop(['date'], axis=1)
         data['GPP'] = data['gppDtVutRef_umolCO2m2s1'].values.copy() * 10 ** -6 * 0.012011 * 1000 * 86400
+        data = data.drop(['date', 'gppDtVutRef_umolCO2m2s1', 'gppDtVutSe_umolCO2m2s1'], axis=1)
         data = data.resample('D').mean()
         return data
 
@@ -122,12 +125,11 @@ class ProfoundData:
         return out
 
     def normalize(self, var):
-        z = (var - np.nanmean(var))/np.nanstd(var)
+        z = (var - np.mean(var))/np.std(var)
         return z
 
-    def shorten_merge(self, GPP, ET, Clim, VPD, fAPAR, lack = None, period=None):
-        if not period:
-            out = GPP.merge(ET, how='inner', on=['date']).merge(Clim, how='inner', on=['date']).merge(VPD, how='inner', on=['date']).merge(fAPAR, how='inner', on=['date'])
+    def shorten_merge(self, GPP, ET, Clim, VPD, fAPAR):
+        out = GPP.merge(ET, how='inner', on=['date']).merge(Clim, how='inner', on=['date']).merge(VPD, how='inner', on=['date']).merge(fAPAR, how='inner', on=['date'])
         return out
 
 
@@ -161,6 +163,24 @@ class ProfoundData:
         if self.sid == 14:
             outix = pd.date_range('1997-01-01', '2001-12-31').union(pd.date_range('2003-01-01', '2008-12-31'))
         output = op[op.index.isin(outix)]
+
+        # latent heat to ET
+        # latent heat vaporization ref: Stull, B., 1988: An Introduction to Boundary Layer Meteorology (p.641)
+        #                                                Kluwer Academic Publishers, Dordrecht, Netherlands
+        tair = output['Tair']
+        k1 = 2.501
+        k2 = 0.00237
+        lb = (k1 - k2 * tair) * 1e06
+        output['ET'] = (output['LE'] / lb) * 86400
+
+        # rad_Jcm2day to mol/m2day
+        jtoumol = 4.56 # ref: McCree Wm-2 to umol m2
+        rad = output['rad_Jcm2day']
+        fracPAR = output['fapar']
+        output['PPFD'] = rad * fracPAR * jtoumol * 1e-6 * 1e-4
+        output = output.drop(['LE', 'rad_Jcm2day'], axis=1)
+
+
 
         # normalize
         if not self.handsoff:
