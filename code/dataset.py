@@ -66,7 +66,6 @@ class ProfoundData:
         data['ET'] = (data.leCORR_Wm2 / 2257) * 0.001 * 86400
         # correct neg values
         pos = data.loc[data['ET'] < 0.0]
-        print(pos)
         bevor = data.shift(periods=1)
         after = data.shift(periods=-1)
         for p in pos.index:
@@ -116,14 +115,11 @@ class ProfoundData:
 
 
 
-# where to get ET??
-
-
     def __getitem__(self):
         if self.split == 'validation':
             self.sid = 12 #hyytiala
         if self.split == 'training':
-            self.sid = 3 #bily kriz
+            self.sid = 21 # soro
         if self.split == 'test':
             self.sid = 5 #collelongo
         if self.split == 'NAS':
@@ -134,9 +130,22 @@ class ProfoundData:
         vpd = self.get_vpd(self.sid)
         gpp = self.get_gpp(self.sid)
         et = self.get_et(self.sid)
-        #swc = self.get_swc(self.sid)
 
-        output = self.shorten_merge(gpp, et, clim, vpd)
+        # merge data
+        op = self.shorten_merge(gpp, et, clim, vpd)
+
+        # shorten to time slot with all variables available
+        if self.sid == 12:
+            outix = pd.date_range('2004-01-01', '2005-12-31').union(pd.date_range('2007-01-01', '2012-12-31'))
+        if self.sid == 21:
+            outix = pd.date_range('2002-01-01', '2008-12-31')
+        if self.sid == 5:
+            outix = pd.date_range('1997-01-01', '2002-12-31').union(pd.date_range('2004-01-01', '2014-12-31'))
+        if self.sid == 14:
+            outix = pd.date_range('1997-01-01', '2001-12-31').union(pd.date_range('2003-01-01', '2008-12-31'))
+        output = op[op.index.isin(outix)]
+
+        # normalize
         if not self.handsoff:
             #normalize
             pass
@@ -144,36 +153,21 @@ class ProfoundData:
         return output
 
 
-#op_hy = ProfoundData('validation').__getitem__()
-op = ProfoundData('NAS').__getitem__()
-
-
-print(op)
-print(op.info())
-plt.plot(op)
-plt.show()
-
 '''
-data1 = ProfoundData('test').__getitem__()
-data2 = ProfoundData('training').__getitem__()
-data3 = ProfoundData('NAS').__getitem__()
-data4 = ProfoundData('validation').__getitem__()
-plt.plot(data1, label='collelongo')
-plt.plot(data2, label='bily kriz')
-plt.plot(data3, label='le bray')
-plt.plot(data4, label='hyytiala')
-plt.show()
+# extract years containing all data
+hyt = ProfoundData('validation').__getitem__()
+hytindex = pd.date_range('2004-01-01', '2005-12-31').union(pd.date_range('2007-01-01', '2012-12-31'))
+hyytiala = hyt[hyt.index.isin(hytindex)]
 
-gpp2 = ProfoundData('test').__getitem__()
-gpp3 = ProfoundData('validation').__getitem__()
-gpp4 = ProfoundData('NAS').__getitem__()
+sor = ProfoundData('training').__getitem__()
+soroindex = pd.date_range('2002-01-01', '2008-12-31')
+soro = sor[sor.index.isin(soroindex)]
 
-plt.plot(gpp1, label='bily kriz')
-plt.plot(gpp2, label='collelongo')
-plt.plot(gpp3, label='hyytiala')
-plt.plot(gpp4, label='le bray')
-plt.legend()
-plt.show()
+leb = ProfoundData('NAS').__getitem__()
+lebindex = pd.date_range('1997-01-01', '2001-12-31').union(pd.date_range('2003-01-01', '2008-12-31'))
+lebray = leb[leb.index.isin(lebindex)]
+
+col = ProfoundData('test').__getitem__()
+colindex = pd.date_range('1997-01-01', '2002-12-31').union(pd.date_range('2004-01-01', '2014-12-31'))
+collelongo = col[col.index.isin(colindex)]
 '''
-
-
