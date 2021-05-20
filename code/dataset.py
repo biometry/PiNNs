@@ -167,17 +167,20 @@ class ProfoundData:
         # latent heat to ET
         # latent heat vaporization ref: Stull, B., 1988: An Introduction to Boundary Layer Meteorology (p.641)
         #                                                Kluwer Academic Publishers, Dordrecht, Netherlands
-        tair = output['Tair']
+        tair = output['Tair'].values
+        LE = output['LE'].values
+        output['ET'] = np.array([0]*len(output['LE']))
         k1 = 2.501
         k2 = 0.00237
         lb = (k1 - k2 * tair) * 1e06
-        output['ET'] = (output['LE'] / lb) * 86400
+        output['ET'][:] = (LE / lb) * 86400
 
         # rad_Jcm2day to mol/m2day
         jtoumol = 4.56 # ref: McCree Wm-2 to umol m2
-        rad = output['rad_Jcm2day']
-        fracPAR = output['fapar']
-        output['PPFD'] = rad * fracPAR * jtoumol * 1e-6 * 1e-4
+        rad = output['rad_Jcm2day'].values
+        fracPAR = output['fapar'].values
+        output['PPFD'] = np.array([0] * len(output['fapar']))
+        output['PPFD'][:] = rad * fracPAR * jtoumol * 1e-6 * 1e-4
         output = output.drop(['LE', 'rad_Jcm2day'], axis=1)
 
 
