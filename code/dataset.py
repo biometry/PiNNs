@@ -174,14 +174,14 @@ class ProfoundData:
         k1 = 2.501
         k2 = 0.00237
         lb = (k1 - k2 * tair) * 1e06
-        output['ET'][:] = (LE / lb) * 86400
+        output['ET'] = (LE / lb) * 86400
 
         # rad_Jcm2day to mol/m2day
         jtoumol = 4.56 # ref: McCree Wm-2 to umol m2
         rad = output['rad_Jcm2day']
         fracPAR = output['fapar']
         output['PPFD'] = np.array([0] * len(output['fapar']))
-        output['PPFD'][:] = rad * fracPAR * jtoumol * 1e-6 * 1e-4
+        output['PPFD'] = rad * fracPAR * jtoumol * 1e-4
         output = output.drop(['LE', 'rad_Jcm2day'], axis=1)
 
 
