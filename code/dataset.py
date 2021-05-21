@@ -191,4 +191,4 @@ data_path = 'C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/phys
 hyytiala.to_csv(''.join((data_path,'hyytiala.csv')))
 soro.to_csv(''.join((data_path, 'soro.csv')))
 collelongo.to_csv(''.join((data_path, 'collelongo.csv')))
-lebray.to_csv(''.join((data_path, 'collelongo.csv')))
+lebray.to_csv(''.join((data_path, 'lebray.csv')))
