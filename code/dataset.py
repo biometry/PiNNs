@@ -33,6 +33,8 @@ class ProfoundData:
         data = data.set_index(pd.to_datetime(data['date']))
         data['Precip'] = data['p_mm'].copy()
         data['Tair'] = data['tmean_degC'].copy()
+        # global irradiance to PAR
+        # reference: Taiz & Zeiger (2015): Plant Physiology and Development, Ch.9 (p.172-174)
         data['PAR'] = ((data.rad_Jcm2day * (2.2*(10**(-7))) / (299792458 * (6.626070150 * (10 **(-34)))))/(6.02*(10**23))) / 0.0001
         data = data.drop(['date', 'p_mm', 'tmean_degC', 'rad_Jcm2day'], axis=1)
         return data
@@ -133,8 +135,6 @@ class ProfoundData:
         out = GPP.merge(ET, how='inner', on=['date']).merge(Clim, how='inner', on=['date']).merge(VPD, how='inner', on=['date']).merge(fAPAR, how='inner', on=['date'])
         return out
 
-
-
     def __getitem__(self):
         if self.split == 'validation':
             self.sid = 12 #hyytiala
@@ -177,47 +177,18 @@ class ProfoundData:
         lb = (k1 - k2 * tair) * 1e06
         output['ET'] = (LE / lb) * 86400
 
-        '''
-        # rad_Jcm2day to mol/m2day
-        jtoumol = 4.56 # ref: McCree Wm-2 to umol m2
-        rad = output['rad_Jcm2day']
-        fracPAR = output['fapar']
-        output['PPFD'] = np.array([0] * len(output['fapar']))
-        output['PPFD'] = rad * fracPAR * jtoumol
-        output = output.drop(['LE', 'rad_Jcm2day'], axis=1)
-        '''
-
-
-        # normalize
-        if not self.handsoff:
-            #normalize
-            pass
         output = output[output.index.isin(outix)]
 
         return output
 
 hyytiala = ProfoundData('validation').__getitem__()
+soro = ProfoundData('training').__getitem__()
+collelongo = ProfoundData('test').__getitem__()
+lebray = ProfoundData('NAS').__getitem__()
 
 
-
-
-
-'''
-# extract years containing all data
-hyt = ProfoundData('validation').__getitem__()
-hytindex = pd.date_range('2004-01-01', '2005-12-31').union(pd.date_range('2007-01-01', '2012-12-31'))
-hyytiala = hyt[hyt.index.isin(hytindex)]
-
-sor = ProfoundData('training').__getitem__()
-soroindex = pd.date_range('2002-01-01', '2008-12-31')
-soro = sor[sor.index.isin(soroindex)]
-
-leb = ProfoundData('NAS').__getitem__()
-lebindex = pd.date_range('1997-01-01', '2001-12-31').union(pd.date_range('2003-01-01', '2008-12-31'))
-lebray = leb[leb.index.isin(lebindex)]
-
-col = ProfoundData('test').__getitem__()
-colindex = pd.date_range('1997-01-01', '2002-12-31').union(pd.date_range('2004-01-01', '2014-12-31'))
-collelongo = col[col.index.isin(colindex)]
-'''
-
+data_path = 'C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/physics_guided_nn/data/'
+hyytiala.to_csv(''.join((data_path,'hyytiala.csv')))
+soro.to_csv(''.join((data_path, 'soro.csv')))
+collelongo.to_csv(''.join((data_path, 'collelongo.csv')))
+lebray.to_csv(''.join((data_path, 'collelongo.csv')))
