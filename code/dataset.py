@@ -123,14 +123,6 @@ class ProfoundData:
         return data
 
 
-    def merge_dat(self, d1, d2):
-        out = d1.join(d2, how='outer')
-        return out
-
-    def normalize(self, var):
-        z = (var - np.mean(var))/np.std(var)
-        return z
-
     def shorten_merge(self, GPP, ET, Clim, VPD, fAPAR):
         out = GPP.merge(ET, how='inner', on=['date']).merge(Clim, how='inner', on=['date']).merge(VPD, how='inner', on=['date']).merge(fAPAR, how='inner', on=['date'])
         return out
