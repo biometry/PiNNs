@@ -160,9 +160,9 @@ class ProfoundData:
         if self.sid == 21:
             outix = pd.date_range('2002-01-01', '2008-12-31')
         if self.sid == 5:
-            outix = pd.date_range('1997-01-01', '2002-12-31').union(pd.date_range('2004-01-01', '2014-12-31'))
+            outix = pd.date_range('2001-01-01', '2002-12-31').union(pd.date_range('2004-01-01', '2014-12-31'))
         if self.sid == 14:
-            outix = pd.date_range('1997-01-01', '2001-12-31').union(pd.date_range('2003-01-01', '2008-12-31'))
+            outix = pd.date_range('2001-01-01', '2001-12-31').union(pd.date_range('2003-01-01', '2008-12-31'))
         output = op
 
 
@@ -176,7 +176,8 @@ class ProfoundData:
         k2 = 0.00237
         lb = (k1 - k2 * tair) * 1e06
         output['ET'] = (LE / lb) * 86400
-
+        output = output.drop(['LE'], axis=1)
+        output['DOY'] = output.index.dayofyear
         output = output[output.index.isin(outix)]
 
         return output
