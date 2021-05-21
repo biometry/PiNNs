@@ -26,7 +26,7 @@ class ProfoundData:
         df = pd.read_sql_query(''.join(('SELECT * FROM ', table_name)), connection)
         return df
 
-# implement conversion of units
+
     def get_clim(self, station_id):
         data = self.get_table('CLIMATEFLUXNET_master', self.con)
         data = data.loc[data['site_id'] == station_id, ['date', 'rad_Jcm2day', 'p_mm', 'tmean_degC']]
@@ -71,7 +71,7 @@ class ProfoundData:
         data = fapar
         return data
 
-# calculate vpd
+
     def get_vpd(self, station_id):
         datavpd = self.get_table('METEOROLOGICAL', self.con)
         data = datavpd.loc[datavpd['site_id'] == station_id, ['date', 'vpdFMDS_hPa']]
@@ -181,6 +181,7 @@ class ProfoundData:
 
         return output
 
+
 hyytiala = ProfoundData('validation').__getitem__()
 soro = ProfoundData('training').__getitem__()
 collelongo = ProfoundData('test').__getitem__()
@@ -188,7 +189,8 @@ lebray = ProfoundData('NAS').__getitem__()
 
 
 data_path = 'C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/physics_guided_nn/data/'
-hyytiala.to_csv(''.join((data_path,'hyytiala.csv')))
+hyytiala.to_csv(''.join((data_path, 'hyytiala.csv')))
 soro.to_csv(''.join((data_path, 'soro.csv')))
 collelongo.to_csv(''.join((data_path, 'collelongo.csv')))
 lebray.to_csv(''.join((data_path, 'lebray.csv')))
+
