@@ -171,6 +171,7 @@ class ProfoundData:
         output = output.drop(['LE'], axis=1)
         output['DOY'] = output.index.dayofyear
         output = output[output.index.isin(outix)]
+        output['CO2'] = np.array([380]*len(output.index))
 
         return output
 
