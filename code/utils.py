@@ -35,7 +35,7 @@ def encode_doy(doy):
     return np.sin(normalized_doy), np.cos(normalized_doy)
 
 
-def add_history(X, Y, batch_size, history):
+def add_history(X, Y, history, batch_size=None):
     '''
     ref: Marieke Wesselkamp
     Mini-batches for training
@@ -45,10 +45,20 @@ def add_history(X, Y, batch_size, history):
     :param history: data points from which time scale before should be used
     :return: x and y
     '''
-    subset = [j for j in random.sample(range(X.shape[0]), batch_size) if j > history]
-    subset_h = [item for sublist in [list(range(j - history, j)) for j in subset] for item in sublist]
-    x = np.concatenate((X.iloc[subset], X.iloc[subset_h]), axis=0)
-    y = np.concatenate((Y.iloc[subset], Y.iloc[subset_h]), axis=0)
+    if batch_size:
+        subset = [j for j in random.sample(range(X.shape[0]), batch_size) if j > history]
+        subset_h = [item for sublist in [list(range(j - history, j)) for j in subset] for item in sublist]
+        x = np.concatenate((X.iloc[subset], X.iloc[subset_h]), axis=0)
+        y = np.concatenate((Y.iloc[subset], Y.iloc[subset_h]), axis=0)
+
+    else:
+        x = X[history:]
+        y = Y[history:]
+        for i in range(1, history+1):
+            outx = np.concatenate((x, X.shift(periods=i)[history:]))
+            outy = np.concatenate((y, Y.shift(periods=i)[history:]))
+            x = outx
+            y = outy
 
     return x, y
 
@@ -65,7 +75,7 @@ def read_in(type, data_dir=None):
 
 
 
-def DataLoader(data_split, batch_size, history, dir=None):
+def DataLoader(data_split, history, batch_size=None, dir=None):
     xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
     ycols = ['GPP', 'ET']
     if data_split == 'NAS':
@@ -73,11 +83,19 @@ def DataLoader(data_split, batch_size, history, dir=None):
         data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
         data = standardize(data.drop(['CO2', 'date', 'DOY'], axis=1))
 
-    x, y = add_history(data[xcols], data[ycols], batch_size, history)
+    x, y = add_history(data[xcols], data[ycols], history, batch_size)
 
 
     return x, y
 
+
+import matplotlib.pyplot as plt
+x, y = DataLoader('NAS', 1)
+xn, yn = DataLoader('NAS', 1, 32)
+print(len(y.to_numpy()))
+print(len(yn.to_numpy()))
+plt.plot(y)
+plt.show()
 
 
 
