@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import random
 import torch
+import dataset
 
 def standardize(var, scaling=None):
     '''
@@ -55,8 +56,8 @@ def add_history(X, Y, history, batch_size=None):
         x = X[history:]
         y = Y[history:]
         for i in range(1, history+1):
-            outx = np.concatenate((x, X.shift(periods=i)[history:]))
-            outy = np.concatenate((y, Y.shift(periods=i)[history:]))
+            outx = pd.merge(x, X.shift(periods=i)[history:], left_index=True, right_index=True)
+            outy = pd.merge(y, Y.shift(periods=i)[history:], left_index=True, right_index=True)
             x = outx
             y = outy
 
@@ -66,16 +67,17 @@ def add_history(X, Y, history, batch_size=None):
 def read_in(type, data_dir=None):
     if not data_dir:
         data_path = 'C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/physics_guided_nn/data/'
-    else:
-        data_path = data_dir
+    elif data_dir == 'load':
+        out = dataset.ProfoundData(type).__getitem__()
+
     # subset station
-    if type == 'NAS':
+    if type == 'NAS' and data_dir != 'load':
         out = pd.read_csv(''.join((data_path, 'soro.csv')))
     return out
 
 
 
-def DataLoader(data_split, history, batch_size=None, dir=None):
+def loaddata(data_split, history, batch_size=None, dir=None):
     xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
     ycols = ['GPP', 'ET']
     if data_split == 'NAS':
@@ -90,12 +92,8 @@ def DataLoader(data_split, history, batch_size=None, dir=None):
 
 
 import matplotlib.pyplot as plt
-x, y = DataLoader('NAS', 1)
-xn, yn = DataLoader('NAS', 1, 32)
-print(len(y.to_numpy()))
-print(len(yn.to_numpy()))
-plt.plot(y)
-plt.show()
+x, y = loaddata('NAS', 1)
+xn, yn = loaddata('NAS', 1, 32)
 
 
 
