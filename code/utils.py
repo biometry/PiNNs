@@ -91,10 +91,6 @@ def loaddata(data_split, history, batch_size=None, dir=None):
     return x, y
 
 
-import matplotlib.pyplot as plt
-x, y = loaddata('NAS', 1)
-xn, yn = loaddata('NAS', 1, 32)
-
 
 
 

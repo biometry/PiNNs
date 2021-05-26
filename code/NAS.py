@@ -45,7 +45,7 @@ def ArchitectureSearch(grid, parameters):
 def HParSearchSpace(gridsize):
     grid = []
     for i in range(gridsize):
-        learning_rate = random.choice([0.01, 0.05, 0.001, 0.005])
+        learning_rate = random.choice([0.01, 0.03, 0.05, 0.001, 0.003, 0.005])
         batchsize = random.choice([2, 4, 8, 16, 32, 64, 128])
         #dropout = random.choice([0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1])
         if [learning_rate, batchsize] not in grid:
@@ -54,8 +54,7 @@ def HParSearchSpace(gridsize):
 
 
 
-def HParSearch(layersizes):
-    grid = HParSearchSpace(40)
+def HParSearch(layersizes, grid):
 
     model_design = {"layer_sizes": layersizes}
     mae_train = []
