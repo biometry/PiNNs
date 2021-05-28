@@ -14,7 +14,7 @@ def plot_genotype(genotype, file_name=None, figure_dir='./', save_figure=False):
         engine='dot')
     g.body.extend(['rankdir=LR'])
 
-    input_node_names = ['x', 'x_dup', 'y_phy', '[x, y_phy]']
+    input_node_names = ['x']
     output_name = 'y_hat'
 
     # All input nodes
