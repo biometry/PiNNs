@@ -21,7 +21,7 @@ def train(hpar, model_design, X, Y, data_dir='./'):
     # shuffle data
     x_train, x_test, y_train, y_test = train_test_split(X, Y)
 
-    model = models.NMLP(model_design, X.shape[1], Y.shape[1])
+    model = models.NMLP(X.shape[1], Y.shape[1], model_design)
     optimizer = optim.Adam(model.parameters(), lr = lr)
     criterion = nn.MSELoss()
 
