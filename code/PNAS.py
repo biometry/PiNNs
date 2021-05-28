@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from operationsPNAS import *
+from plot import *
 
 # Create Layer of all operations
 class MixedLayer(nn.Module):
@@ -196,4 +197,149 @@ class RandomMask(torch.autograd.Function):
         return grad_out.clone(), None
 
 
+def search_arch(model, train_set, test_set, options):
+    test_loader = torch.utils.data.DataLoader(test_set,
+                                              batch_size=len(test_set))
+    train_set_size = len(train_set)
+    sample_id = list(range(train_set_size))
+    train_sampler = torch.utils.data.sampler.SubsetRandomSampler(sample_id[:train_set_size//2])
+    val_sampler = torch.utils.data.sampler.SubsetRandomSampler(sample_id[train_set_size // 2:])
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=options['batch_size'], sampler= train_sampler)
+    val_loader = torch.utils.data.DataLoader(train_set, batch_size=options['batch_size'], sampler= val_sampler)
 
+    # Optimizers
+    alpha_optimizer = torch.optim.Adam(model.arch_parameters(), lr=options['arch_lr'], weight_decay=options['arch_weight_decay'])
+    weight_optimizer = torch.optim.Adam(model.parameters(), lr= options['lr'], weight_decay=options['weight_decay'])
+
+    weight_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        weight_optimizer, float(options['num_epochs']), eta_min= 1e-3 * options['lr']
+    )
+    alpha_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        alpha_optimizer, float(options['num_epochs']), eta_min= 1e-3 * options['arch_lr']
+    )
+    # Best error
+    min_test_diff = float('inf')
+    epoch_loss = []
+
+    # Best genotype
+    best_genotype = None
+
+    # Train loop
+    for epoch in range(options['num_epochs']):
+
+        # Train
+        train_stat = train_model(model,
+                                 train_loader,
+                                 val_loader,
+                                 alpha_optimizer,
+                                 weight_optimizer,
+                                 options['criterion']
+                                 )
+
+        # Test
+        test_stat = test_model(model, test_loader, options['criterion'])
+        cur_test_diff = test_stat['diff']
+
+        # Update Scheduler
+        weight_scheduler.step()
+        alpha_scheduler.step()
+
+        # Output information
+        cur_genotype = model.get_cur_genotype()
+        print('-' * 20 + 'Epoch ' + str(epoch) + '-' * 20)
+        print('Train:\t', train_stat)
+        print('Test:\t', test_stat)
+
+        # Save
+        if min_test_diff > cur_test_diff:
+
+            min_test_diff = cur_test_diff
+            best_genotype = cur_genotype
+            print('Best')
+            print(best_genotype)
+
+            # Save the network
+            if options['network_dir']:
+                torch.save(model.state_dict(), options['network_dir'])
+
+            # Plot the architecture picture
+            if options['figure_dir']:
+                plot_genotype(
+                    cur_genotype,
+                    file_name='test_' + str(epoch),
+                    figure_dir=options['figure_dir'],
+                    save_figure=True
+                )
+                print('Figure saved.')
+    return best_genotype
+
+
+def train_model(model, train_loader, val_loader, alpha_optimizer, weight_optimizer, criterion, options):
+    model.train()
+
+    mse_distance = nn.MSELoss()
+
+    batch_loss = []
+    batch_diff = []
+    for step, (train_sample, val_sample) in enumerate(zip(train_loader, val_loader)):
+        # Train set
+        x_train = train_sample['x']
+        y_train = train_sample['y']
+
+        # Val set
+        x_val = val_sample['x']
+        y_val = val_sample['y']
+
+        alpha_optimizer.zero_grad()
+        y_hat_val = model(x_val, y_val)
+        loss = criterion(y_hat_val, y_val)
+        loss.backward()
+
+        # Update weights
+        alpha_optimizer.step()
+
+        # Network step
+        weight_optimizer.zero_grad()
+        y_hat_train = model(x_train, y_train)
+        loss = criterion(y_hat_train, y_train)
+        loss.backward()
+
+        # Clip the gradient
+        nn.utils.clip_grad_norm_(model.parameters(), options['gradient_clip'])
+
+        # Update weights
+        weight_optimizer.step()
+
+        # Train statistics
+        batch_loss.append(loss.item())
+        batch_diff.append(mse_distance(y_hat_train, y_train).item())
+
+    train_loss = sum(batch_loss) / len(batch_loss)
+    train_diff = sum(batch_diff) / len(batch_diff)
+
+    return {'loss': train_loss, 'diff': train_diff}
+
+
+def test_model(model, test_loader, criterion):
+    model.eval()
+    mse_distance = nn.MSELoss()
+    batch_loss = []
+    batch_diff = []
+    with torch.no_grad():
+        for step, test_sample in enumerate(test_loader):
+            # Test set
+            x_test = test_sample['x']
+            y_test = test_sample['y']
+
+            # Network output
+            y_hat_test = model(x_test, y_test)
+            loss = criterion(y_hat_test, y_test)
+
+            # Test statistics
+            batch_loss.append(loss.item())
+            batch_diff.append(mse_distance(y_hat_test, y_test).item())
+
+    test_loss = sum(batch_loss) / len(batch_loss)
+    test_diff = sum(batch_diff) / len(batch_diff)
+
+    return {'loss': test_loss, 'diff': test_diff}

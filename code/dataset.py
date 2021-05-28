@@ -3,6 +3,7 @@
 import pandas as pd
 import sqlite3
 import numpy as np
+import zipfile
 from scipy.optimize import leastsq
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -15,7 +16,11 @@ class ProfoundData:
     '''
     def __init__(self, split, handsoff=True, dir=None):
         self.split = split
-        if dir:
+        if dir.endswith('.zip'):
+            zf = zipfile.ZipFile(dir)
+            db = zf.read('ProfoundData.sqlite')
+            self.path_to_db = db
+        elif dir.endswith('.sqlite'):
             self.path_to_db = dir
         else:
             self.path_to_db = 'C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/physics_guided_nn/data/ProfoundData.sqlite'
@@ -176,6 +181,12 @@ class ProfoundData:
         return output
 
 
+ProfoundData('NAS', dir='C:/Users/Niklas/Downloads/ProfoundData.zip')
+
+
+
+
+'''
 hyytiala = ProfoundData('validation').__getitem__()
 soro = ProfoundData('training').__getitem__()
 collelongo = ProfoundData('test').__getitem__()
@@ -187,4 +198,4 @@ hyytiala.to_csv(''.join((data_path, 'hyytiala.csv')))
 soro.to_csv(''.join((data_path, 'soro.csv')))
 collelongo.to_csv(''.join((data_path, 'collelongo.csv')))
 lebray.to_csv(''.join((data_path, 'lebray.csv')))
-
+'''

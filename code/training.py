@@ -6,7 +6,7 @@ import pandas as pd
 import torch.nn as nn
 import torch.optim as optim
 from sklearn import metrics
-from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split
 import utils
 import random
 import models
@@ -19,13 +19,7 @@ def train(hpar, model_design, X, Y, data_dir='./'):
     batchsize = hpar['batchsize']
     lr = hpar['learningrate']
     # shuffle data
-    x = random.shuffle(X.to_numpy())
-    y = random.shuffle(Y.to_numpy())
-    # data splits
-    x_train = x[0:np.ceil(len(x)/100*80)]
-    y_train = y[0:np.ceil(len(y)/100*80)]
-    x_test = x[np.ceil(len(x)/100*80):]
-    y_test = y[np.ceil(len(y)/100*80):]
+    x_train, x_test, y_train, y_test = train_test_split(X, Y)
 
     model = models.NMLP(model_design, X.shape[1], Y.shape[1])
     optimizer = optim.Adam(model.parameters(), lr = lr)
@@ -75,7 +69,7 @@ def train(hpar, model_design, X, Y, data_dir='./'):
             mae_train.append(metrics.mean_absolute_error(y_train, y_hat_train))
             mae_val.append(val_loss)
 
-        torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
+        torch.save(model.state_dict(), os.path.join(data_dir, f"model{i}.pth"))
 
     return {'mae_train': mae_train, 'mae_val':mae_val}
 

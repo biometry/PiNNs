@@ -20,7 +20,7 @@ def ArchitectureSearchSpace(input_size, output_size, grid_size, max_layers):
             grid.append(layer_size)
         return grid
 
-def ArchitectureSearch(grid, parameters):
+def ArchitectureSearch(grid, parameters, X, Y):
 
     mae_train = []
     mae_val = []
@@ -54,7 +54,7 @@ def HParSearchSpace(gridsize):
 
 
 
-def HParSearch(layersizes, grid):
+def HParSearch(layersizes, grid, X, Y):
 
     model_design = {"layer_sizes": layersizes}
     mae_train = []
@@ -81,6 +81,6 @@ def HParSearch(layersizes, grid):
 
     return hparams
 
-search_space = ArchitectureSearchSpace(24, 4, 70, 7)
+
 
 

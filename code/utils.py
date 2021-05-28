@@ -69,7 +69,6 @@ def read_in(type, data_dir=None):
         data_path = 'C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/physics_guided_nn/data/'
     elif data_dir == 'load':
         out = dataset.ProfoundData(type).__getitem__()
-
     # subset station
     if type == 'NAS' and data_dir != 'load':
         out = pd.read_csv(''.join((data_path, 'soro.csv')))

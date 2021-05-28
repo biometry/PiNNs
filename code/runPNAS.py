@@ -16,7 +16,7 @@ options = {
     'batch_size': 4,
     'criterion': metrics.mean_absolute_error(),
     'figure_dir': './',
-    'network_dir': None
+    'network_dir': './'
 }
 
 x, y = utils.loaddata('NAS', 1, dir='./data')
