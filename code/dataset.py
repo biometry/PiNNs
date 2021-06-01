@@ -181,7 +181,7 @@ class ProfoundData:
         return output
 
 
-ProfoundData('NAS', dir='C:/Users/Niklas/Downloads/ProfoundData.zip')
+#ProfoundData('NAS', dir='C:/Users/Niklas/Downloads/ProfoundData.zip')
 
 
 

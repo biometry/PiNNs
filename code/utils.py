@@ -71,7 +71,7 @@ def read_in(type, data_dir=None):
         out = dataset.ProfoundData(type).__getitem__()
     # subset station
     if type == 'NAS' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_path, 'soro.csv')))
+        out = pd.read_csv(''.join((data_dir, 'soro.csv')))
     return out
 
 

@@ -7,24 +7,28 @@ import torch.nn as nn
 # naive feed forward MLP
 class NMLP(nn.Module):
 
-    def __init__(self, input_dim, output_dim, model_design):
+    def __init__(self, input_dim, output_dim, layersizes):
         super(NMLP, self).__init__()
 
-        self.MLP = nn.Sequential()
-        self.nlayers = len(model_design['layer_sizes'])
-
-        for i in range(1, self.nlayers):
-            if i == 1:
-                self.MLP.add_module('Linear', nn.Linear(input_dim, model_design['layer_sizes'][i]))
-                self.MLP.add_module('relu1', nn.ReLU(inplace=True))
-            if i == self.nlayers-1:
-                self.MLP.add_module('Linear', nn.Linear(model_design['layer_sizes'][i-1], output_dim))
-            else:
-                self.MLP.add_module('Linear', nn.Linear(model_design['layer_sizes'][i-1], model_design['layer_sizes'][i]))
-                self.MLP.add_module('relu', nn.ReLU(inplace=True))
+        self.layers = nn.Sequential()
+        self.nlayers = len(layersizes)
+        print('Initializing model')
+        for i in range(0, self.nlayers+1):
+            if i == 0:
+                self.layers.add_module(f'input{i}', nn.Linear(input_dim, layersizes[i]))
+                self.layers.add_module(f'activation{i}', nn.ReLU())
+                print('adding input l', input_dim, layersizes[i])
+            elif i == (self.nlayers):
+                self.layers.add_module(f'output{i}', nn.Linear(layersizes[i-1], output_dim))
+                print('adding output l', layersizes[i-1], output_dim)
+            elif i and i < self.nlayers:
+                self.layers.add_module(f'fc{i}', nn.Linear(layersizes[i-1], layersizes[i]))
+                self.layers.add_module(f'activation{i}', nn.ReLU())
+                print('adding hidden l', layersizes[i-1], layersizes[i])
+                
 
     def forward(self, x):
-        out = self.MLP(x)
+        out = self.layers(x)
 
         return out
 

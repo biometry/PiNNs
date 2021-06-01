@@ -4,6 +4,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import DataLoader, TensorDataset
+from torch import Tensor
 
 from operationsPNAS import *
 from plot import *
@@ -31,9 +33,9 @@ class Network(nn.Module):
         self.dim_hid = dim_hid
         self.dim_out = dim_out
         self.layers = nn.ModuleList()
-        self.init_input_dim = init_input_dim
+        self.init_input_dim = [init_input_dim]
         self.op_name_list = []
-        self.n_init_inp = len(init_input_dim)
+        self.n_init_inp = len([init_input_dim])
 
         for i in range(self.nlayers-1):
             for j in range(i + self.n_init_inp):
@@ -51,7 +53,7 @@ class Network(nn.Module):
                     self.op_name_list.append(list(operation_dict_similar_dim.keys()))
         # Last Layer
         # from input -> output
-        for in_dim in init_input_dim:
+        for in_dim in self.init_input_dim:
             if in_dim == self.dim_out:
                 layer = MixedLayer(in_dim, self.dim_out, operation_dict_similar_dim_out)
                 self.layers.append(layer)
@@ -92,7 +94,7 @@ class SearchController(nn.Module):
         self.dim_hid = dim_hid
         self.criterion = criterion
         self.ini_inp_dims = dim_in #depending on input of NN
-        self.nini_inp = len(self.ini_inp_dims)
+        self.nini_inp = [self.ini_inp_dims]
 
         # Build Network
         self.network = Network(self.nlayers, self.ini_inp_dims, self.dim_hid, self.dim_out)
@@ -103,13 +105,13 @@ class SearchController(nn.Module):
         self.op_alpha_list = []
         for i in range(len(self.op_name_list)):
             self.op_alpha_list.append(
-                torch.randn(len(self.op_name_list[i]), requires_grad=True)
+                torch.randn(len(self.op_name_list[i]), requires_grad=True, device=device)
             )
         # Alpha for edges
         self.edge_alpha_list = []
-        for i in range(len(self.nlayers)):
+        for i in range(self.nlayers):
             self.edge_alpha_list.append(
-                torch.randn(i + self.nini_inp, requires_grad=True)
+                torch.randn(i + len(self.nini_inp), requires_grad=True, device=device)
             )
         # Ini alphas
         with torch.no_grad():
@@ -162,7 +164,7 @@ class SearchController(nn.Module):
         edge_weights = [weight.data.cpu().numpy() for weight in self.edge_weights()]
         operation_weights = [weight.data.cpu().numpy() for weight in self.operation_weights()]
         gene = []
-        n = self.nini_inp
+        n = len(self.nini_inp)
         start = 0
         for i in range(self.nlayers):  # for each node
             end = start + n
@@ -198,15 +200,21 @@ class RandomMask(torch.autograd.Function):
 
 
 def search_arch(model, train_set, test_set, options):
+    print('Train:', len(train_set))
+    print('Test:', len(test_set))
+    print(train_set)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=len(test_set))
+    
     test_loader = torch.utils.data.DataLoader(test_set,
                                               batch_size=len(test_set))
     train_set_size = len(train_set)
-    sample_id = list(range(train_set_size))
+    sample_id = list(range(len(train_set)))
     train_sampler = torch.utils.data.sampler.SubsetRandomSampler(sample_id[:train_set_size//2])
     val_sampler = torch.utils.data.sampler.SubsetRandomSampler(sample_id[train_set_size // 2:])
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=options['batch_size'], sampler= train_sampler)
-    val_loader = torch.utils.data.DataLoader(train_set, batch_size=options['batch_size'], sampler= val_sampler)
-
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=options['batch_size'], sampler= train_sampler, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(train_set, batch_size=options['batch_size'], sampler= val_sampler, shuffle=False)
+    print(train_loader)
+    print(val_loader)
     # Optimizers
     alpha_optimizer = torch.optim.Adam(model.arch_parameters(), lr=options['arch_lr'], weight_decay=options['arch_weight_decay'])
     weight_optimizer = torch.optim.Adam(model.parameters(), lr= options['lr'], weight_decay=options['weight_decay'])
@@ -233,7 +241,8 @@ def search_arch(model, train_set, test_set, options):
                                  val_loader,
                                  alpha_optimizer,
                                  weight_optimizer,
-                                 options['criterion']
+                                 options['criterion'],
+                                 options=None
                                  )
 
         # Test
@@ -283,15 +292,17 @@ def train_model(model, train_loader, val_loader, alpha_optimizer, weight_optimiz
     batch_diff = []
     for step, (train_sample, val_sample) in enumerate(zip(train_loader, val_loader)):
         # Train set
-        x_train = train_sample['x']
-        y_train = train_sample['y']
+        print(train_sample)
+        print(val_sample)
+        x_train = train_sample[0]
+        y_train = train_sample[1]
 
         # Val set
-        x_val = val_sample['x']
-        y_val = val_sample['y']
+        x_val = val_sample[0]
+        y_val = val_sample[1]
 
         alpha_optimizer.zero_grad()
-        y_hat_val = model(x_val, y_val)
+        y_hat_val = model(x_val)
         loss = criterion(y_hat_val, y_val)
         loss.backward()
 
@@ -300,7 +311,7 @@ def train_model(model, train_loader, val_loader, alpha_optimizer, weight_optimiz
 
         # Network step
         weight_optimizer.zero_grad()
-        y_hat_train = model(x_train, y_train)
+        y_hat_train = model(x_train)
         loss = criterion(y_hat_train, y_train)
         loss.backward()
 
@@ -328,11 +339,11 @@ def test_model(model, test_loader, criterion):
     with torch.no_grad():
         for step, test_sample in enumerate(test_loader):
             # Test set
-            x_test = test_sample['x']
-            y_test = test_sample['y']
+            x_test = test_sample[0]
+            y_test = test_sample[1]
 
             # Network output
-            y_hat_test = model(x_test, y_test)
+            y_hat_test = model(x_test)
             loss = criterion(y_hat_test, y_test)
 
             # Test statistics

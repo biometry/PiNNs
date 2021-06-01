@@ -5,11 +5,12 @@ import NAS
 
 
 # import data
-x, y = utils.loaddata('NAS', 1, dir = './data')
+x, y = utils.loaddata('NAS', 1, dir = './data/')
 
 
 # architecture grid
 arch_grid = NAS.ArchitectureSearchSpace(x.shape[1], y.shape[1], 100, 5)
+
 
 # architecture search
 layersizes = NAS.ArchitectureSearch(arch_grid, parameters={'epochs': 300, 'batchsize': 8, 'learningrate':0.01}, X=x, Y=y)
