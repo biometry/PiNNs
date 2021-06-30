@@ -17,7 +17,7 @@ def ArchitectureSearchSpace(input_size, output_size, grid_size, max_layers):
             layer_size.append(size)
         if layer_size not in grid:
             grid.append(layer_size)
-        return grid
+    return grid
 
 def ArchitectureSearch(grid, parameters, X, Y):
 
@@ -26,6 +26,7 @@ def ArchitectureSearch(grid, parameters, X, Y):
 
     for i in range(len(grid)):
         model_design = {"layer_sizes": grid[i]}
+        print(grid)
         running_losses = training.train(parameters, model_design, X.to_numpy(), Y.to_numpy()) # train model
         mae_train.append(np.mean(running_losses["train_loss"]))
         mae_val.append(np.mean(running_losses["val_loss"]))

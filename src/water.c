@@ -1,116 +1,119 @@
 #include "prelesglobals.h"
+#include <pybind11/pybind11.h>
+#include <TH/TH.h>
+#include <stdio.h>
 
 /* Estimate Evapotranspiration according to a simple empirical model
  * that uses GPP prediction to calculate transpiration, as driven
  * by VPD. Evaporation is estimated with PPFD, which is a surrogate
  * for Rnet */
-double ETfun(double D, double theta, double ppfd, double fAPAR, double T, 
-             p3 ET_par, p1 Site_par,
-             double *canw,
-             double *fE, double A,
-             double fWgpp,  p2 GPP_par,  //double fCO2mean, 
-	     double CO2, 
-	     FILE *flog, int LOGFLAG, int etmodel, double *transp, 
-	     double *evap, double *fWE) {
+torch::Tensor ETfun(torch::Tensor D, torch::Tensor theta, torch::Tensor ppfd, torch::Tensor fAPAR, torch::Tensor T, 
+		    p3 ET_par, p1 Site_par,
+		    torch::Tensor *canw,
+		    torch::Tensor *fE, torch::Tensor A,
+		    torch::Tensor fWgpp,  p2 GPP_par,  //double fCO2mean, 
+		    torch::Tensor CO2, 
+		    FILE *flog, int LOGFLAG, int etmodel, torch::Tensor *transp, 
+		    torch::Tensor *evap, torch::Tensor *fWE, int i, torch::Tensor Msk, torch::Tensor msk) {
+  extern torch::Tensor fCO2_ET_model_mean(torch::Tensor CO2, p2 GPP_par, torch::Tensor Msk );
+  //torch::Tensor pow();
 
-  extern double fCO2_ET_model_mean(double CO2, p2 GPP_par );
-
-  double pow();
-  double thetavol = theta/Site_par.soildepth; 
-  double REW=(thetavol-Site_par.ThetaPWP)/
+  
+  torch::Tensor thetavol = theta/Site_par.soildepth; 
+  torch::Tensor REW=(thetavol-Site_par.ThetaPWP)/
     (Site_par.ThetaFC-Site_par.ThetaPWP);
   //  double fEsub = -999; /* Minimum of fW and fD returned if ET-model 
   //			* flag indicates similar modifier as for GPP */
-  double fWsub=1;
+  torch::Tensor fWsub=torch::tensor(1.0, torch::requires_grad());
   //  double fDsub=1;
-  double  et; 
-  double fCO2mean;
-  double lambda, psychom, s; //, rho;
-  double cp = 1003.5; // J/(kg K) (nearly constant, this is dry air on sea level)
-  double MWratio = 0.622; // Ratio of molecular weigths of water vapor and dry air;
+  torch::Tensor et; 
+  torch::Tensor fCO2mean;
+  torch::Tensor lambda, psychom, s; //, rho;
+  torch::Tensor cp = torch::tensor(1003.5, torch::requires_grad()); // J/(kg K) (nearly constant, this is dry air on sea level)
+  torch::Tensor MWratio = torch::tensor(0.622, torch::requires_grad()); // Ratio of molecular weigths of water vapor and dry air;
   // double R = 287.058; // J/(kg K) Specific gas constant for dry air, wiki
   // double zh, zm, d, zom, zoh;
   /*If pressure is not inputted use default */
-  double pressure = 101300; // Pa  
-
-  fCO2mean = fCO2_ET_model_mean(CO2, GPP_par);
+  torch::Tensor pressure = torch::tensor(101300., torch::requires_grad()); // Pa  
+  fCO2mean = fCO2_ET_model_mean(CO2, GPP_par, Msk);
 
   // rho=pressure/(R * (T+273.15) ); // Dry air density, kg/m3
-  lambda = (-0.0000614342 * pow(T, 3) + 0.00158927 * pow(T, 2) - 
-	    2.36418 * T +  2500.79) * 1000; // J/kg
-  psychom= cp * pressure / (lambda* MWratio); // Pa/C, wiki
-  s = 1000 * 4098.0 * (0.6109 * exp((17.27 * T)/(T+237.3))) / 
-    pow(T+237.3, 2);  // Pa/C! (Ice has nearly the same slope)
-
-
+  lambda = ((-0.0000614342 * T.pow(3) + 0.00158927 * T.pow(2) - 
+	     2.36418 * T +  2500.79) * 1000)*Msk; // J/kg
+  psychom = ((cp * pressure).pow(Msk) /(lambda * MWratio).pow(Msk))*Msk; // Pa/C, wiki
+  s = (1000 * 4098.0 * (0.6109 * torch::exp((17.27 * T)/(T+237.3))) / 
+       (T+237.3).pow(2))*Msk;  // Pa/C! (Ice has nearly the same slope)
+  
   /* Calculate soil constraint, simple linear following Granier 1987*/
-  if (ET_par.soilthres < -998) { /*-999 omits water control*/
-    fWsub = 1; 
+  if (torch::lt(ET_par.soilthres, -998).item<bool>()) { /*-999 omits water control*/
+    fWsub = Msk; 
   } else {
-    if (REW < ET_par.soilthres) {
-      if (REW > 0.01) fWsub = REW/ET_par.soilthres; else fWsub = 0.0;
+    if (torch::lt(REW, ET_par.soilthres).item<bool>()) {
+      if (torch::gt(REW, 0.01).item<bool>()) fWsub = (REW/ET_par.soilthres)*Msk; else fWsub = torch::zeros(Msk.sizes(), torch::requires_grad());
     } else {
-      fWsub = 1.0;
+      fWsub = Msk;
     }
   }
-
   
   /* If there is any water in canopy, evaporation is not reduced by
    * low soil water */
-  if (*canw > 0.00000001) fWsub = 1;
-
-  //  if (fDsub > fWsub) fEsub=fWsub; else fEsub = fDsub;     
   
-  *fE = fWsub;   
-  *fWE = fWsub;
+  if (torch::gt(*canw, 0.00000001).item<bool>()){
+    fWsub = Msk;
+  }
+  //  if (fDsub > fWsub) fEsub=fWsub; else fEsub = fDsub;     
+  *fE = *fE*msk + fWsub;   
+  *fWE = *fWE*msk + fWsub;
 
-  if (D < 0.01) D=0.01;
-
+  if (torch::any(torch::lt(D*Msk, 0.01*Msk)).item<bool>()) {
+    D = D*msk + Msk*torch::tensor(0.01, torch::requires_grad());
+  }
   if (LOGFLAG > 1.5)
     fprintf(flog, "   ETfun(): CO2mean=%lf\tat CO2=%lf\n", 
 	    fCO2mean, CO2);
   
   if (etmodel == -1) {
-    *transp = D * ET_par.beta*A/pow(D, ET_par.kappa) *
-      pow(fWgpp, ET_par.nu) * // ET differently sensitive to soil water than GPP
-      fCO2mean;
-    *evap = ET_par.chi *  (1-fAPAR) *  fWsub * ppfd;
-    et = (*transp + *evap) * s / (s + psychom); 
+    *transp = *transp*msk + (D * ET_par.beta*A/D.pow(ET_par.kappa) *
+      fWgpp.pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
+			     fCO2mean)*Msk;
+    *evap = *evap*msk + (ET_par.chi *  (1-fAPAR) *  fWsub * ppfd)*Msk;
+    et = (*transp + *evap * s / (s + psychom))*Msk; 
   }
-
   if (etmodel == 0) {
-    *transp = D * ET_par.beta*A/pow(D, ET_par.kappa) *
-      pow(fWgpp, ET_par.nu) * // ET differently sensitive to soil water than GPP
-      fCO2mean;
-    *evap = ET_par.chi *  s / (s + psychom) * (1-fAPAR) *  fWsub * ppfd;
+    *transp = *transp*msk + (Msk * D * ET_par.beta * A/D.pow(ET_par.kappa) *
+			     fWgpp.pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
+			     fCO2mean)*Msk;    
+    *evap = *evap*msk + ((ET_par.chi *  s).pow(Msk) / (s + psychom).pow(Msk) * (1-fAPAR) *  fWsub * ppfd)*Msk;
     //    et = D * ET_par.beta*A/pow(D, ET_par.kappa) *
     //  pow(fWgpp, ET_par.nu) * // ET differently sensitive to soil water than GPP
     //  fCO2mean +  // Mean effect of CO2 on transpiration
     //  ET_par.chi *  s / (s + psychom) * (1-fAPAR) *  fWsub * ppfd;
-    et = *transp + *evap;
+
+    et = *transp*Msk + *evap*Msk;
   }
   if (etmodel == 1) {
-    *transp = D * ET_par.beta*A/pow(D, ET_par.kappa) *
-      pow(fWgpp, ET_par.nu) * // ET differently sensitive to soil water than GPP
-      fCO2mean;
-    *evap = ET_par.chi * (1-fAPAR) *  fWsub * ppfd;
+    *transp = *transp*msk + (D * ET_par.beta*A/D.pow(ET_par.kappa) *
+      fWgpp.pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
+			     fCO2mean)*Msk;
+    *evap = *evap*msk + (ET_par.chi * (1-fAPAR) *  fWsub * ppfd)*Msk;
     //et = D * ET_par.beta*A/pow(D, ET_par.kappa) *
     //  pow(fWgpp, ET_par.nu) * // ET differently sensitive to soil water than GPP
     //  fCO2mean +  // Mean effect of CO2 on transpiration
     //  ET_par.chi * (1-fAPAR) *  fWsub * ppfd;
-    et = *transp + *evap;
+    et = (*transp + *evap)*Msk;
   }
+  
   if (etmodel == 2) {
-      et = D * (1 + ET_par.beta/pow(D, ET_par.kappa)) * A / CO2 * 
-	pow(fWgpp, ET_par.nu) * // ET differently sensitive to soil water than GPP
+    et = (D * (1 + ET_par.beta/D.pow(ET_par.kappa)) * A / CO2 * 
+        fWgpp.pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
 	fCO2mean +  // Mean effect of CO2 on transpiration      
-	ET_par.chi * (1-fAPAR) *  fWsub * ppfd;
+	  ET_par.chi * (1-fAPAR) *  fWsub * ppfd)*Msk;
     }
-
+  
   if (LOGFLAG > 2.5)
     fprintf(flog, "      ETfun(): Model=%d\nD\t%lf\nET_par.beta\t%lf\nA\t%lf\npow(D, ET_par.kappa)\t%lf\npow(fWgpp, ET_par.nu)\t%lf\nfWgpp\t%lf\nET_par.nu\t%lf\nfCO2mean\t%lf\nCO2\t%lf\nET_par.chi\t%lf\ns/(s+psychom)\t%lf\n1-fAPAR\t%lf\nfWsum\t%lf\nppfd\t%lf\n-->et\t%lf\n",	    
-	    etmodel, D, ET_par.beta, A, pow(D, ET_par.kappa), 
-	    pow(fWgpp, ET_par.nu), fWgpp, ET_par.nu,
+	    etmodel, D, ET_par.beta, A, D.pow(ET_par.kappa), 
+	    fWgpp.pow(ET_par.nu), fWgpp, ET_par.nu,
 	    fCO2mean, 
 	    CO2,
 	    ET_par.chi ,   s / (s + psychom), 1-fAPAR, fWsub,  ppfd, et);
@@ -121,13 +124,13 @@ double ETfun(double D, double theta, double ppfd, double fAPAR, double T,
 
 
 /*Interception is a fraction of daily rainfall, fraction depending on fAPAR*/
-void  interceptionfun(double *rain, double *intercepted, double Temp, p4 
-		       SnowRain_par, double fAPAR) {
-  if (Temp > SnowRain_par.SnowThreshold)  {
-    *intercepted = *rain * (SnowRain_par.I0 * fAPAR / 0.75); 
-    *rain = *rain - *intercepted;
+void  interceptionfun(torch::Tensor *rain, torch::Tensor *intercepted, torch::Tensor Temp, p4 
+		      SnowRain_par, torch::Tensor fAPAR, int i, torch::Tensor Msk, torch::Tensor msk) {
+  if (torch::any(torch::gt(Temp*Msk, SnowRain_par.SnowThreshold*Msk)).item<bool>())  {
+    *intercepted = *intercepted*msk + *rain*Msk * ((SnowRain_par.I0 * fAPAR) / 0.75); 
+    *rain = *rain*msk + *rain*Msk - *intercepted;
   } else {
-    *intercepted = 0;
+    *intercepted = *intercepted*msk;
   }
 }
 
@@ -136,59 +139,67 @@ void  interceptionfun(double *rain, double *intercepted, double Temp, p4
 
 /* Soil water balance is updated with snowmelt and canopy throughfall
  * and evapotranspiration. No drainage occurs below field capacity */
-void swbalance(double *theta, double throughfall, double snowmelt, double et, 
-               p1 sitepar, double *drainage,
-	       double *snow, double *canw, p4 SnowRain_par) {
-   double st0, etfromvegandsoil=0;
-
+void swbalance(torch::Tensor *theta, torch::Tensor throughfall, torch::Tensor snowmelt, torch::Tensor et, 
+               p1 sitepar, torch::Tensor *drainage,
+	       torch::Tensor *snow, torch::Tensor *canw, p4 SnowRain_par, int i, torch::Tensor Msk, torch::Tensor msk) {
+  torch::Tensor st0, etfromvegandsoil=torch::zeros(Msk.sizes(), torch::requires_grad());
   /* Evaporate first from wet canopy and snow on ground */
-
-  if (SnowRain_par.CWmax > 0.00000001) { 
-    if ( (*canw + *snow - et) > 0 ) {             
-      if ( (*canw - et) > 0 ) { 
-	*canw = *canw -et;
-	etfromvegandsoil = 0;
-      } else if (*canw - et < 0) { // in this case, there's enough snow left
-	*snow = *snow + *canw - et;
-	*canw = 0;
-	etfromvegandsoil = 0;
+  if (torch::gt(SnowRain_par.CWmax, 0.00000001).item<bool>()) {
+    std::cout << "Moin";
+    std::cout << *canw;
+    std::cout << *snow;
+    std::cout << et;
+    if (torch::any(torch::gt((*canw*Msk + *snow*Msk -  et*Msk), 0*Msk)).item<bool>()) {
+      if (torch::any(torch::gt((*canw*Msk - et*Msk), 0*Msk)).item<bool>()) { 
+	*canw = torch::nansum(*canw*Msk - et*Msk);
+	etfromvegandsoil = torch::tensor(0., torch::requires_grad());
+      } else if (torch::any(torch::lt((*canw*Msk - et*Msk), 0*Msk)).item<bool>()) { // in this case, there's enough snow left
+	*snow = torch::nansum(*snow*Msk + *canw*Msk - et*Msk);
+	*canw = torch::tensor(0., torch::requires_grad());
+	etfromvegandsoil = torch::zeros(Msk.sizes(), torch::requires_grad());
       }    
     } else {
-      etfromvegandsoil = et - *canw - *snow;
-      *canw=0.0;
-      *snow = 0.0;
+      etfromvegandsoil = et*Msk - *canw*Msk - *snow*Msk;
+      *canw= torch::tensor(0., torch::requires_grad());
+      *snow = torch::tensor(0., torch::requires_grad());
     }
 
-  } else {  
-    if ( (*snow - et) > 0 ) {             
-      *snow = *snow - et;
-      etfromvegandsoil = 0;
-    } else if (*snow - et < 0) { // in this case, there's enough snow left
-      etfromvegandsoil = et - *snow;
-      *snow = 0;
+  } else {
+    if (torch::any(torch::gt((*snow*Msk - et*Msk), 0*Msk)).item<bool>()) {
+      std::cout << "I1";
+      *snow = torch::nansum(*snow*Msk - et*Msk);
+      etfromvegandsoil = torch::zeros(Msk.sizes(), torch::requires_grad());
+    } else if (torch::any(torch::lt((*snow*Msk - et*Msk), 0*Msk)).item<bool>()) { // in this case, there's enough snow left
+      std::cout << "I2";
+      etfromvegandsoil = et*Msk - *snow*Msk;
+      *snow = torch::tensor(0., torch::requires_grad());
     } else {
-      *snow = 0.0;
+      *snow = torch::tensor(0., torch::requires_grad());
     }
   }
-
+  std::cout << et;
+  std::cout << etfromvegandsoil;
   et = etfromvegandsoil;
-
-  /* Water balance without drainage */
-  st0 = *theta + throughfall + snowmelt  - et;
-  if (st0 <= 0) st0 = 0.0001;
-
+  /*  balance without drainage */
+  st0 = (*theta + throughfall + snowmelt - et)*Msk;
+  std::cout << st0;
+if (torch::any(torch::le(st0.pow(Msk), 0)).item<bool>()){
+    
+    st0 = Msk*torch::tensor(0.0001, torch::requires_grad());
+  }
   /* Calculate what is left to drainage after partial balance update above: */
-  if (sitepar.tauDrainage > 0) {  
-
-
+  if (torch::gt(sitepar.tauDrainage, 0).item<bool>()) {  
     // Simple time delay drainage above FC:
-    if (st0 > sitepar.ThetaFC * sitepar.soildepth) { 
-      *drainage = (st0 - sitepar.ThetaFC * sitepar.soildepth) / 
-	sitepar.tauDrainage;      
+    if (torch::any(torch::gt(st0*Msk, (sitepar.ThetaFC * sitepar.soildepth)*Msk)).item<bool>()) { 
+      *drainage = *drainage*msk + ((st0 - sitepar.ThetaFC * sitepar.soildepth) / 
+				   sitepar.tauDrainage)*Msk;      
     } else {
-      *drainage = 0;
+      *drainage = *drainage*msk;
     }
-    *theta = st0 - *drainage;
+    std::cout << "st0";
+    std::cout << st0;
+    std::cout << *drainage;
+    *theta = torch::nansum(st0*Msk - *drainage*Msk);
 
 
     /* Include marginal drainage below FC.
@@ -228,24 +239,29 @@ if (st0 > sitepar.ThetaFC * sitepar.soildepth) {
 
 
 /* Rain is snow below T > 0 C, and snow melts above O C. */
-void  Snow(double T, double *rain, double *snow, p4 SnowRain_par, 
-	   double *SnowMelt) {
-  double NewSnow; 
-  if (T < SnowRain_par.SnowThreshold) {
-    NewSnow=*rain; 
-    *rain = 0; 
+void  Snow(torch::Tensor T, torch::Tensor *rain, torch::Tensor *snow, p4 SnowRain_par, 
+	   torch::Tensor *SnowMelt, int i, torch::Tensor Msk, torch::Tensor msk) {
+  torch::Tensor NewSnow;
+  
+  if (torch::any(torch::lt(T*Msk, SnowRain_par.SnowThreshold*Msk)).item<bool>()) {
+    NewSnow = *rain*Msk; 
+    *rain = *rain * msk ; 
   } else {
-    NewSnow=0;
+    NewSnow=torch::zeros(Msk.sizes(), torch::requires_grad());
   } 
   
-  if (T > SnowRain_par.T_0) 
-    *SnowMelt = SnowRain_par.MeltCoef*(T-SnowRain_par.T_0);  
-  else *SnowMelt=0;
-  
-  if (*snow + NewSnow - *SnowMelt < 0) {
-    *SnowMelt=NewSnow + *snow;
-    *snow =0;
+  if (torch::any(torch::gt(T*Msk, SnowRain_par.T_0*Msk)).item<bool>()){ 
+    *SnowMelt = *SnowMelt*msk + SnowRain_par.MeltCoef.pow(Msk)*(T*Msk-(SnowRain_par.T_0*Msk));  
   } else {
-    *snow = *snow + NewSnow - *SnowMelt;
+    *SnowMelt= *SnowMelt*msk;
+  
   }
+  if (torch::any(torch::lt((*snow*Msk + NewSnow*Msk - *SnowMelt*Msk), 0*Msk)).item<bool>()) {
+    *SnowMelt = *SnowMelt*msk + NewSnow + *snow*Msk;
+    *snow = torch::tensor(0, torch::requires_grad());
+  } else {
+    *snow = torch::nansum((*snow + NewSnow - *SnowMelt)*Msk);
+    
+  }
+  
 };  

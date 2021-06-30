@@ -9,7 +9,7 @@ x, y = utils.loaddata('NAS', 1, dir = './data/')
 
 
 # architecture grid
-arch_grid = NAS.ArchitectureSearchSpace(x.shape[1], y.shape[1], 100, 5)
+arch_grid = NAS.ArchitectureSearchSpace(x.shape[1], y.shape[1], 200, 7)
 
 
 # architecture search

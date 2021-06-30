@@ -1,118 +1,71 @@
 #include "prelesglobals.h"
-/* 26.4.2013 Mikko Peltoniemi, Implemented PRELES model to R */
-/* 21.6.2012. Mikko Peltoniemi, mikko.peltoniemi@metla.fi
- * Citations: Peltoniemi et al., manuscript submitted.
- *            Contact Mikko for the current status of the manuscript.
- *
- * Motivation for this model has been to prepare a simple model
- * for the prediction of drought effect on GPP that could be
- * run at high resolution for broad spatial scales.
- *
- * Model has been fitted using MCMC to Hyytiälä data, with embedded MCMC code 
- * of J. Rosenthal (borrowed from amcmc package). Following parameter estimates
- * were obtained (highest LL set)
-
-RUN_PARAMETERS_FOR_MODEL
-0 useMeasurement
-0 LOGFLAG
-SITE_SPECIFIC_PARAMETERS
-413.0 soildepth
-0.450 ThetaFC
-0.118 ThetaPWP
-3 tauDrainage
-GPP_MODEL_PARAMETERS
-0.748464 betaGPP
-12.74915 tauGPP
--3.566967 S0GPP
-18.4513 SmaxGPP
--0.136732 kappaGPP
-0.033942 gammaGPP
-0.448975 soilthresGPP
-2000 cmCO2
-0.4 ckappaCO2
-EVAPOTRANSPIRATION_PARAMETERS
-0.33271 betaET
-0.857291 kappaET
-0.041781 chiET
-0.474173 soilthresET
-0.278332 nuET
-SNOW_RAIN_PARAMETERS
-1.5 Meltcoef
-0.33 I_0
-4.824704 CWmax
-57, ## t0 fPheno_start_date_Tsum_accumulation; -999 for conif
-1.5, ## tcrit, fPheno_start_date_Tsum_Tthreshold, -999 for conif
-134 ##tsumcrit, fPheno_budburst_Tsum, -999 for conif
- *
- * 
- *
- *
-*/
-
+#include <pybind11/pybind11.h>
+#include <torch/extension.h>
+#include <stdio.h>
 
 /* R interface function, replaces main() */
-void call_preles(// INPUTS
-		 double *PAR, double *TAir, double *VPD, double *Precip, double *CO2, double *fAPAR,  
-     double *GPPmeas, double *ETmeas, double *SWmeas,
-                 // OUTPUTS
-                 double *GPP, double *ET, double *SW, double *SOG,
-                 double *fS, double *fD, double *fW,  double *fE,
-		 double *Throughfall, double *Interception, double *Snowmelt,
-		 double *Drainage,
-		 double *Canopywater, double *S,
-  
-		 //PARAMETERS
-		 double *soildepth, 
-		 double *ThetaFC, 
-		 double *ThetaPWP, 
-		 double *tauDrainage, 
-		 double *beta, // START GPP PARAMETERS
-		 double *tau, 
-		 double *S0,
-		 double *Smax,
-		 double *kappa,
-		 double *gamma,
-		 double *soilthres, // used for fW with ETmodel = 2 | 4 | 6
-		 double *bCO2, // used for fW with ETmodel = 1 | 3 | 5
-		 double *xCO2, // used for fW with ETmodel = 1 | 3 | 5)  ;
-		 double *ETbeta, // START ET PARAMETERS
-		 double *ETkappa, 
-		 double *ETchi,
-		 double *ETsoilthres, // used for fW with ETmodel = 2 | 4
-		 double *ETnu, // used for fW with ETmodel = 1 | 3 
-		 double *MeltCoef, // START WATER/SNOW PARAMETERS
-		 double *I0, 
-		 double *CWmax,
-		 double *SnowThreshold,
-		 double *T_0, 
-		 double *SWinit, // START INITIALISATION PARAMETERS // Soilw water at beginning
-		 double *CWinit, // Canopy water
-		 double *SOGinit, // Snow on Ground 
-		 double *Sinit, // State of temperature acclimation
-		 double *t0,
-		 double *tcrit,
-		 double *tsumcrit,
-		 int *etmodel, int *LOGFLAG, int *NofDays, 
-		 int *day, 
-		 double *transp, 
-		 double *evap, 
-		 double *fWE) {
-    
-  extern int preles(int NofDays, double *PAR, double *TAir, double *VPD, double *Precip,
-		    double *CO2,
-		    double *fAPAR,  p1 Site_par, p2 GPP_par, p3 ET_par,p4 SnowRain_par,
-		    int etmodel ,
-		    double *GPP, double *ET, double *SW, double *SOG,
-		    double *fS, double *fD, double *fW,  double *fE,
-		    double *Throughfall, double *Interception, double *Snowmelt,
-		    double *Drainage,
-		    double *Canopywater,
-		    double *GPPmeas, double *ETmeas, double *SWmeas, double *S,
-		    int LOGFLAG, long int multisiteNday, 
-		    int *day, 
-		    double *transp, 
-		    double *evap, double *fWE)  ;      
+std::vector<torch::Tensor> call_preles(torch::Tensor *PAR, torch::Tensor *TAir, torch::Tensor *VPD, torch::Tensor *Precip, torch::Tensor *CO2,
+		 torch::Tensor *fAPAR,
+                 torch::Tensor *GPPmeas, torch::Tensor *ETmeas, torch::Tensor *SWmeas,
+                 torch::Tensor *GPP, torch::Tensor *ET, torch::Tensor *SW, torch::Tensor *SOG,
+                 torch::Tensor *fS, torch::Tensor *fD, torch::Tensor *fW,  torch::Tensor *fE,
+                 torch::Tensor *Throughfall, torch::Tensor *Interception, torch::Tensor *Snowmelt,
+                 torch::Tensor *Drainage,
+                 torch::Tensor *Canopywater, torch::Tensor *S,
+                 torch::Tensor *soildepth,
+                 torch::Tensor *ThetaFC,
+                 torch::Tensor *ThetaPWP,
+                 torch::Tensor *tauDrainage,
+                 torch::Tensor *beta,                                                             
+                 torch::Tensor *tau,
+                 torch::Tensor *S0,
+                 torch::Tensor *Smax,
+                 torch::Tensor *kappa,
+                 torch::Tensor *gamma,
+                 torch::Tensor *soilthres,                                                                      
+                 torch::Tensor *bCO2,                                                                    
+                 torch::Tensor *xCO2,                                                                  
+                 torch::Tensor *ETbeta,                                              
+                 torch::Tensor *ETkappa,
+                 torch::Tensor *ETchi,
+                 torch::Tensor *ETsoilthres,                                                                    
+                 torch::Tensor *ETnu,                                                                
+                 torch::Tensor *MeltCoef,                                                                   
+                 torch::Tensor *I0,
+                 torch::Tensor *CWmax,
+                 torch::Tensor *SnowThreshold,
+                 torch::Tensor *T_0,
+                 torch::Tensor *SWinit,  
+                 torch::Tensor *CWinit,                                                                 
+                 torch::Tensor *SOGinit,
+                 torch::Tensor *Sinit,                                                                           
+                 torch::Tensor *t0,
+                 torch::Tensor *tcrit,
+                 torch::Tensor *tsumcrit,
+		 int *etmodel, int *LOGFLAG, int *NofDays,
+                 torch::Tensor *day,
+                 torch::Tensor *transp,
+                 torch::Tensor *evap,
+                 torch::Tensor *fWE) {
 
+  int preles(int NofDays, torch::Tensor *PAR, torch::Tensor *TAir, torch::Tensor *VPD, torch::Tensor *Precip,
+		    torch::Tensor *CO2,
+		    torch::Tensor *fAPAR,  p1 Site_par, p2 GPP_par, p3 ET_par, p4 SnowRain_par,
+		    int etmodel,
+		    torch::Tensor *GPP, torch::Tensor *ET, torch::Tensor *SW, torch::Tensor *SOG,
+		    torch::Tensor *fS, torch::Tensor *fD, torch::Tensor *fW,  torch::Tensor *fE,
+		    torch::Tensor *Throughfall, torch::Tensor *Interception, torch::Tensor *Snowmelt,
+		    torch::Tensor *Drainage,
+		    torch::Tensor *Canopywater,
+		    torch::Tensor *GPPmeas, torch::Tensor *ETmeas, torch::Tensor *SWmeas, torch::Tensor *S,
+	            int LOGFLAG, long int multisiteNday, 
+		    torch::Tensor *day, 
+		    torch::Tensor *transp, 
+		    torch::Tensor *evap, torch::Tensor *fWE);
+
+  std::cout << "co2check";
+  std::cout << *CO2;
+  
   /* Parameter structs */
   p1 parSite;
   p2 parGPP;
@@ -127,7 +80,7 @@ void call_preles(// INPUTS
   parGPP.beta = *beta; 
   parGPP.tau = *tau;
   parGPP.S0 = *S0;
-  parGPP.Smax =*Smax;
+  parGPP.Smax = *Smax;
   parGPP.kappa = *kappa;
   parGPP.gamma = *gamma;
   parGPP.soilthres = *soilthres;
@@ -145,30 +98,35 @@ void call_preles(// INPUTS
   parSnowRain.I0 = *I0; 
   parSnowRain.CWmax = *CWmax;
   
-  parSnowRain.SnowThreshold=0;
-  parSnowRain.T_0=0;
-  parSnowRain.SnowThreshold=0;
-  parSnowRain.T_0=0;
-  
-  // Forward init values (previous day values) as first values of result vectors
-  SW[0] = *SWinit;
-  Canopywater[0] = *CWinit;
-  SOG[0] = *SOGinit;
-  S[0] = *Sinit;
+  parSnowRain.SnowThreshold=torch::tensor(0., torch::requires_grad());
+  parSnowRain.T_0=torch::tensor(0., torch::requires_grad());
+  parSnowRain.SnowThreshold=torch::tensor(0., torch::requires_grad());
+  parSnowRain.T_0=torch::tensor(0., torch::requires_grad());
 
+
+  // Forward init values (previous day values) as first values of result vectors
+  int n = *NofDays;
+  torch::Tensor ini = torch::zeros(n);
+  ini[0] = 1;
+  ini.requires_grad_();
+  torch::Tensor iniT = torch::ones(n);
+  iniT[0] = 0;
+  iniT.requires_grad_();
+  
+  *SW = *SW*iniT + *SWinit*ini;
+  *Canopywater = *Canopywater*iniT + *CWinit*ini;
+  *SOG = *SOG*iniT + *SOGinit*ini;
+  *S = *S*iniT + *Sinit*ini;
+  
   FILE *flog=NULL;
   if (*LOGFLAG > 0.5) {
     flog = fopen("preles.log", "w"); // EXCEPTION LOGGING
     if (flog) {
-      fprintf(flog, "call_preles(): First day weather:\nDOY=%d\tPPFD=%lf\tT=%lf\tVPD=%lf\tP=%lf\tCO2=%lf\n"
-	      "fAPAR=%lf\tSW=%lf\tCW=%lf\tSOG=%lf\tS=%lf\n",
-	      day[0], PAR[0], TAir[0], VPD[0], Precip[0],  CO2[0],fAPAR[0], 
-	      SW[0], Canopywater[0], SOG[0], S[0]);
+      fprintf(flog, "call_preles(): First day weather:\nDOY=", day[0], "\tPPFD=",PAR[0], "\tT=", TAir[0], "\tVPD=",VPD[0], "\tP=", Precip[0], "\tCO2=",CO2[0], "\nfAPAR=",
+	      fAPAR[0], "\tSW=", SW[0], "\tCW=",Canopywater[0], "\tSOG=",SOG[0], "\tS=", S[0], "\n");
       if (*LOGFLAG > 1.5) 
 	fprintf(flog, 
-		"call_preles(): Parameters: N=%i\tparGGP.beta=%lf\tparET.chi=%lf\tparSnowRain.SnowThreshold=%lf\tetmodel=%d\nLOGFLAG=%d parGPP.t0=%lf\n",
-		*NofDays, parGPP.beta, parET.chi, parSnowRain.SnowThreshold, *etmodel, 
-		*LOGFLAG, parGPP.t0);
+		"call_preles(): Parameters: N=",NofDays, "\tparGGP.beta=", parGPP.beta, "\tparET.chi=", parET.chi,"tparSnowRain.SnowThreshold=", parSnowRain.SnowThreshold, "\tetmodel=", etmodel, "\nLOGFLAG=", LOGFLAG, "parGPP.t0=", parGPP.t0, "\n");
       
     }  else {
       //exit(1);
@@ -177,13 +135,12 @@ void call_preles(// INPUTS
   }
   
   /* Call the workhorse function ------------------------------------------ */
-  int notinf = 0;
-  
+  int notinf;
 
   notinf = preles(*NofDays, PAR, TAir,
 		  VPD, Precip,CO2,
 		  fAPAR, parSite,
-		  parGPP, parET, parSnowRain, *etmodel ,
+		  parGPP, parET, parSnowRain, *etmodel,
 		  GPP, ET, SW, SOG, fS, fD, fW,  fE,
 		  Throughfall, Interception, Snowmelt,
 		  Drainage, Canopywater,
@@ -202,7 +159,23 @@ void call_preles(// INPUTS
       //exit(1);
     }           
   }
+  
+  return { *GPP, *ET, *SW, *SOG, *fS, *fD, *fW, *fE, *Throughfall, *Interception, *Snowmelt, *Drainage, *Canopywater, *S};
+};
+namespace py = pybind11;
 
+PYBIND11_MODULE(preles, m) {
+  using namespace pybind11::literals;
+  m.def("preles", &call_preles, "PAR"_a, "TAir"_a, "VPD"_a, "Precip"_a, "CO2"_a, "fAPAR"_a, "GPPmeas"_a, "ETmeas"_a, "SWmeas"_a, "GPP"_a, "ET"_a, "SW"_a,
+	"SOG"_a, "fS"_a, "fD"_a, "fW"_a, "fE"_a, "Throughfall"_a, "Interception"_a, "Snowmelt"_a, "Drainage"_a, "Canopywater"_a, "S"_a, "soildepth"_a,
+	"ThetaFC"_a, "ThetaPWP"_a, "tauDrainage"_a, "beta"_a, "tau"_a, "S0"_a, "Smax"_a, "kappa"_a, "gamma"_a, "soilthres"_a, "bCO2"_a, "xCO2"_a,
+	"ETbeta"_a, "ETkappa"_a, "ETchi"_a, "ETsoilthres"_a, "ETnu"_a, "MeltCoef"_a, "I0"_a, "CWmax"_a, "SnowThreshold"_a, "T_0"_a, "SWinit"_a,
+	"CWinit"_a, "SOGinit"_a, "Sinit"_a, "t0"_a, "tcrit"_a, "tsumcrit"_a, "etmodel"_a, "LOGFLAG"_a, "NofDays"_a, "day"_a, "transp"_a, "evap"_a, "fWE"_a);
 
+  #ifdef VERSION_INFO
+  m.attr("__version__") = MACRO_STRINGIF(VERSION_INFO);
+  #else
+  m.attr("__version__") = "dev";
+  #endif
 }
-                                
+

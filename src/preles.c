@@ -1,62 +1,58 @@
 #include "prelesglobals.h"
+#include <torch/extension.h>
+#include <stdio.h>
 
-/* Model function:
- *   1. Makes initialisations
- *   2. Estimates GPP
- *   3. Estimates snow and interception
- *   4. Estimates Evapotranspiration
- *   5. Updates soil water balance
-*/ 
+using namespace torch::indexing;
 
 int preles(int NofDays,
-	   double *PAR, double *TAir, double *VPD, double *Precip, 
-	   double *CO2,
-	   double *fAPAR,  p1 Site_par,
-	   p2 GPP_par, p3 ET_par,  p4 SnowRain_par, int etmodel,
-	   double *GPP, double *ET, double *SW, double *SOG,
-	   double *fS, double *fD, double *fW,  double *fE,
-	   double *Throughfall, double *Interception, double *Snowmelt,
-	   double *Drainage, double *Canopywater,
-	   double *GPPmeas, double *ETmeas, double *SWmeas, double *S, 	   
-	   int LOGFLAG, long multisiteNday, int *day, 
-	   double *transp, 
-	   double *evap, double *fWE){
+	   torch::Tensor *PAR, torch::Tensor *TAir, torch::Tensor *VPD, torch::Tensor *Precip, 
+	   torch::Tensor *CO2,
+	   torch::Tensor *fAPAR,  p1 Site_par,
+		     p2 GPP_par, p3 ET_par,  p4 SnowRain_par, int etmodel,
+	   torch::Tensor *GPP, torch::Tensor *ET, torch::Tensor *SW, torch::Tensor *SOG,
+	   torch::Tensor *fS, torch::Tensor *fD, torch::Tensor *fW,  torch::Tensor *fE,
+	   torch::Tensor *Throughfall, torch::Tensor *Interception, torch::Tensor *Snowmelt,
+	   torch::Tensor *Drainage, torch::Tensor *Canopywater,
+	   torch::Tensor *GPPmeas, torch::Tensor *ETmeas, torch::Tensor *SWmeas, torch::Tensor *S, 	   
+	   int LOGFLAG, long int multisiteNday, torch::Tensor *day, 
+	   torch::Tensor *transp, 
+	   torch::Tensor *evap, torch::Tensor *fWE){
 
-  extern double fS_model(double *S, double T, p2 GPP_par);
-  extern double fPheno_model(p2 GPP_par, double T, double *PhenoS, 
-			     int DOY, double fS);
+  extern torch::Tensor fS_model(torch::Tensor *S, torch::Tensor T, p2 GPP_par, torch::Tensor Msk, int i);
+  extern torch::Tensor fPheno_model(p2 GPP_par, torch::Tensor T, torch::Tensor *PhenoS, 
+				    torch::Tensor DOY, torch::Tensor fS, torch::Tensor Msk, int i, torch::Tensor msk);
     
 
 
-  extern double ETfun(double D, double theta, double ppfd, double fAPAR, 
-		      double T,
+  extern torch::Tensor ETfun(torch::Tensor D, torch::Tensor theta, torch::Tensor ppfd, torch::Tensor fAPAR, 
+		      torch::Tensor T,
 		      p3 ET_par, p1 Site_par,
-		      double *canw,
-		      double *fE, double A,
-		      double fWgpp, p2 GPP_par,  //double fCO2mean, 
-		      double CO2, 
+		      torch::Tensor *canw,
+		      torch::Tensor *fE, torch::Tensor A,
+		      torch::Tensor fWgpp, p2 GPP_par,  //double fCO2mean, 
+		      torch::Tensor CO2, 
 		      FILE *flog, int LOGFLAG, int etmodel, 
-		      double *transp, 
-		      double *evap, double *fWE);
+		      torch::Tensor *transp, 
+		      torch::Tensor *evap, torch::Tensor *fWE, int i, torch::Tensor Msk, torch::Tensor msk);
   
-  extern void  interceptionfun(double *rain, double *intercepted, double Temp, p4
-			       SnowRain_par, double fAPAR);
-  extern void swbalance(double *theta, double throughfall, 
-			double snowmelt, double et,
-			p1 sitepar, double *drainage,
-			double *snow, double *canw, p4 SnowRain_par);
-  extern void  Snow(double T, double *rain, double *snow, p4 SnowRain_par,
-		    double *SnowMelt);
-  extern void initConditions(double **PAR, double **TAir, 
-			     double **VPD, double **Precip,
-			     double **CO2);
+  extern void  interceptionfun(torch::Tensor *rain, torch::Tensor *intercepted, torch::Tensor Temp, p4
+			       SnowRain_par, torch::Tensor fAPAR, int i, torch::Tensor Msk, torch::Tensor msk);
+  extern void swbalance(torch::Tensor *theta, torch::Tensor throughfall, 
+			torch::Tensor snowmelt, torch::Tensor et,
+			p1 sitepar, torch::Tensor *drainage,
+			torch::Tensor *snow, torch::Tensor *canw, p4 SnowRain_par, int i, torch::Tensor Mask, torch::Tensor mask);
+  extern void  Snow(torch::Tensor T, torch::Tensor *rain, torch::Tensor *snow, p4 SnowRain_par,
+		    torch::Tensor *SnowMelt, int i, torch::Tensor Msk, torch::Tensor msk);
+  extern void initConditions(torch::Tensor **PAR, torch::Tensor **TAir, 
+			     torch::Tensor **VPD, torch::Tensor **Precip,
+			     torch::Tensor **CO2, torch::Tensor Msk, torch::Tensor msk);
 
-  extern void GPPfun(double *gpp, double *gpp380, double ppfd,  
-		     double D, double CO2, 
-		     double theta, 
-		     double fAPAR, double fSsub, 
-		     p2 GPP_par, p1 Site_par, double *fD, double *fW,
-	      double *fE, FILE *flog, int LOGFLAG);
+  extern void GPPfun(torch::Tensor *gpp, torch::Tensor *gpp380, torch::Tensor ppfd,  
+		     torch::Tensor D, torch::Tensor CO2, 
+		     torch::Tensor theta, 
+		     torch::Tensor fAPAR, torch::Tensor fSsub, 
+		     p2 GPP_par, p1 Site_par, torch::Tensor *fD, torch::Tensor *fW,
+	             torch::Tensor *fE, FILE *flog, int LOGFLAG, int i, torch::Tensor Msk, torch::Tensor msk);
     
   //extern double fCO2_VPD_exponent(double CO2, double xCO2 ) ;
 
@@ -64,83 +60,145 @@ int preles(int NofDays,
   
   //extern double fCO2_ET_VPD_correction(double fEgpp, double xCO2 );
   //extern double fCO2_model_mean(double CO2, double bCO2 ) ;
-  
-  
+
   FILE *flog=NULL;
   flog = fopen("preles.log", "a"); // EXCEPTION LOGGING
   
   if (LOGFLAG > 0.5) fprintf(flog, "  Stepped into preles()");
   
-  double I, T, D, P, theta, theta_snow, theta_canopy, S_state;
-  double PhenoS=0;
-  double fPheno=0;
+  torch::Tensor theta;
+  torch::Tensor theta_snow;
+  torch::Tensor theta_canopy;
+  torch::Tensor S_state;
+  torch::Tensor PhenoS=torch::tensor(0., torch::requires_grad());
+  torch::Tensor fPheno=torch::tensor(0., torch::requires_grad());
   int i; 
-  double fEgpp = 0;
-  double gpp380 = 0;
+  torch::Tensor fEgpp = torch::tensor(0., torch::requires_grad());
+  torch::Tensor gpp380 = torch::tensor(0., torch::requires_grad());
   
-  
-  initConditions(&PAR, &TAir, &VPD, &Precip, &CO2);
-  theta=SW[0];
-  theta_canopy=Canopywater[0];
-  theta_snow=SOG[0];
-  S_state = S[0];
-  
-  
+  int n = NofDays;
+  torch::Tensor Mini = torch::zeros(n);
+  Mini[0] = 1;
+  Mini.requires_grad_();
+ 
+  torch::Tensor mini = torch::ones(n);
+  mini[0] = 0;
+  mini.requires_grad_();
+  std::cout << "-1CO2";
+  std::cout << *CO2;
+  initConditions(&PAR, &TAir, &VPD, &Precip, &CO2, Mini, mini);
+  theta = torch::nansum(*SW*Mini);
+  theta_canopy = torch::nansum(*Canopywater*Mini);
+  theta_snow = torch::nansum(*SOG*Mini);
+  S_state = torch::nansum(*S*Mini);
+  std::cout << "thetaINI";
+  std::cout << theta;
+
   if (LOGFLAG > 1.5) {
-    fprintf(flog, "   preles(): Starting values for storage components:\nSW=%lf\tCW=%lf\tSOG=%lf\tS=%lf\n"
-	    "   ...will loop %d rows of weather input\n",
-	    theta, theta_canopy, theta_snow, S[0], NofDays);
-    printf("   preles(): Site fAPAR =%lf,  LUE = %lf and soil depth = %lf.\n",
-	   fAPAR[0], GPP_par.beta, Site_par.soildepth);
+    fprintf(flog, "   preles(): Starting values for storage components:\nSW=", theta, "\tCW=", theta_canopy, "\tSOG=", theta_snow, "\tS=", S[0], "\n",
+	    "   ...will loop %d rows of weather input\n");
+    printf("   preles(): Site fAPAR =", fAPAR[0], " LUE =", GPP_par.beta, "and soil depth =", Site_par.soildepth, "\n");
   }
+
+  
   //    fclose(flog);
   
+  
+  /*------- LOOPING DAYS---------------------------------------------------*/
+  /* ---------------- ----------------------------------------------------*/  
+  //int d = NofDays.item<int>();
+  for (i=0; i < n; i++) { 
+    torch::Tensor mask = torch::ones(n);
+    mask[i] = 0;
+    mask.requires_grad_();
 
-  
-  
-
-  
-  /* ---------------------------------------------------------------------*/
-  /* START LOOPING DAYS---------------------------------------------------*/
-  /* ---------------- ----------------------------------------------------*/
-  for (i=0; i < NofDays; i++) { 
+    torch::Tensor Mask = torch::zeros(n);
+    Mask[i] = 1;
+    Mask.requires_grad_();
     
+
     if ((LOGFLAG > 1.5)) {
-      fprintf(flog, "   \ni=%d/%d,\t SW=%lf\tCW=%lf\tSOG=%lf\tS=%lf\n",
-	      i+1, NofDays, theta, theta_canopy, theta_snow, S_state);
+      fprintf(flog, "   \ni=", i+1, NofDays, "\t SW=", theta, "\tCW=", theta_canopy, "\tSOG=", theta_snow, "\tS=",S_state, "\n");
     }      
-    
+    std::cout << "i";
+    std::cout << i;
     /* Use previous day environment for prediction, if current values are missing,
        or suspicious*/
-    if (i > 0) { 
-	if (PAR[i] < -900) PAR[i] = PAR[i-1];
-	if (TAir[i] < -900) TAir[i] = TAir[i-1];
-	if (VPD[i] < 0 || VPD[i] > 6) VPD[i] = VPD[i-1];
-	if (Precip[i] <    0) Precip[i] = Precip[i-1] * 0.3; 
-	/* On avg. P+1=0.315*P 
+    if (i > 0) {      
+      std::cout << "build masks";
+      torch::Tensor bmmask = torch::zeros(n);
+      bmmask[i-1] = 1;
+      bmmask.requires_grad_();
+
+      
+      torch::Tensor par = torch::zeros(n);
+      par[i] = torch::nansum(*PAR*bmmask);
+      par.requires_grad_();
+
+      torch::Tensor tair = torch::zeros(n);
+      tair[i] = torch::nansum(*TAir*bmmask);
+      tair.requires_grad_();
+
+      torch::Tensor vpd = torch::zeros(n);
+      vpd[i] = torch::nansum(*VPD*bmmask);
+      vpd.requires_grad_();
+
+      torch::Tensor precip = torch::zeros(n);
+      precip[i] = torch::nansum(*Precip*bmmask);
+      precip.requires_grad_();
+
+      torch::Tensor co2 = torch::zeros(n);
+      co2[i] = torch::nansum(*CO2*bmmask);
+      co2.requires_grad_();
+
+      torch::Tensor gppmeas = torch::zeros(n);
+      gppmeas[i] = torch::nansum(*GPPmeas*bmmask);
+      gppmeas.requires_grad_();
+
+      torch::Tensor etmeas = torch::zeros(n);
+      etmeas[i] = torch::nansum(*ETmeas*bmmask);
+      etmeas.requires_grad_();
+
+      torch::Tensor swmeas = torch::zeros(n);
+      swmeas[i] = torch::nansum(*SWmeas*bmmask);
+      swmeas.requires_grad_();
+
+      torch::Tensor sw = torch::zeros(n);
+      sw[i] = torch::nansum(*SW*bmmask);
+      sw.requires_grad_();
+
+      torch::Tensor sog = torch::zeros(n);
+      sog[i] = torch::nansum(*SOG*bmmask);
+      sog.requires_grad_();
+      
+      if (torch::any(torch::lt(*PAR*Mask, -900)).item<bool>()) *PAR = *PAR * mask + par;
+      if (torch::any(torch::lt(*TAir*Mask, -900)).item<bool>()) *TAir = *TAir * mask + tair;
+      if (torch::any(torch::lt(*VPD*Mask, 0)).item<bool>() || torch::any(torch::gt(*VPD*Mask, 6)).item<bool>())  *VPD = *VPD * mask + tair;
+      if (torch::any(torch::lt(*Precip*Mask, 0)).item<bool>()) *Precip = *Precip * mask + (precip * 0.3); 
+      /* On avg. P+1=0.315*P 
 	 * (in Sodis & Hyde) */
-	if (CO2[i] < 0) CO2[i] = CO2[i-1];
-	if (GPPmeas[i] < -990) GPPmeas[i] = GPPmeas[i-1]; 
-	if (ETmeas[i] < -990) ETmeas[i] = ETmeas[i-1];    
-	if (SWmeas[i] < 0.0) SWmeas[i] = SWmeas[i-1];   
-	if (SW[i] < -900) SW[i] = SW[i-1]; 
-	if (SOG[i] < -900) SOG[i] = SOG[i-1]; // See above, could be used for 
-	// calibration	
+      if (torch::any(torch::lt(*CO2*Mask, 0)).item<bool>()) *CO2 = *CO2 * mask + co2;
+      if (torch::any(torch::lt(*GPPmeas*Mask, -990)).item<bool>()) *GPPmeas = *GPPmeas * mask + gppmeas; 
+      if (torch::any(torch::lt(*ETmeas*Mask, -990)).item<bool>()) *ETmeas = *ETmeas * mask + etmeas;    
+      if (torch::any(torch::lt(*SWmeas*Mask, 0.0)).item<bool>()) *SWmeas = *SWmeas * mask + swmeas;   
+      if (torch::any(torch::lt(*SW*Mask, -900)).item<bool>()) *SW = *SW * mask + sw; 
+      if (torch::any(torch::lt(*SOG*Mask, -900)).item<bool>()) *SOG = *SOG * mask + sog; // See above, could be used for 
+      
+      	
     }
-    
-    
+
     if ((LOGFLAG > 1.5)) {
-      fprintf(flog, "   weather inputs: PAR=%lf\tT=%lf\tVPD=%lf\tP=%lf\tCO2=%lf\n",
+      fprintf(flog, "   weather inputs: PAR, T, VPD, P, CO2",
 	      PAR[i], TAir[i], VPD[i], Precip[i], CO2[i]);
     }   
-    
-    /* Assign current values for environment */
-    I = PAR[i]; T=TAir[i]; D=VPD[i]; P=Precip[i]; 
+
+  
     /* Update temperature state that tells about seasonality -
      * for GPP and through GPP to ET */
-    fS[i] = fS_model(&S_state, T, GPP_par);
-
-    if (LOGFLAG > 1.5) fprintf(flog, "   preles(): estimated fS=%lf\n", fS[i]);
+    
+    *fS = *fS*mask + fS_model(&S_state, *TAir, GPP_par, Mask, i);
+    
+    if (LOGFLAG > 1.5) fprintf(flog, "   preles(): estimated fS=\n", fS[i]);
     
     
     /* Deciduous phenology - don't use if this information is inputted in fAPAR */
@@ -148,73 +206,85 @@ int preles(int NofDays,
     /* Model predicts budbreak based on critical threshold temperature sum */ 
     /* Note that this implementation works only if data starts before t0-date of fPheno-model */      
     if (LOGFLAG > 1.5) fprintf(flog, 
-			       "   preles(): stepping into fPheno_model: inputs:\n      GPP_par.t0=%lf\tT=%lf\tPhenoS=%lf\tDOY=%d\n", 
-			       GPP_par.t0, T, PhenoS, day[i]);
-
-    fPheno = fPheno_model(GPP_par, T, &PhenoS, day[i], fS[i]);
-    if (LOGFLAG > 1.5) fprintf(flog, "   preles(): PhenoS=%lf\tfPheno=%lf\n", 
+			       "   preles(): stepping into fPheno_model: inputs:\n      GPP_par.t0, T, PhenoS, DOY", 
+			       GPP_par.t0, TAir, PhenoS, day[i]);
+    std::cout << *day;
+    torch::Tensor DAY = torch::nansum(*day*Mask);
+    
+    fPheno = fPheno_model(GPP_par, *TAir, &PhenoS, DAY, *fS, Mask, i, mask);
+    
+    if (LOGFLAG > 1.5) fprintf(flog, "   preles(): PhenoS, fPheno", 
 			       PhenoS, fPheno );
 
-    fAPAR[i] = fAPAR[i] * fPheno; 
+    *fAPAR = *fAPAR*mask + *fAPAR*Mask * fPheno; 
+
     if (LOGFLAG > 1.5) fprintf(flog, 
-			       "   preles(): fAPAR changed to %lf\n", 
+			       "   preles(): fAPAR changed to \n", 
 			       fAPAR[i]);
     
-
-    GPPfun(&GPP[i], &gpp380, I, D, CO2[i], theta, fAPAR[i], fS[i],
-		    GPP_par, Site_par,  &fD[i], &fW[i], &fEgpp, 
-		    flog, LOGFLAG );
-
+    GPPfun(&GPP[0], &gpp380, *PAR, *VPD, *CO2, theta, *fAPAR, *fS,
+		    GPP_par, Site_par,  &fD[0], &fW[0], &fEgpp, 
+	   flog, LOGFLAG, i, Mask, mask);
+    
+    
     if (LOGFLAG > 1.5) 
       fprintf(flog, 
-	      "   preles(): estimated GPP=%lf\tfD=%lf\tfEgpp=%lf\n GPP380ppm %lf\n", 
+	      "   preles(): estimated GPP, fD, fEgg, GPP380ppm\n", 
 	      GPP[i], fD[i], fEgpp, gpp380);
     
-    
+    std::cout << "TS_bSnow";
+    std::cout << theta_snow;
     /* Calculate amount of snow and snowmelt at the end of the day */
-    Snow(T, &P, &theta_snow, SnowRain_par, &Snowmelt[i]);
-    
+    Snow(*TAir, &Precip[0], &theta_snow, SnowRain_par, &Snowmelt[0], i, Mask, mask);
     // NOTE: interception model could be better
-    Throughfall[i]  = P; 
-    interceptionfun(&Throughfall[i], &Interception[i], T, 
-		    SnowRain_par, fAPAR[i]);
+    std::cout << theta_snow;
     
-    if (LOGFLAG > 1.5) 
-      fprintf(flog, 
-	      "   preles(): estimated Thr.fall=%lf\tIntercept.=%lf\tSOG=%lf\tSnowmelt=%lf\n", 
-	      Throughfall[i], Interception[i], SOG[i], Snowmelt[i]);
+    *Throughfall  = *Throughfall*mask + *Precip*Mask;
+    
+    interceptionfun(&Throughfall[0], &Interception[0], *TAir, 
+		    SnowRain_par, *fAPAR, i, Mask, mask);
+    
+    //if (LOGFLAG > 1.5) 
+      //fprintf(flog, 
+      //      "   preles(): estimated Thr.fall, Intercept, SOG, Snowmelt", 
+      //      Throughfall->index({i}), Interception[i], SOG->index({i}), Snowmelt->index({i}));
     
     /*Excess water from canopy will drip down to soil if not evaporated 
       during the day, rest remains in canopy for the next day*/
-    
-    if (SnowRain_par.CWmax <= 0.00000001) { 
-      Throughfall[i] = Throughfall[i] + Interception[i];
+    std::cout << "bIFtcanop";
+    std::cout << theta_canopy;
+    if (torch::lt(SnowRain_par.CWmax, 0.000000011).item<bool>()) { 
+      *Throughfall = *Throughfall + *Interception*Mask;
     } else {
-      if (Interception[i] + theta_canopy > SnowRain_par.CWmax * fAPAR[i]) {
-	Throughfall[i] = Throughfall[i] + Interception[i] + 
-	  theta_canopy - SnowRain_par.CWmax  * fAPAR[i];
-	theta_canopy = SnowRain_par.CWmax  * fAPAR[i];	
+      if (torch::any(torch::lt((SnowRain_par.CWmax* *fAPAR)*Mask, (*Interception + theta_canopy)*Mask)).item<bool>()) {
+	*Throughfall = *Throughfall + *Interception*Mask + theta_canopy*Mask - (SnowRain_par.CWmax* *fAPAR)*Mask;
+	theta_canopy = torch::nansum(SnowRain_par.CWmax  * *fAPAR*Mask);	
       } else {
-	theta_canopy = Interception[i] + theta_canopy;
+	theta_canopy = torch::nansum(*Interception*Mask + theta_canopy*Mask);
       }     
     }
+    std::cout << "aIFcanop";
+    std::cout << theta_canopy;
     
     if (LOGFLAG > 1.5) 
-      fprintf(flog, "   preles(): estimated canopy water=%lf\n", 
+      fprintf(flog, "   preles(): estimated canopy water", 
 	      theta_canopy);
-    
-    
-    ET[i] = ETfun(D, theta, I, fAPAR[i], T, 
-		  ET_par, Site_par,
-		  &theta_canopy,
-		  &fE[i], // Soil water constrain on evaporation  
-		  gpp380, 
-		  fW[i], // soil water constrain of GPP at 380 ppm
-		  GPP_par, //fCO2_ET_model_mean(CO2[i], GPP_par),
-		  CO2[i], 
-		  flog, LOGFLAG, etmodel, 
-		  &transp[i], 
-		  &evap[i], &fWE[i]);                     
+
+    std::cout << "bET";
+    std::cout << theta_canopy;
+    *ET = *ET*mask + ETfun(*VPD, theta, *PAR, *fAPAR, *TAir, 
+			   ET_par, Site_par,
+			   &theta_canopy,
+			   &fE[0], // Soil water constrain on evaporation  
+			   gpp380, 
+			   *fW, // soil water constrain of GPP at 380 ppm
+			   GPP_par, //fCO2_ET_model_mean(CO2[i], GPP_par),
+			   *CO2, 
+			   flog, LOGFLAG, etmodel, 
+			   &transp[0], 
+			   &evap[0], &fWE[0], i, Mask, mask);
+    std::cout << "aET";
+    std::cout << theta_canopy;
     
     if (LOGFLAG > 1.5) 
       fprintf(flog, 
@@ -225,26 +295,33 @@ int preles(int NofDays,
          end of the day, as well as update snow and canopy water with et */
     
     //    swbalance(&theta, Throughfall[i], Snowmelt[i], ET[i],
-    swbalance(&theta, Throughfall[i], Snowmelt[i], ET[i],
-	      Site_par, &Drainage[i], //&Psi[i], &Ks[i], 
-	      &theta_snow, &theta_canopy, SnowRain_par);
-
+    std::cout << "PRESWB";
+    std::cout << theta_snow;
+    std::cout << theta_canopy;
+    swbalance(&theta, *Throughfall, *Snowmelt, *ET,
+	      Site_par, &Drainage[0], //&Psi[i], &Ks[i], 
+	      &theta_snow, &theta_canopy, SnowRain_par, i, Mask, mask);
+    std::cout << "POSTSWB";
+    std::cout << theta_snow;
+    std::cout << theta_canopy;
     if (LOGFLAG > 1.5) 
       fprintf(flog, 
-	      "   preles(): drainage=%lf, after ET: SW=%lf\tSOG=%lf\tCW=%lf\n", 
+	      "   preles(): drainage, after ET: SW \tSOG CW\n", 
 	      Drainage[i], theta, theta_snow, theta_canopy);
     
     /* Record result variables with storage components */
-    SOG[i] = theta_snow;
-    SW[i] = theta;
-    Canopywater[i] = theta_canopy;
-    S[i]=S_state;
+    *SOG = *SOG*mask + theta_snow*Mask;
+    *SW = *SW*mask + theta*Mask;
+    *Canopywater = *Canopywater*mask + theta_canopy*Mask;
+    *S = *S*mask + S_state*Mask;
+
+    std::cout << "CO2";
+    std::cout << *CO2;
     
     if (LOGFLAG > 1.5) 
       fprintf(flog, 
-	      "   preles(): after day state:\n   SW=%lf\tCW=%lf\tSOG=%lf\tS=%lf\n\n", SW[i], Canopywater[i], SOG[i], S[i]);
+	      "   preles(): after day state:\n   SW \tCW \tSOG \tS \n\n", SW[i], Canopywater[i], SOG[i], S[i]);
 
-    
   } // END DAY LOOP
   
 
@@ -252,6 +329,7 @@ int preles(int NofDays,
     fprintf(flog, 
 	    "   preles(): looped all days, closing preles.log, exiting...\n");
   if (flog) fclose(flog);
+  
   return(0);
 }
     

@@ -57,9 +57,9 @@ def add_history(X, Y, history, batch_size=None):
         y = Y[history:]
         for i in range(1, history+1):
             outx = pd.merge(x, X.shift(periods=i)[history:], left_index=True, right_index=True)
-            outy = pd.merge(y, Y.shift(periods=i)[history:], left_index=True, right_index=True)
+            #outy = pd.merge(y, Y.shift(periods=i)[history:], left_index=True, right_index=True)
             x = outx
-            y = outy
+            # outy
 
     return x, y
 

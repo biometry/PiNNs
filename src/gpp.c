@@ -1,47 +1,75 @@
 #include "prelesglobals.h"
+#include <pybind11/pybind11.h>
+#include <TH/TH.h>
+#include <stdio.h>
 
 /* Seasonality model of Mäkelä et al 2004 */
-double fS_model(double *S, double T, p2 GPP_par) {
-  double fS; 
+torch::Tensor fS_model(torch::Tensor *S, torch::Tensor T, p2 GPP_par, torch::Tensor Msk, int i) {
+  torch::Tensor fS;
   
-  *S = *S + (T-*S)/GPP_par.tau;
-  if (0 > *S-GPP_par.S0) fS=0; else fS= *S-GPP_par.S0;
-  if (1 < fS/GPP_par.Smax) fS=1; else fS=fS/GPP_par.Smax;
+  if (i>0){
+    torch::Tensor smsk = torch::zeros(Msk.sizes());
+    smsk[i-1] = 1;
+    smsk.requires_grad_();
+    *S = torch::nansum(*S*smsk);
+    //*S = torch::tensor(-0.85436861, torch::requires_grad());
+  }
+  *S = *S + ((T-*S).pow(Msk)/GPP_par.tau.pow(Msk))*Msk;
+  
+  if (torch::any(torch::lt((*S*Msk-GPP_par.S0*Msk), 0)).item<bool>()){
+    fS = Msk * torch::tensor(0., torch::requires_grad());
+  } else {
+    fS = (*S*Msk-GPP_par.S0*Msk);
+  }
+  if (torch::any(torch::gt((fS.pow(Msk)/GPP_par.Smax.pow(Msk))*Msk, 1*Msk)).item<bool>()){
+    fS = Msk* torch::tensor(1., torch::requires_grad());
+  } else {
+    fS = (fS.pow(Msk)/GPP_par.Smax.pow(Msk))*Msk;
+  }
+  
   
   return(fS);
 };
 
 
-double fPheno_model(p2 GPP_par, double T, double *PhenoS, 
-		    int DOY, double fS) {
-  double m; 
-  double fPheno=0;
-
-  if (GPP_par.t0 > -998) { // ie not -999 
+torch::Tensor fPheno_model(p2 GPP_par, torch::Tensor T, torch::Tensor *PhenoS, 
+			   torch::Tensor DOY, torch::Tensor fS, torch::Tensor Msk, int i, torch::Tensor msk) {
+  torch::Tensor m; 
+  torch::Tensor fPheno=torch::zeros(msk.sizes(), torch::requires_grad());
+  
+  if (torch::gt(GPP_par.t0, -998).item<bool>()) { // ie not -999 
     /* Budbreak must occur between specified min. date and end of July */
-    if ( (DOY > (GPP_par.t0 - 0.5)) & (DOY < 213) )  {
-      m = (T - GPP_par.tcrit);
-      if (m < 0) m = 0;
-      *PhenoS = *PhenoS + m ;
+    if (torch::gt(DOY, (GPP_par.t0 - 0.5)).item<bool>() & torch::lt(DOY, 213).item<bool>() )  {
+      m = (T*Msk - GPP_par.tcrit*Msk);
+      if (torch::any(torch::lt(m*Msk, 0)).item<bool>()){
+	m = m * msk;
+      }
+      *PhenoS = *PhenoS + m;
     } else {
-      *PhenoS = 0;
+      *PhenoS = *PhenoS * msk;
     }
     
-    if (*PhenoS > GPP_par.tsumcrit - 0.005) fPheno = 1; else fPheno = 0;
+    if (torch::any(torch::gt(*PhenoS*Msk, (GPP_par.tsumcrit - 0.005)*Msk)).item<bool>()){
+      fPheno = fPheno + Msk;
+    } else {
+      fPheno = fPheno * msk;
+    }
     /* Quick solution to leaf out: 
      * After end of July we just apply season prediction based on conifer fS 
      *  for gradual leaf out. Assume leaves drop much faster that fS.
      *  ...essentially this should be light driven process...i think. */
-    if (DOY > 212) {
-	fPheno = fS * fS;
-      if (fPheno < 0.5) {
-	fPheno = 0;
+    if (torch::gt(DOY, 212).item<bool>()) {
+      std::cout << "-fPh7-";
+      fPheno = fPheno*msk + (fS*Msk) * (fS*Msk);
+      if (torch::any(torch::lt(fPheno*Msk, 0.5*Msk)).item<bool>()) {
+	std::cout << "-fPh8-";
+	fPheno = fPheno * msk;
       } 
     }
     
     /* If there is no t0 parameter, it is an evergreen */
   } else {
-    fPheno = 1;
+      fPheno = fPheno*msk + Msk;
   }
   
   return(fPheno);
@@ -77,59 +105,74 @@ double fCO2_ET_model_mean(double CO2, p2 GPP_par ) {
    to model predicted
    bCO2 = 0.5; xCO2 = -0.364
 */
-double fCO2_model_mean(double CO2, p2 GPP_par ) {
-  return(1 + GPP_par.bCO2 * log(CO2/380) );
+torch::Tensor fCO2_model_mean(torch::Tensor CO2, p2 GPP_par, torch::Tensor Msk) {
+  return(Msk + GPP_par.bCO2 * torch::log(CO2/380) * Msk);
 }
-double fCO2_ET_model_mean(double CO2, p2 GPP_par ) {
-  return(1 + GPP_par.xCO2 * log(CO2/380) );
+torch::Tensor fCO2_ET_model_mean(torch::Tensor CO2, p2 GPP_par, torch::Tensor Msk ) {
+  return(Msk + GPP_par.xCO2 * torch::log(CO2/380) * Msk);
 }
 
 
 
 /* GPP model, modified from Mäkelä et al 2008 */
-void GPPfun(double *gpp, double *gpp380, 
-	      double ppfd,  double D, double CO2, double theta, 
-	      double fAPAR, double fSsub, 
-              p2 GPP_par, p1 Site_par, double *fD, double *fW,
-	      double *fE, FILE *flog, int LOGFLAG) {
+void GPPfun(torch::Tensor *gpp, torch::Tensor *gpp380, 
+	    torch::Tensor ppfd,  torch::Tensor D, torch::Tensor CO2, torch::Tensor theta, 
+	    torch::Tensor fAPAR, torch::Tensor fSsub, 
+	    p2 GPP_par, p1 Site_par, torch::Tensor *fD, torch::Tensor *fW,
+	    torch::Tensor *fE, FILE *flog, int LOGFLAG, int i, torch::Tensor Msk, torch::Tensor msk) {
 
-    extern double fCO2_model_mean(double CO2, p2 b ) ;
-    //    extern double fCO2_VPD_exponent(double CO2, double xCO2 ) ;
-    double thetavol = theta/Site_par.soildepth;
-    //  double GPPsub, GPP380sub;
-    double fCO2;
-    double REW=(thetavol-Site_par.ThetaPWP)/
+  extern torch::Tensor fCO2_model_mean(torch::Tensor CO2, p2 b, torch::Tensor Msk) ;
+  //    extern double fCO2_VPD_exponent(double CO2, double xCO2 ) ;
+  torch::Tensor thetavol = (theta/Site_par.soildepth);
+
+  //  double GPPsub, GPP380sub;
+  torch::Tensor fCO2;
+  torch::Tensor REW=(thetavol-Site_par.ThetaPWP)/
         (Site_par.ThetaFC-Site_par.ThetaPWP);
-    double fEsub, fWsub, fLsub, fDsub;
-    // double fECO2sub, fDCO2sub, fWCO2sub;
 
-    /* Calculate first the reference condition (ca=380 ppm) effect */
-    fDsub = exp(GPP_par.kappa * D);
-    fDsub = fDsub > 1 ? 1 : fDsub;
-
-    if (GPP_par.soilthres < -998) { 
-      fWsub = 1.0;      /* e.g. -999 means no water control of GPP*/
-    } else {
-      if (REW < GPP_par.soilthres) {
-        if (REW > 0.01) fWsub = REW/GPP_par.soilthres; else fWsub = 0.0;
-      } else {
-        fWsub = 1.0;
-      }
-    }
-
-    fLsub = 1 / (GPP_par.gamma * ppfd + 1);
-
-    if (fDsub > fWsub) fEsub=fWsub; else fEsub = fDsub;
-    *fW = fWsub;
-    *fD = fEsub;
-
-    *gpp380 = GPP_par.beta *  ppfd *  fAPAR * fSsub * fLsub * fEsub;
-    fCO2 = fCO2_model_mean(CO2, GPP_par);
-    *gpp = *gpp380 * fCO2;
-
+  torch::Tensor fEsub;
+  torch::Tensor fWsub;
+  torch::Tensor fLsub;
+  torch::Tensor fDsub;
+  // double fECO2sub, fDCO2sub, fWCO2sub;
+  /* first the reference condition (ca=380 ppm) effect */
+  fDsub = torch::exp(GPP_par.kappa * D)*Msk;
+  if (torch::any(torch::gt(fDsub*Msk, 1*Msk)).item<bool>()){
+    std::cout << "-gp1-";
+    fDsub = fDsub * msk + Msk;
+  }
+ 
+  if (torch::lt(GPP_par.soilthres, -998).item<bool>()) { 
+    fWsub = Msk;      /* e.g. -999 means no water control of GPP*/
+  } else {
     
-    if (LOGFLAG > 1.5) 
-      fprintf(flog, 
+    if (torch::any(torch::lt(REW*Msk, GPP_par.soilthres*Msk)).item<bool>()){ 
+      if (torch::any(torch::gt(REW*Msk, 0.01*Msk)).item<bool>()){
+	fWsub = (REW/GPP_par.soilthres)*Msk;
+      } else {
+	fWsub = torch::zeros(Msk.sizes(), torch::requires_grad());
+      }
+    } else {
+	fWsub = Msk;
+      }
+  }
+  
+  fLsub = (torch::ones(Msk.sizes(),torch::requires_grad()) / (Msk*GPP_par.gamma*ppfd + torch::ones(Msk.sizes(), torch::requires_grad())))*Msk;
+  
+  if (torch::any(torch::gt(fDsub*Msk, fWsub*Msk)).item<bool>()){
+    fEsub = fWsub;
+  } else {
+    fEsub = fDsub;
+  }
+  
+  *fW = *fW*msk + fWsub;
+  *fD = *fD*msk + fEsub;
+  *gpp380 = *gpp380*msk + (GPP_par.beta *  ppfd *  fAPAR * fSsub * fLsub * fEsub)*Msk;
+  fCO2 = fCO2_model_mean(CO2, GPP_par, Msk);
+  *gpp = *gpp*msk + (*gpp380 * fCO2)*Msk;
+    
+  if (LOGFLAG > 1.5) 
+     fprintf(flog, 
 	      "   gpp(): Modifiers: fAPAR %lf\tfSsub %lf\t fLsub %lf\t fDsub %lf\t fWsub %lf\tfEsub %lf\t fCO2 %lf\n                    gpp380 %lf\t gpp %lf\n",
 	      fAPAR, fSsub, fLsub, fDsub, fWsub, fEsub, fCO2, *gpp380, *gpp);
 

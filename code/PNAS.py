@@ -10,6 +10,9 @@ from torch import Tensor
 from operationsPNAS import *
 from plot import *
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print('Device:', device)
+
 # Create Layer of all operations
 class MixedLayer(nn.Module):
     def __init__(self, dim_in, dim_out, op_dict):
@@ -188,6 +191,8 @@ class RandomMask(torch.autograd.Function):
     @staticmethod
     def forward(ctx, w, nmasked_w):
         ctx.nmasked_w = nmasked_w
+        print(w)
+        print(nmasked_w)
         picked_idx = torch.multinomial(w, nmasked_w)
         masked_w = torch.zeros_like(w)
         masked_w[picked_idx] = 1.0

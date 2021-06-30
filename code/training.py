@@ -23,21 +23,23 @@ def train(hpar, model_design, X, Y, data_dir='./'):
     lr = hpar['learningrate']
     layersizes = model_design['layer_sizes']
     # shuffle data
-    x_train, x_test, y_train, y_test = train_test_split(X, Y)
+    #x_train, x_test, y_train, y_test = train_test_split(X, Y)
     print(layersizes)
     print(X.shape[1], Y.shape[1])
+    x_train, y_train = X, Y
+    print('x_train', x_train.shape, '\n y_train', y_train.shape)
     train_set = TensorDataset(Tensor(x_train), Tensor(y_train))
-    test_set = TensorDataset(Tensor(x_test), Tensor(y_test))
+    #test_set = TensorDataset(Tensor(x_test), Tensor(y_test))
     model = models.NMLP(X.shape[1], Y.shape[1], layersizes)
     optimizer = optim.Adam(model.parameters(), lr = lr)
     criterion = nn.MSELoss()
     
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=len(test_set))
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=len(test_set))
+    #test_loader = torch.utils.data.DataLoader(test_set, batch_size=len(test_set))
+    #test_loader = torch.utils.data.DataLoader(test_set, batch_size=len(test_set))
     train_set_size = len(train_set)
     sample_id = list(range(len(train_set)))
-    train_sampler = torch.utils.data.sampler.SubsetRandomSampler(sample_id[:train_set_size//2])
-    val_sampler = torch.utils.data.sampler.SubsetRandomSampler(sample_id[train_set_size // 2:])
+    train_sampler = torch.utils.data.sampler.SubsetRandomSampler(sample_id[:int(train_set_size// 100 * 80)])
+    val_sampler = torch.utils.data.sampler.SubsetRandomSampler(sample_id[int(train_set_size // 100 * 80):])
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=batchsize,
                                                sampler= train_sampler, shuffle=False)
     val_loader = torch.utils.data.DataLoader(train_set, batch_size=batchsize, sampler= val_sampler,
