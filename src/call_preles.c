@@ -63,8 +63,7 @@ std::vector<torch::Tensor> call_preles(torch::Tensor *PAR, torch::Tensor *TAir, 
 		    torch::Tensor *transp, 
 		    torch::Tensor *evap, torch::Tensor *fWE);
 
-  std::cout << "co2check";
-  std::cout << *CO2;
+  
   
   /* Parameter structs */
   p1 parSite;

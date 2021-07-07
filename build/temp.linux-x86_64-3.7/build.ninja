@@ -1,0 +1,24 @@
+ninja_required_version = 1.3
+cxx = c++
+
+cflags = -pthread -B /pfs/work7/workspace/scratch/fr_nm164-conda-0/conda/envs/pgnn/compiler_compat -Wl,--sysroot=/ -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -Wstrict-prototypes -fPIC -I/pfs/work7/workspace/scratch/fr_nm164-conda-0/conda/envs/pgnn/lib/python3.7/site-packages/torch/include -I/pfs/work7/workspace/scratch/fr_nm164-conda-0/conda/envs/pgnn/lib/python3.7/site-packages/torch/include/torch/csrc/api/include -I/pfs/work7/workspace/scratch/fr_nm164-conda-0/conda/envs/pgnn/lib/python3.7/site-packages/torch/include/TH -I/pfs/work7/workspace/scratch/fr_nm164-conda-0/conda/envs/pgnn/lib/python3.7/site-packages/torch/include/THC -I/pfs/work7/workspace/scratch/fr_nm164-conda-0/conda/envs/pgnn/include/python3.7m -c
+post_cflags = -g -O -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1013"' -DTORCH_EXTENSION_NAME=preles -D_GLIBCXX_USE_CXX11_ABI=1 -std=c++14
+ldflags = 
+
+rule compile
+  command = $cxx -MMD -MF $out.d $cflags -c $in -o $out $post_cflags
+  depfile = $out.d
+  deps = gcc
+
+
+
+build /pfs/work7/workspace/scratch/fr_nm164-conda-0/physics_guided_nn/build/temp.linux-x86_64-3.7/call_preles.o: compile /pfs/work7/workspace/scratch/fr_nm164-conda-0/physics_guided_nn/call_preles.c
+build /pfs/work7/workspace/scratch/fr_nm164-conda-0/physics_guided_nn/build/temp.linux-x86_64-3.7/initruns.o: compile /pfs/work7/workspace/scratch/fr_nm164-conda-0/physics_guided_nn/initruns.c
+build /pfs/work7/workspace/scratch/fr_nm164-conda-0/physics_guided_nn/build/temp.linux-x86_64-3.7/preles.o: compile /pfs/work7/workspace/scratch/fr_nm164-conda-0/physics_guided_nn/preles.c
+build /pfs/work7/workspace/scratch/fr_nm164-conda-0/physics_guided_nn/build/temp.linux-x86_64-3.7/gpp.o: compile /pfs/work7/workspace/scratch/fr_nm164-conda-0/physics_guided_nn/gpp.c
+build /pfs/work7/workspace/scratch/fr_nm164-conda-0/physics_guided_nn/build/temp.linux-x86_64-3.7/water.o: compile /pfs/work7/workspace/scratch/fr_nm164-conda-0/physics_guided_nn/water.c
+
+
+
+
+

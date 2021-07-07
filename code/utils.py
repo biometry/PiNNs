@@ -76,18 +76,24 @@ def read_in(type, data_dir=None):
 
 
 
-def loaddata(data_split, history, batch_size=None, dir=None):
+def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
     xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
     ycols = ['GPP', 'ET']
-    if data_split == 'NAS':
-        data = read_in(data_split, dir)
-        data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
-        data = standardize(data.drop(['CO2', 'date', 'DOY'], axis=1))
+    print(dir)
+    data = read_in(data_split, dir)
+    rawdata = []
+    if raw:
+        rawdata = data.copy()
 
-    x, y = add_history(data[xcols], data[ycols], history, batch_size)
+    data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
+    data = standardize(data.drop(['CO2', 'date', 'DOY'], axis=1))
 
+    if history:
+        x, y = add_history(data[xcols], data[ycols], history, batch_size)
+    else:
+        x, y = data[xcols], data[ycols]
 
-    return x, y
+    return x, y, rawdata
 
 
 

@@ -84,15 +84,13 @@ int preles(int NofDays,
   torch::Tensor mini = torch::ones(n);
   mini[0] = 0;
   mini.requires_grad_();
-  std::cout << "-1CO2";
-  std::cout << *CO2;
+  
   initConditions(&PAR, &TAir, &VPD, &Precip, &CO2, Mini, mini);
   theta = torch::nansum(*SW*Mini);
   theta_canopy = torch::nansum(*Canopywater*Mini);
   theta_snow = torch::nansum(*SOG*Mini);
   S_state = torch::nansum(*S*Mini);
-  std::cout << "thetaINI";
-  std::cout << theta;
+  
 
   if (LOGFLAG > 1.5) {
     fprintf(flog, "   preles(): Starting values for storage components:\nSW=", theta, "\tCW=", theta_canopy, "\tSOG=", theta_snow, "\tS=", S[0], "\n",
@@ -120,12 +118,11 @@ int preles(int NofDays,
     if ((LOGFLAG > 1.5)) {
       fprintf(flog, "   \ni=", i+1, NofDays, "\t SW=", theta, "\tCW=", theta_canopy, "\tSOG=", theta_snow, "\tS=",S_state, "\n");
     }      
-    std::cout << "i";
-    std::cout << i;
+    
     /* Use previous day environment for prediction, if current values are missing,
        or suspicious*/
     if (i > 0) {      
-      std::cout << "build masks";
+      
       torch::Tensor bmmask = torch::zeros(n);
       bmmask[i-1] = 1;
       bmmask.requires_grad_();
@@ -208,7 +205,7 @@ int preles(int NofDays,
     if (LOGFLAG > 1.5) fprintf(flog, 
 			       "   preles(): stepping into fPheno_model: inputs:\n      GPP_par.t0, T, PhenoS, DOY", 
 			       GPP_par.t0, TAir, PhenoS, day[i]);
-    std::cout << *day;
+    
     torch::Tensor DAY = torch::nansum(*day*Mask);
     
     fPheno = fPheno_model(GPP_par, *TAir, &PhenoS, DAY, *fS, Mask, i, mask);
@@ -232,12 +229,12 @@ int preles(int NofDays,
 	      "   preles(): estimated GPP, fD, fEgg, GPP380ppm\n", 
 	      GPP[i], fD[i], fEgpp, gpp380);
     
-    std::cout << "TS_bSnow";
-    std::cout << theta_snow;
+    
+    
     /* Calculate amount of snow and snowmelt at the end of the day */
     Snow(*TAir, &Precip[0], &theta_snow, SnowRain_par, &Snowmelt[0], i, Mask, mask);
     // NOTE: interception model could be better
-    std::cout << theta_snow;
+    
     
     *Throughfall  = *Throughfall*mask + *Precip*Mask;
     
@@ -251,8 +248,7 @@ int preles(int NofDays,
     
     /*Excess water from canopy will drip down to soil if not evaporated 
       during the day, rest remains in canopy for the next day*/
-    std::cout << "bIFtcanop";
-    std::cout << theta_canopy;
+    
     if (torch::lt(SnowRain_par.CWmax, 0.000000011).item<bool>()) { 
       *Throughfall = *Throughfall + *Interception*Mask;
     } else {
@@ -263,15 +259,13 @@ int preles(int NofDays,
 	theta_canopy = torch::nansum(*Interception*Mask + theta_canopy*Mask);
       }     
     }
-    std::cout << "aIFcanop";
-    std::cout << theta_canopy;
+    
     
     if (LOGFLAG > 1.5) 
       fprintf(flog, "   preles(): estimated canopy water", 
 	      theta_canopy);
 
-    std::cout << "bET";
-    std::cout << theta_canopy;
+    
     *ET = *ET*mask + ETfun(*VPD, theta, *PAR, *fAPAR, *TAir, 
 			   ET_par, Site_par,
 			   &theta_canopy,
@@ -283,8 +277,7 @@ int preles(int NofDays,
 			   flog, LOGFLAG, etmodel, 
 			   &transp[0], 
 			   &evap[0], &fWE[0], i, Mask, mask);
-    std::cout << "aET";
-    std::cout << theta_canopy;
+    
     
     if (LOGFLAG > 1.5) 
       fprintf(flog, 
@@ -295,15 +288,11 @@ int preles(int NofDays,
          end of the day, as well as update snow and canopy water with et */
     
     //    swbalance(&theta, Throughfall[i], Snowmelt[i], ET[i],
-    std::cout << "PRESWB";
-    std::cout << theta_snow;
-    std::cout << theta_canopy;
+    
     swbalance(&theta, *Throughfall, *Snowmelt, *ET,
 	      Site_par, &Drainage[0], //&Psi[i], &Ks[i], 
 	      &theta_snow, &theta_canopy, SnowRain_par, i, Mask, mask);
-    std::cout << "POSTSWB";
-    std::cout << theta_snow;
-    std::cout << theta_canopy;
+    
     if (LOGFLAG > 1.5) 
       fprintf(flog, 
 	      "   preles(): drainage, after ET: SW \tSOG CW\n", 
@@ -315,8 +304,7 @@ int preles(int NofDays,
     *Canopywater = *Canopywater*mask + theta_canopy*Mask;
     *S = *S*mask + S_state*Mask;
 
-    std::cout << "CO2";
-    std::cout << *CO2;
+    
     
     if (LOGFLAG > 1.5) 
       fprintf(flog, 

@@ -138,7 +138,7 @@ void GPPfun(torch::Tensor *gpp, torch::Tensor *gpp380,
   /* first the reference condition (ca=380 ppm) effect */
   fDsub = torch::exp(GPP_par.kappa * D)*Msk;
   if (torch::any(torch::gt(fDsub*Msk, 1*Msk)).item<bool>()){
-    std::cout << "-gp1-";
+    
     fDsub = fDsub * msk + Msk;
   }
  

@@ -145,10 +145,6 @@ void swbalance(torch::Tensor *theta, torch::Tensor throughfall, torch::Tensor sn
   torch::Tensor st0, etfromvegandsoil=torch::zeros(Msk.sizes(), torch::requires_grad());
   /* Evaporate first from wet canopy and snow on ground */
   if (torch::gt(SnowRain_par.CWmax, 0.00000001).item<bool>()) {
-    std::cout << "Moin";
-    std::cout << *canw;
-    std::cout << *snow;
-    std::cout << et;
     if (torch::any(torch::gt((*canw*Msk + *snow*Msk -  et*Msk), 0*Msk)).item<bool>()) {
       if (torch::any(torch::gt((*canw*Msk - et*Msk), 0*Msk)).item<bool>()) { 
 	*canw = torch::nansum(*canw*Msk - et*Msk);
@@ -166,24 +162,21 @@ void swbalance(torch::Tensor *theta, torch::Tensor throughfall, torch::Tensor sn
 
   } else {
     if (torch::any(torch::gt((*snow*Msk - et*Msk), 0*Msk)).item<bool>()) {
-      std::cout << "I1";
       *snow = torch::nansum(*snow*Msk - et*Msk);
       etfromvegandsoil = torch::zeros(Msk.sizes(), torch::requires_grad());
     } else if (torch::any(torch::lt((*snow*Msk - et*Msk), 0*Msk)).item<bool>()) { // in this case, there's enough snow left
-      std::cout << "I2";
       etfromvegandsoil = et*Msk - *snow*Msk;
       *snow = torch::tensor(0., torch::requires_grad());
     } else {
       *snow = torch::tensor(0., torch::requires_grad());
     }
   }
-  std::cout << et;
-  std::cout << etfromvegandsoil;
+  
   et = etfromvegandsoil;
   /*  balance without drainage */
   st0 = (*theta + throughfall + snowmelt - et)*Msk;
-  std::cout << st0;
-if (torch::any(torch::le(st0.pow(Msk), 0)).item<bool>()){
+  
+  if (torch::any(torch::le(st0.pow(Msk), 0)).item<bool>()){
     
     st0 = Msk*torch::tensor(0.0001, torch::requires_grad());
   }
@@ -196,9 +189,7 @@ if (torch::any(torch::le(st0.pow(Msk), 0)).item<bool>()){
     } else {
       *drainage = *drainage*msk;
     }
-    std::cout << "st0";
-    std::cout << st0;
-    std::cout << *drainage;
+    
     *theta = torch::nansum(st0*Msk - *drainage*Msk);
 
 
@@ -258,7 +249,7 @@ void  Snow(torch::Tensor T, torch::Tensor *rain, torch::Tensor *snow, p4 SnowRai
   }
   if (torch::any(torch::lt((*snow*Msk + NewSnow*Msk - *SnowMelt*Msk), 0*Msk)).item<bool>()) {
     *SnowMelt = *SnowMelt*msk + NewSnow + *snow*Msk;
-    *snow = torch::tensor(0, torch::requires_grad());
+    *snow = torch::tensor(0., torch::requires_grad());
   } else {
     *snow = torch::nansum((*snow + NewSnow - *SnowMelt)*Msk);
     
