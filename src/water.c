@@ -73,16 +73,28 @@ torch::Tensor ETfun(torch::Tensor D, torch::Tensor theta, torch::Tensor ppfd, to
 	    fCO2mean, CO2);
   
   if (etmodel == -1) {
-    *transp = *transp*msk + (D * ET_par.beta*A/D.pow(ET_par.kappa) *
-      fWgpp.pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
+    if ((torch::lt(torch::nansum(D*Msk), 0).item<bool>() & (torch::lt(ET_par.kappa, 0).item<bool>() & torch::gt(ET_par.kappa, -1).item<bool>()) | (torch::gt(ET_par.kappa, 0).item<bool>() & torch::lt(ET_par.kappa, 1).item<bool>())) | (torch::lt(torch::nansum(fWgpp*Msk), 0).item<bool>() & (torch::lt(ET_par.nu, 0).item<bool>() & torch::gt(ET_par.nu, -1).item<bool>()) | (torch::gt(ET_par.nu, 0).item<bool>() & torch::lt(ET_par.nu, 1).item<bool>()))){
+      *transp = *transp;
+	 
+	 } else {  
+   
+	
+    *transp = *transp*msk + (D * ET_par.beta*A/(D*Msk).pow(ET_par.kappa) *
+			     (fWgpp*Msk).pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
 			     fCO2mean)*Msk;
+    }
     *evap = *evap*msk + (ET_par.chi *  (1-fAPAR) *  fWsub * ppfd)*Msk;
     et = (*transp + *evap * s / (s + psychom))*Msk; 
   }
   if (etmodel == 0) {
-    *transp = *transp*msk + (Msk * D * ET_par.beta * A/D.pow(ET_par.kappa) *
-			     fWgpp.pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
-			     fCO2mean)*Msk;    
+    if ((torch::lt(torch::nansum(D*Msk), 0).item<bool>() & (torch::lt(ET_par.kappa, 0).item<bool>() & torch::gt(ET_par.kappa, -1).item<bool>()) | (torch::gt(ET_par.kappa, 0).item<bool>() & torch::lt(ET_par.kappa, 1).item<bool>())) | (torch::lt(torch::nansum(fWgpp*Msk), 0).item<bool>() & (torch::lt(ET_par.nu, 0).item<bool>() & torch::gt(ET_par.nu, -1).item<bool>()) | (torch::gt(ET_par.nu, 0).item<bool>() & torch::lt(ET_par.nu, 1).item<bool>()))){
+      *transp = *transp;
+
+       } else {
+      *transp = *transp*msk + (Msk * D * ET_par.beta * A/(D*Msk).pow(ET_par.kappa) *
+			       (fWgpp*Msk).pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
+			     fCO2mean)*Msk;
+    }
     *evap = *evap*msk + ((ET_par.chi *  s).pow(Msk) / (s + psychom).pow(Msk) * (1-fAPAR) *  fWsub * ppfd)*Msk;
     //    et = D * ET_par.beta*A/pow(D, ET_par.kappa) *
     //  pow(fWgpp, ET_par.nu) * // ET differently sensitive to soil water than GPP
@@ -92,9 +104,14 @@ torch::Tensor ETfun(torch::Tensor D, torch::Tensor theta, torch::Tensor ppfd, to
     et = *transp*Msk + *evap*Msk;
   }
   if (etmodel == 1) {
-    *transp = *transp*msk + (D * ET_par.beta*A/D.pow(ET_par.kappa) *
-      fWgpp.pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
+    if ((torch::lt(torch::nansum(D*Msk), 0).item<bool>() & (torch::lt(ET_par.kappa, 0).item<bool>() & torch::gt(ET_par.kappa, -1).item<bool>()) | (torch::gt(ET_par.kappa, 0).item<bool>() & torch::lt(ET_par.kappa, 1).item<bool>())) | (torch::lt(torch::nansum(fWgpp*Msk), 0).item<bool>() & (torch::lt(ET_par.nu, 0).item<bool>() & torch::gt(ET_par.nu, -1).item<bool>()) | (torch::gt(ET_par.nu, 0).item<bool>() & torch::lt(ET_par.nu, 1).item<bool>()))){
+      *transp = *transp;
+
+      } else {
+      *transp = *transp*msk + (D * ET_par.beta*A/(D*Msk).pow(ET_par.kappa) *
+			       (fWgpp*Msk).pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
 			     fCO2mean)*Msk;
+    }
     *evap = *evap*msk + (ET_par.chi * (1-fAPAR) *  fWsub * ppfd)*Msk;
     //et = D * ET_par.beta*A/pow(D, ET_par.kappa) *
     //  pow(fWgpp, ET_par.nu) * // ET differently sensitive to soil water than GPP
@@ -104,11 +121,17 @@ torch::Tensor ETfun(torch::Tensor D, torch::Tensor theta, torch::Tensor ppfd, to
   }
   
   if (etmodel == 2) {
-    et = (D * (1 + ET_par.beta/D.pow(ET_par.kappa)) * A / CO2 * 
-        fWgpp.pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
-	fCO2mean +  // Mean effect of CO2 on transpiration      
-	  ET_par.chi * (1-fAPAR) *  fWsub * ppfd)*Msk;
+    if ((torch::lt(torch::nansum(D*Msk), 0).item<bool>() & (torch::lt(ET_par.kappa, 0).item<bool>() & torch::gt(ET_par.kappa, -1).item<bool>()) | (torch::gt(ET_par.kappa, 0).item<bool>() & torch::lt(ET_par.kappa, 1).item<bool>())) | (torch::lt(torch::nansum(fWgpp*Msk), 0).item<bool>() & (torch::lt(ET_par.nu, 0).item<bool>() & torch::gt(ET_par.nu, -1).item<bool>()) | (torch::gt(ET_par.nu, 0).item<bool>() & torch::lt(ET_par.nu, 1).item<bool>()))){
+      et = (ET_par.chi * (1-fAPAR) * fWsub * ppfd)*Msk;
+
+       } else {
+         et = (D * (1 + ET_par.beta/(D*Msk).pow(ET_par.kappa)) * A / CO2 * 
+	   (fWgpp*Msk).pow(ET_par.nu) * // ET differently sensitive to soil water than GPP
+	   fCO2mean +  // Mean effect of CO2 on transpiration      
+	    ET_par.chi * (1-fAPAR) *  fWsub * ppfd)*Msk;
     }
+  }
+  
   
   if (LOGFLAG > 2.5)
     fprintf(flog, "      ETfun(): Model=%d\nD\t%lf\nET_par.beta\t%lf\nA\t%lf\npow(D, ET_par.kappa)\t%lf\npow(fWgpp, ET_par.nu)\t%lf\nfWgpp\t%lf\nET_par.nu\t%lf\nfCO2mean\t%lf\nCO2\t%lf\nET_par.chi\t%lf\ns/(s+psychom)\t%lf\n1-fAPAR\t%lf\nfWsum\t%lf\nppfd\t%lf\n-->et\t%lf\n",	    

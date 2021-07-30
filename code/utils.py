@@ -13,17 +13,26 @@ def standardize(var, scaling=None):
     :param scaling: other targets to normalize on
     :return: scaled variables in 2-D array
     '''
+    
     if not scaling:
         if (isinstance(var, pd.DataFrame)):
             out = (var - np.mean(var)) / np.std(var)
+            m = np.mean(var)
+            std = np.std(var)
         elif (torch.is_tensor(var)):
             out = (var - torch.mean(var)) / torch.std(var)
+            m = torch.mean(var)
+            std = torch.std(var)
         else:
             out = (var - np.mean(var, axis=0)) / np.std(var, axis=0)
+            m = np.mean(var, axis=0)
+            std = np.std(var, axis=0)
     else:
         out = (var - scaling[0]) / scaling[1]
+        m = scaling[0]
+        std = scaling[1]
 
-    return out
+    return out, m, std
 
 
 def encode_doy(doy):
@@ -72,29 +81,41 @@ def read_in(type, data_dir=None):
     # subset station
     if type == 'NAS' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'soro.csv')))
+    elif type == 'NASp' and data_dir != 'load':
+        out = pd.read_csv(''.join((data_dir, 'soro_p.csv')))
+    elif type == 'validation' and data_dir != 'load':
+        out = pd.read_csv(''.join((data_dir, 'hyytiala.csv')))
     return out
 
 
 
 def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
-    xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
-    ycols = ['GPP', 'ET']
-    print(dir)
+    if data_split.endswith('p'):
+        xcols = ['GPPp', 'ETp']
+        
+    else:
+        xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
+
+    ycols = ['GPP']
     data = read_in(data_split, dir)
     rawdata = []
     if raw:
         rawdata = data.copy()
 
     data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
-    data = standardize(data.drop(['CO2', 'date', 'DOY'], axis=1))
+    date = data['date']
+    data, mn, sd = standardize(data.drop(['CO2', 'date', 'DOY'], axis=1))
 
     if history:
         x, y = add_history(data[xcols], data[ycols], history, batch_size)
     else:
         x, y = data[xcols], data[ycols]
 
-    return x, y, rawdata
 
+    
+    x.index = pd.DatetimeIndex(date[history:])
+    y.index = pd.DatetimeIndex(date[history:])
+    return x, y, mn, sd, rawdata
 
 
 

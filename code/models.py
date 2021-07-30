@@ -38,7 +38,7 @@ class NMLP(nn.Module):
 
 class EMB(nn.Module):
 
-    def __init__(self, input_dim, output_dim, layersizes, pin, pout, pt):
+    def __init__(self, input_dim, output_dim, layersizes, pin, pout):
         super(EMB, self).__init__()
         
         self.parnet = nn.Sequential()
@@ -47,12 +47,12 @@ class EMB(nn.Module):
         self.preleslayer = [pin, pout]
         self.rnlayers = len(layersizes[1])
         print('Initializing Model')
-        
+        print(self.pnlayers, self.rnlayers)
         # Add Parameter Layers
         for i in range(0, self.pnlayers+1):
             if i == 0:
                 self.parnet.add_module(f'P_input{i}', nn.Linear(input_dim, layersizes[0][i]))
-                self.parnet.add_module(f'activation', nn.ReLU())
+                self.parnet.add_module(f'activation', nn.Sigmoid())
                 print('adding input 1', input_dim, layersizes[0][i])
             elif i == (self.pnlayers):
                 print("i", i, "layers", layersizes[0][i-1])
@@ -60,7 +60,7 @@ class EMB(nn.Module):
                 print("add parameters output", layersizes[0][i-1])
             elif i and i < self.pnlayers:
                 self.parnet.add_module(f'P_fc{i}', nn.Linear(layersizes[0][i-1], layersizes[0][i]))
-                self.parnet.add_module(f'activation', nn.ReLU())
+                self.parnet.add_module(f'activation', nn.Sigmoid())
 
                 
         # Add Residual Layers
@@ -77,60 +77,40 @@ class EMB(nn.Module):
                 self.resnet.add_module(f'activation', nn.ReLU())
 
         # Initialize weights of Parameter Layer
-        if pt:
-            for mod in pt:
-                self.mod = pt[mod]
-            #size = self.parnet[-2].weight.shape[0]
-            #self.parnet[-3].weight.data = pt['layers.input0.weight']
-            #self.parnet[-3].bias.data = pt['layers.input0.bias']
-            #self.parnet[-1].weight.data = pt['layers.output1.weight']
-            #self.parnet[-1].bias.data = pt['layers.output1.bias']
-            
-        #self.parnet[-2].weight.data = torch.tensor([[413.0]*size,
-        #                                            [0.450]*size, [0.118]*size, [3.]*size, [0.748464]*size, [12.74915]*size,
-        #                                            [-3.566967]*size, [18.4513]*size, [-0.136732]*size,
-        #                                            [0.033942]*size, [0.448975]*size, [0.500]*size, [-0.364]*size,
-        #                                            [0.33271]*size, [0.857291]*size, [0.041781]*size,
-        #                                            [0.474173]*size, [0.278332]*size, [1.5]*size, [0.33]*size,
-        #                                            [4.824704]*size, [0.]*size, [0.]*size, [180.]*size,
-        #                                            [0.]*size, [0.]*size, [10.]*size,
-        #                                            [-999.]*size, [-999.]*size, [-999.]*size]
-        #) # default preles values
-        #print(self.parnet[-1].weight)
 
-        
-    def forward(self, x, cin):
-        pinit = self.parnet(x)
-        p = parameter_constraint(pinit.type(torch.float64))
+    def forward(self, x, cin, mean, std):
+        #pinit = self.parnet(x)
+        #p = parameter_constraint(pinit.type(torch.float64))
         #print("Parameters: ", p.shape, p[0], p[1])
-        ppreds = physical_forward(p.type(torch.float64), cin)
-        #print("predicted_values", ppreds)
-        y_hat = self.resnet(ppreds.type(torch.float32))
-        #print("y_hat", y_hat)
-        return p.type(torch.float32), y_hat
+        #ppreds = physical_forward(p.type(torch.float64), cin, mean, std)
+        print("predicted_values", x)
+        y_hat = self.resnet(x.type(torch.float32))
+        print("y_hat", y_hat)
+
+        return y_hat#ppreds.type(torch.float32), y_hat #ppreds.type(torch.float32) y_hat
 
 
 def parameter_constraint(parameters):
-    p1 = torch.relu(parameters[..., 0:1]).type(torch.float64)
-    p2 = parameters[..., 1:2].type(torch.float64)
-    p3 = parameters[..., 2:3].type(torch.float64)
+    p1 = torch.clamp(parameters[..., 0:1], min=0, max=2).type(torch.float64)
+    p2 = torch.relu(parameters[..., 1:2]).type(torch.float64)
+    p3 = torch.relu(parameters[..., 2:3]).type(torch.float64)
     p4 = parameters[..., 3:4].type(torch.float64)
-    p5 = torch.relu(parameters[..., 4:5]).type(torch.float64)
-    p6 = torch.relu(parameters[..., 5:6]).type(torch.float64)
-    p7 = parameters[..., 6:7].type(torch.float64)
-    p8 = torch.relu(parameters[..., 7:8]).type(torch.float64)
-    p9 = parameters[..., 8:9].type(torch.float64)
-    p10 = parameters[..., 9:10].type(torch.float64)
-    p11 = parameters[..., 10:11].type(torch.float64)
-    p12 = parameters[..., 11:12].type(torch.float64)
+    p5 = torch.clamp(parameters[..., 4:5], min=0, max=2.5).type(torch.float64)
+    p6 = torch.clamp(parameters[..., 5:6], min=0.01, max=3).type(torch.float64)
+    p7 = torch.clamp(parameters[..., 6:7], min=-0.2, max=2.1).type(torch.float64)
+    p8 = torch.clamp(parameters[..., 7:8], min=0.23, max=3.0).type(torch.float64)
+    p9 = torch.clamp(parameters[..., 8:9], min=-1, max=0).type(torch.float64)
+    p10 = torch.clamp(parameters[..., 9:10], min=0, max=0.7).type(torch.float64)
+    p11 = torch.exp(parameters[..., 10:11])/(1+torch.exp(parameters[...,10:11])).type(torch.float64)
+    p12 =parameters[..., 11:12].type(torch.float64)
     p13 = parameters[..., 12:13].type(torch.float64)
-    p14 = parameters[..., 13:14].type(torch.float64)
-    p15 = parameters[..., 14:15].type(torch.float64)
-    p16 = parameters[..., 15:16].type(torch.float64)
-    p17 = parameters[..., 16:17].type(torch.float64)
-    p18 = parameters[..., 17:18].type(torch.float64)
+    p14 = torch.clamp(parameters[..., 13:14], min=0, max=1.0).type(torch.float64)
+    p15 = torch.clamp(parameters[..., 14:15], min=0, max=1.2).type(torch.float64)
+    p16 = torch.clamp(parameters[..., 15:16], min=0, max=2.5).type(torch.float64)
+    p17 = torch.exp(parameters[..., 16:17])/(1+torch.exp(parameters[...,16:17])).type(torch.float64)
+    p18 = torch.clamp(parameters[..., 17:18], min=0, max=1).type(torch.float64)
     p19 = parameters[..., 18:19].type(torch.float64)
-    p20 = torch.relu(parameters[..., 19:20]).type(torch.float64)
+    p20 = torch.clamp(parameters[..., 19:20], min=0, max=(1/0.75)).type(torch.float64)
     p21 = torch.relu(parameters[..., 20:21]).type(torch.float64)
     p22 = torch.relu(parameters[..., 21:22]).type(torch.float64)
     p23 = parameters[..., 22:23].type(torch.float64)
@@ -145,29 +125,34 @@ def parameter_constraint(parameters):
 
     return torch.stack((p1.flatten(), p2.flatten(), p3.flatten(), p4.flatten(), p5.flatten(), p6.flatten(), p7.flatten(), p8.flatten(), p9.flatten(), p10.flatten(), p11.flatten(), p12.flatten(), p13.flatten(), p14.flatten(), p15.flatten(), p16.flatten(), p17.flatten(), p18.flatten(), p19.flatten(), p20.flatten(), p21.flatten(), p22.flatten(), p23.flatten(), p24.flatten(), p25.flatten(), p26.flatten(), p27.flatten()), dim=1)
 
-def physical_forward(parameters, input_data):
+#torch.stack((p2.flatten(), p3.flatten(), p5.flatten(), p6.flatten(), p7.flatten(), p8.flatten(), p9.flatten(), p10.flatten(), p11.flatten(), p14.flatten()), dim=1)
+
+'''
+torch.stack((p1.flatten(), p2.flatten(), p3.flatten(), p4.flatten(), p5.flatten(), p6.flatten(), p7.flatten(), p8.flatten(), p9.flatten(), p10.flatten(), p11.flatten(), p12.flatten(), p13.flatten(), p14.flatten(), p15.flatten(), p16.flatten(), p17.flatten(), p18.flatten(), p19.flatten(), p20.flatten(), p21.flatten(), p22.flatten(), p23.flatten(), p24.flatten(), p25.flatten(), p26.flatten(), p27.flatten()), dim=1)
+'''
+def physical_forward(parameters, input_data, mean, std):
     # extract Parameters
     p1 = torch.mean(parameters[..., 0:1], dtype=torch.float64)*400
-    p2 = torch.mean(parameters[..., 1:2], dtype=torch.float64)
-    p3 = torch.mean(parameters[..., 2:3], dtype=torch.float64)
+    p2 = torch.mean(parameters[..., 1:2], dtype=torch.float64) #torch.tensor(0.45, dtype=torch.float64) #torch.mean(parameters[..., 1:2], dtype=torch.float64)
+    p3 = torch.mean(parameters[..., 2:3], dtype=torch.float64) #torch.tensor(0.118, dtype=torch.float64) #torch.mean(parameters[..., 2:3], dtype=torch.float64)
     p4 = torch.mean(parameters[..., 3:4], dtype=torch.float64)
-    p5 = torch.mean(parameters[..., 4:5], dtype=torch.float64)
-    p6 = torch.mean(parameters[..., 5:6], dtype=torch.float64)*12
-    p7 = torch.mean(parameters[..., 6:7], dtype=torch.float64)
-    p8 = torch.mean(parameters[..., 7:8], dtype=torch.float64)*18
-    p9 = torch.mean(parameters[..., 8:9], dtype=torch.float64)
-    p10 = torch.mean(parameters[..., 9:10], dtype=torch.float64)
-    p11 = torch.mean(parameters[..., 10:11], dtype=torch.float64)
+    p5 = torch.mean(parameters[..., 4:5], dtype=torch.float64) #torch.tensor(0.748018, dtype=torch.float64) torch.mean(parameters[..., 4:5], dtype=torch.float64)
+    p6 = torch.mean(parameters[..., 5:6], dtype=torch.float64)*12 #torch.tensor(13.233830, dtype=torch.float64) #torch.mean(parameters[..., 5:6], dtype=torch.float64)*12
+    p7 = torch.mean(parameters[..., 6:7], dtype=torch.float64)*10  #torch.tensor(-3.965787, dtype=torch.float64)
+    p8 = torch.mean(parameters[..., 7:8], dtype=torch.float64)*10  #torch.tensor(18.766960, dtype=torch.float64) #torch.mean(parameters[..., 7:8], dtype=torch.float64)*10
+    p9 = torch.mean(parameters[..., 8:9], dtype=torch.float64) #torch.tensor(-0.130473, dtype=torch.float64) #torch.mean(parameters[..., 8:9], dtype=torch.float64)
+    p10 = torch.mean(parameters[..., 9:10], dtype=torch.float64) #torch.tensor(0.034459, dtype=torch.float64) #torch.mean(parameters[..., 9:10], dtype=torch.float64)
+    p11 = torch.mean(parameters[..., 10:11], dtype=torch.float64) #torch.tensor(0.450828, dtype=torch.float64) #torch.mean(parameters[..., 10:11], dtype=torch.float64)
     p12 = torch.mean(parameters[..., 11:12], dtype=torch.float64)
     p13 = torch.mean(parameters[..., 12:13], dtype=torch.float64)
-    p14 = torch.mean(parameters[..., 13:14], dtype=torch.float64)
+    p14 = torch.mean(parameters[..., 13:14], dtype=torch.float64)*10 #torch.tensor(0.324463, dtype=torch.float64) #torch.mean(parameters[..., 13:14], dtype=torch.float64)*10
     p15 = torch.mean(parameters[..., 14:15], dtype=torch.float64)
     p16 = torch.mean(parameters[..., 15:16], dtype=torch.float64)
     p17 = torch.mean(parameters[..., 16:17], dtype=torch.float64)
-    p18 = torch.mean(parameters[..., 17:18], dtype=torch.float64)
+    p18 = torch.mean(parameters[..., 17:18], dtype=torch.float64)*5
     p19 = torch.mean(parameters[..., 18:19], dtype=torch.float64)
     p20 = torch.mean(parameters[..., 19:20], dtype=torch.float64)
-    p21 = torch.mean(parameters[..., 20:21], dtype=torch.float64)
+    p21 = torch.mean(parameters[..., 20:21], dtype=torch.float64)*4
     p22 = torch.mean(parameters[..., 21:22], dtype=torch.float64)
     p23 = torch.mean(parameters[..., 22:23], dtype=torch.float64)
     p24 = torch.mean(parameters[..., 23:24], dtype=torch.float64)*180
@@ -219,10 +204,11 @@ def physical_forward(parameters, input_data):
     Drainage = torch.tensor([0.]*leng, dtype=torch.float64, requires_grad=False)
     Canopywater = torch.tensor([0.]*leng, dtype=torch.float64, requires_grad=False)
     S = torch.tensor([0.]*leng, dtype=torch.float64, requires_grad=False)    
+    
     op = preles.preles(PAR=PAR, TAir = TAir, VPD = VPD, Precip = Precip, CO2 = CO2, fAPAR = fAPAR, GPPmeas = GPPmeas, ETmeas = ETmeas, SWmeas = SWmeas, GPP = GPP, ET = ET, SW = SW, SOG = SOG, fS = fS, fD = fD, fW = fW, fE = fE, Throughfall = Throughfall, Interception = Interception, Snowmelt = Snowmelt, Drainage = Drainage, Canopywater = Canopywater, S = S, soildepth = p1, ThetaFC = p2,  ThetaPWP = p3  , tauDrainage = p4  , beta = p5  , tau = p6  , S0= p7  , Smax = p8  , kappa= p9  , gamma = p10  , soilthres = p11  , bCO2 = p12  , xCO2 = p13  , ETbeta = p14  , ETkappa = p15  , ETchi = p16  , ETsoilthres = p17  , ETnu = p18  , MeltCoef = p19  , I0 = p20  , CWmax = p21  , SnowThreshold = p22  , T_0 = p23  , SWinit = p24  , CWinit = p25  , SOGinit = p26  , Sinit = p27  , t0 = p28  , tcrit = p29  , tsumcrit = p30  , etmodel = control  , LOGFLAG = logflag, NofDays = NofDays  , day = DOY  , transp = transp  , evap = evap  , fWE = fWE)
     
-    GPP = op[0]
-    ET = op[1]
-    
-    return torch.stack((GPP, ET), dim=1)
+    GPP = (op[0]-mean['GPP'])/std['GPP']
+    ET = op[1]#(op[1]-mean['ET'])/std['ET']
+    #print('gpp', GPP)
+    return GPP.unsqueeze(-1) #torch.stack((GPP, ET), dim=1)
 
