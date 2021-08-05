@@ -1,7 +1,7 @@
 # !/usr/bin/env python
 # coding: utf-8
 import utils
-import NAS
+import HP
 import utils
 import trainloaded
 import embtraining
@@ -30,19 +30,20 @@ splits = len(x.index.year.unique())
 #print(splits)
 x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
 
-arch_grid = NAS.ArchitectureSearchSpace(x.shape[1], y.shape[1], 200, 4)
+arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 150, 4)
 
 # architecture search
-layersizes = NAS.ArchitectureSearch(arch_grid, {'epochs': 300, 'batchsize': 8, 'lr':0.01}, x, y, splits, "arSres")
+layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 300, 'batchsize': 8, 'lr':0.01}, x, y, splits, "arSres")
 
 # Hyperparameter Search Space
-hpar_grid = NAS.HParSearchSpace(200)
+hpar_grid = HP.HParSearchSpace(150)
 
 # Hyperparameter search
-hpars, grid = NAS.HParSearch(layersizes, hpar_grid, x, y, splits, "hpres")
+hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpres")
 
 print( 'hyperparameters: ', hpars)
 
 
-grid.to_csv("./Nres.csv")
+grid.to_csv("./NresHP.csv")
 
+agrid.to_csv("./NresAS.csv")

@@ -52,7 +52,7 @@ class EMB(nn.Module):
         for i in range(0, self.pnlayers+1):
             if i == 0:
                 self.parnet.add_module(f'P_input{i}', nn.Linear(input_dim, layersizes[0][i]))
-                self.parnet.add_module(f'activation', nn.Sigmoid())
+                self.parnet.add_module(f'activation', nn.ReLU())
                 print('adding input 1', input_dim, layersizes[0][i])
             elif i == (self.pnlayers):
                 print("i", i, "layers", layersizes[0][i-1])
@@ -60,7 +60,7 @@ class EMB(nn.Module):
                 print("add parameters output", layersizes[0][i-1])
             elif i and i < self.pnlayers:
                 self.parnet.add_module(f'P_fc{i}', nn.Linear(layersizes[0][i-1], layersizes[0][i]))
-                self.parnet.add_module(f'activation', nn.Sigmoid())
+                self.parnet.add_module(f'activation', nn.ReLU())
 
                 
         # Add Residual Layers
@@ -79,15 +79,15 @@ class EMB(nn.Module):
         # Initialize weights of Parameter Layer
 
     def forward(self, x, cin, mean, std):
-        #pinit = self.parnet(x)
-        #p = parameter_constraint(pinit.type(torch.float64))
+        pinit = self.parnet(x)
+        p = parameter_constraint(pinit.type(torch.float64))
         #print("Parameters: ", p.shape, p[0], p[1])
-        #ppreds = physical_forward(p.type(torch.float64), cin, mean, std)
-        print("predicted_values", x)
-        y_hat = self.resnet(x.type(torch.float32))
-        print("y_hat", y_hat)
+        ppreds = physical_forward(p.type(torch.float64), cin, mean, std)
+        #print("predicted_values", x)
+        y_hat = self.resnet(ppreds.type(torch.float32))
+        #print("y_hat", y_hat)
 
-        return y_hat#ppreds.type(torch.float32), y_hat #ppreds.type(torch.float32) y_hat
+        return y_hat, ppreds.type(torch.float32)
 
 
 def parameter_constraint(parameters):
