@@ -54,7 +54,7 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
 def HParSearchSpace(gridsize, reg=False):
     grid = []
     for i in range(gridsize):
-        learning_rate = random.choice(np.round(np.linspace(0.0001, 0.1),5))
+        learning_rate = random.choice(np.round(np.linspace(0.0001, 0.1),4))
         batchsize = random.choice([2, 4, 8, 16, 32, 64])
         if reg is not False:
             r = random.choice(np.round(np.linspace(0.000, 1.000, 1000), 4))

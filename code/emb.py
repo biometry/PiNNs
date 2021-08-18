@@ -28,22 +28,22 @@ splits = len(x.index.year.unique())
 
 x.index, y.index, ypp.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(ypp))
 
-#arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 50, 4, emb=True)
+arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 100, 4, emb=True)
 
 # architecture search
-#layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 80, 'batchsize': 8, 'lr':0.01, 'eta': 0.6}, x, y, splits, "arSemb", reg=ypp, emb=True, raw= xt, mn=mn, std=std)
+layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 20, 'batchsize': 16, 'lr':0.01, 'eta': 0.2}, x, y, splits, "arSemb", reg=ypp, emb=True, raw= xt, mn=mn, std=std)
 
-#ag.to_csv("./NembAS.csv")
+ag.to_csv("./NembAS2.csv")
 
-layersizes = [[4], [64]]
+#layersizes = [[4], [64]]
 # Hyperparameter Search Space
-hpar_grid = HP.HParSearchSpace(80, reg=True)
+#hpar_grid = HP.HParSearchSpace(80, reg=True)
 
 # Hyperparameter search
-hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpemb", reg=ypp, emb=True, raw=xt, mn=mn, std=std)
+#hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpemb", reg=ypp, emb=True, raw=xt, mn=mn, std=std)
 
-print( 'hyperparameters: ', hpars)
+#print( 'hyperparameters: ', hpars)
 
 
-grid.to_csv("./NembHP.csv")
+#grid.to_csv("./NembHP.csv")
 
