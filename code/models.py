@@ -212,3 +212,32 @@ def physical_forward(parameters, input_data, mean, std):
     #print('gpp', GPP)
     return GPP.unsqueeze(-1) #torch.stack((GPP, ET), dim=1)
 
+
+
+
+class RES(nn.Module):
+
+    def __init__(self, input_dim, output_dim, layersizes):
+        super(RES, self).__init__()
+        
+        self.layers = nn.Sequential()
+        self.nlayers = len(layersizes)
+        print('Initializing model')
+        for i in range(0, self.nlayers+1):
+            if i == 0:
+                self.layers.add_module(f'input{i}', nn.Linear(input_dim, layersizes[i]))
+                self.layers.add_module(f'activation{i}', nn.ReLU())
+                print('adding input l', input_dim, layersizes[i])
+            elif i == (self.nlayers):
+                self.layers.add_module(f'output{i}', nn.Linear(layersizes[i-1], output_dim))
+                print('adding output l', layersizes[i-1], output_dim)
+            elif i and i < self.nlayers:
+                self.layers.add_module(f'fc{i}', nn.Linear(layersizes[i-1], layersizes[i]))
+                self.layers.add_module(f'activation{i}', nn.ReLU())
+                print('adding hidden l', layersizes[i-1], layersizes[i])
+                
+                
+    def forward(self, x, yphy):
+        out = self.layers(x)
+                    
+        return out + yphy

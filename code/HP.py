@@ -28,7 +28,7 @@ def ArchitectureSearchSpace(input_size, output_size, grid_size, max_layers, emb=
             grid.append(layer_size)
     return grid
 
-def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False, raw=None, mn =None, std = None):
+def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False, raw=None, mn =None, std = None, res=None, ypreles=None):
 
     mse_train = []
     mse_val = []
@@ -36,7 +36,7 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
     for i in range(len(grid)):
         model_design = {"layersizes": grid[i]}
         print(grid)
-        running_losses = temb.train_cv(parameters, model_design, X, Y, "./data/" , splits, data, reg, emb, raw, mn, std) # train model
+        running_losses = temb.train_cv(parameters, model_design, X, Y, "./data/" , splits, data, reg, emb, raw, mn, std, res, ypreles) # train model
         mse_train.append(np.mean(running_losses["train_loss"]))
         mse_val.append(np.mean(running_losses["val_loss"]))
         print(f"fitted model {i}")
@@ -67,7 +67,7 @@ def HParSearchSpace(gridsize, reg=False):
 
 
 
-def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=None, mn = None, std = None):
+def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=None, mn = None, std = None, res=None, ypreles=None):
 
     model_design = {"layersizes": layersizes}
     mse_train = []
@@ -87,7 +87,7 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
                        }
                        
 
-        running_losses = temb.train_cv(hparams, model_design, X, Y, "./data/" , splits, data, reg, emb, raw, mn, std)
+        running_losses = temb.train_cv(hparams, model_design, X, Y, "./data/" , splits, data, reg, emb, raw, mn, std, res, ypreles)
         mse_train.append(np.mean(running_losses["train_loss"]))
         mse_val.append(np.mean(running_losses["val_loss"]))
         print(f"fitted model {i}")

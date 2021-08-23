@@ -25,6 +25,8 @@ yp = pd.concat([yptr, ypte])
 #print(yp)
 
 x = (yp[1:]-mn['GPP'])/std['GPP']
+
+
 #print(len(x), len(y))
 splits = len(x.index.year.unique())
 #print(splits)
@@ -34,6 +36,7 @@ arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 150, 4)
 
 # architecture search
 layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 300, 'batchsize': 8, 'lr':0.01}, x, y, splits, "arSres")
+agrid.to_csv("./NresAS.csv")
 
 # Hyperparameter Search Space
 hpar_grid = HP.HParSearchSpace(150)
@@ -46,4 +49,4 @@ print( 'hyperparameters: ', hpars)
 
 grid.to_csv("./NresHP.csv")
 
-agrid.to_csv("./NresAS.csv")
+

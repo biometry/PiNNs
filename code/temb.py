@@ -103,7 +103,7 @@ def train(hpar, model_design, X, Y, data_dir='./'):
 
 
 
-def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=False, raw=None, mn = None, std = None):
+def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=False, raw=None, mn = None, std = None, res=None, ypreles=None):
     nepoch = hparams['epochs']
     batchsize = hparams['batchsize']
     if reg is not None:
@@ -139,6 +139,10 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=
             else:
                 train_set = TensorDataset(x_train, y_train, yp_train)
                 val_set = TensorDataset(x_val, y_val, yp_val)
+        elif res == 1 or res == 2:
+            yp_train, yp_val = torch.tensor(ypreles.loc[t_idx].to_numpy(), dtype=torch.float32), torch.tensor(ypreles.loc[v_idx].to_numpy(), dtype=torch.float32)
+            train_set = TensorDataset(x_train, y_train, yp_train)
+            val_set = TensorDataset(x_val, y_val, yp_val)
         else:
             train_set = TensorDataset(x_train, y_train)
             val_set = TensorDataset(x_val, y_val)
@@ -160,6 +164,10 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=
         
         if emb:
             model = models.EMB(X.shape[1], Y.shape[1], model_design['layersizes'], 27, 1)
+        elif res == 2:
+            model = models.RES(X.shape[1], Y.shape[1], model_design['layersizes'])
+        elif res == 1:
+            model = models.NMLP(yp_train.shape[1], Y.shape[1], model_design['layersizes'])
         else:
             model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
         print("INIMODEL", model)
@@ -176,7 +184,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=
             for step, train_data in enumerate(train_loader):
                 xt = train_data[0]
                 yt = train_data[1]
-                if reg is not None:
+                if reg is not None or res is not None:
                     yp = train_data[2]
                 if emb:
                     xr = train_data[3]
@@ -186,6 +194,10 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=
                 # forward
                 if emb:
                     y_hat, p = model(xt, xr, mn, std)
+                elif res == 1:
+                    y_hat = model(yp)
+                elif res == 2:
+                    y_hat = model(xt, yp)
                 else:
                     y_hat = model(xt)
                 if reg is not None and not emb:
@@ -214,11 +226,15 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=
                 for step, val_sample in enumerate(val_loader):
                     x_val = val_sample[0]
                     y_val = val_sample[1]
-                    if reg is not None:
+                    if reg is not None or res is not None:
                         yp_val = val_sample[2]
                     if emb:
                         xrv = val_sample[3]
                         y_hat_val, pv = model(x_val, xrv, mn, std)
+                    elif res == 1:
+                        y_hat_val = model(yp_val)
+                    elif res == 2:
+                        y_hat_val = model(x_val, y_val)
                     else:
                         y_hat_val = model(x_val)
 
