@@ -49,6 +49,7 @@ class EMB(nn.Module):
         print('Initializing Model')
         print(self.pnlayers, self.rnlayers)
         # Add Parameter Layers
+        
         for i in range(0, self.pnlayers+1):
             if i == 0:
                 self.parnet.add_module(f'P_input{i}', nn.Linear(input_dim, layersizes[0][i]))
@@ -78,14 +79,12 @@ class EMB(nn.Module):
 
         # Initialize weights of Parameter Layer
 
-    def forward(self, x, cin, mean, std):
+    def forward(self, x, cin, tp=None, sw=None):
         pinit = self.parnet(x)
         p = parameter_constraint(pinit.type(torch.float64))
-        #print("Parameters: ", p.shape, p[0], p[1])
-        ppreds = physical_forward(p.type(torch.float64), cin, mean, std)
-        #print("predicted_values", x)
+        ppreds = physical_forward(p.type(torch.float64), cin, tp, sw)
         y_hat = self.resnet(ppreds.type(torch.float32))
-        #print("y_hat", y_hat)
+        #print('PARAMETERS', ppreds.flatten())
 
         return y_hat, ppreds.type(torch.float32)
 
@@ -122,15 +121,12 @@ def parameter_constraint(parameters):
     #p28 = torch.tensor([-999.]*len(p1), dtype=torch.float64)
     #p29 = torch.tensor([-999.]*len(p1), dtype=torch.float64)
     #p30 = torch.tensor([-999.]*len(p1), dtype=torch.float64)
+    
+    return torch.stack((p1.flatten(), p2.flatten(), p3.flatten(), p4.flatten(), p5.flatten(), p6.flatten(), p7.flatten(), p8.flatten(), p9.flatten(), p10.flatten(), p11.flatten(), p12.flatten(), p13.flatten(), p14.flatten(), p15.flatten
+                        (), p16.flatten(), p17.flatten(), p18.flatten(), p19.flatten(), p20.flatten(), p21.flatten(), p22.flatten(), p23.flatten(), p24.flatten(), p25.flatten(), p26.flatten(), p27.flatten()), dim=1)
 
-    return torch.stack((p1.flatten(), p2.flatten(), p3.flatten(), p4.flatten(), p5.flatten(), p6.flatten(), p7.flatten(), p8.flatten(), p9.flatten(), p10.flatten(), p11.flatten(), p12.flatten(), p13.flatten(), p14.flatten(), p15.flatten(), p16.flatten(), p17.flatten(), p18.flatten(), p19.flatten(), p20.flatten(), p21.flatten(), p22.flatten(), p23.flatten(), p24.flatten(), p25.flatten(), p26.flatten(), p27.flatten()), dim=1)
 
-#torch.stack((p2.flatten(), p3.flatten(), p5.flatten(), p6.flatten(), p7.flatten(), p8.flatten(), p9.flatten(), p10.flatten(), p11.flatten(), p14.flatten()), dim=1)
-
-'''
-torch.stack((p1.flatten(), p2.flatten(), p3.flatten(), p4.flatten(), p5.flatten(), p6.flatten(), p7.flatten(), p8.flatten(), p9.flatten(), p10.flatten(), p11.flatten(), p12.flatten(), p13.flatten(), p14.flatten(), p15.flatten(), p16.flatten(), p17.flatten(), p18.flatten(), p19.flatten(), p20.flatten(), p21.flatten(), p22.flatten(), p23.flatten(), p24.flatten(), p25.flatten(), p26.flatten(), p27.flatten()), dim=1)
-'''
-def physical_forward(parameters, input_data, mean, std):
+def physical_forward(parameters, input_data, tp=None, sw=None):
     # extract Parameters
     p1 = torch.mean(parameters[..., 0:1], dtype=torch.float64)*400
     p2 = torch.mean(parameters[..., 1:2], dtype=torch.float64) #torch.tensor(0.45, dtype=torch.float64) #torch.mean(parameters[..., 1:2], dtype=torch.float64)
@@ -162,7 +158,7 @@ def physical_forward(parameters, input_data, mean, std):
     #p28 = torch.mean(parameters[..., 27:28], dtype=torch.float64)
     #p29 = torch.mean(parameters[..., 28:29], dtype=torch.float64)
     #p30 = torch.mean(parameters[..., 29:30], dtype=torch.float64)
-    
+ 
     p28 = torch.tensor(-999., dtype=torch.float64)
     p29 = torch.tensor(-999., dtype=torch.float64)
     p30 = torch.tensor(-999., dtype=torch.float64)
@@ -206,9 +202,44 @@ def physical_forward(parameters, input_data, mean, std):
     S = torch.tensor([0.]*leng, dtype=torch.float64, requires_grad=False)    
     
     op = preles.preles(PAR=PAR, TAir = TAir, VPD = VPD, Precip = Precip, CO2 = CO2, fAPAR = fAPAR, GPPmeas = GPPmeas, ETmeas = ETmeas, SWmeas = SWmeas, GPP = GPP, ET = ET, SW = SW, SOG = SOG, fS = fS, fD = fD, fW = fW, fE = fE, Throughfall = Throughfall, Interception = Interception, Snowmelt = Snowmelt, Drainage = Drainage, Canopywater = Canopywater, S = S, soildepth = p1, ThetaFC = p2,  ThetaPWP = p3  , tauDrainage = p4  , beta = p5  , tau = p6  , S0= p7  , Smax = p8  , kappa= p9  , gamma = p10  , soilthres = p11  , bCO2 = p12  , xCO2 = p13  , ETbeta = p14  , ETkappa = p15  , ETchi = p16  , ETsoilthres = p17  , ETnu = p18  , MeltCoef = p19  , I0 = p20  , CWmax = p21  , SnowThreshold = p22  , T_0 = p23  , SWinit = p24  , CWinit = p25  , SOGinit = p26  , Sinit = p27  , t0 = p28  , tcrit = p29  , tsumcrit = p30  , etmodel = control  , LOGFLAG = logflag, NofDays = NofDays  , day = DOY  , transp = transp  , evap = evap  , fWE = fWE)
-    
-    GPP = (op[0]-mean['GPP'])/std['GPP']
-    ET = op[1]#(op[1]-mean['ET'])/std['ET']
-    #print('gpp', GPP)
-    return GPP.unsqueeze(-1) #torch.stack((GPP, ET), dim=1)
 
+    GPP = op[0]
+    ET = op[1]
+    SW = op[2]
+    if tp is None:
+        out = GPP.unsqueeze(-1)
+    else:
+        out = torch.stack((GPP.flatten(), ET.flatten(), (SW.flatten()-sw[0])/sw[1]), dim=1)
+        
+    #print(out)
+    return out
+
+
+
+
+class RES(nn.Module):
+
+    def __init__(self, input_dim, output_dim, layersizes):
+        super(RES, self).__init__()
+        
+        self.layers = nn.Sequential()
+        self.nlayers = len(layersizes)
+        print('Initializing model')
+        for i in range(0, self.nlayers+1):
+            if i == 0:
+                self.layers.add_module(f'input{i}', nn.Linear(input_dim, layersizes[i]))
+                self.layers.add_module(f'activation{i}', nn.ReLU())
+                print('adding input l', input_dim, layersizes[i])
+            elif i == (self.nlayers):
+                self.layers.add_module(f'output{i}', nn.Linear(layersizes[i-1], output_dim))
+                print('adding output l', layersizes[i-1], output_dim)
+            elif i and i < self.nlayers:
+                self.layers.add_module(f'fc{i}', nn.Linear(layersizes[i-1], layersizes[i]))
+                self.layers.add_module(f'activation{i}', nn.ReLU())
+                print('adding hidden l', layersizes[i-1], layersizes[i])
+                
+                
+    def forward(self, x, yphy):
+        out = self.layers(x)
+                    
+        return out + yphy

@@ -12,115 +12,148 @@ import os
 from torch.utils.data import TensorDataset, DataLoader
 from torch import Tensor
 import csv
-import training
+import temb
+import cv
 
 # Load hyytiala
-x, y, mn, std, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
+x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
+y = y.to_frame()
 
-train_x = x[x.index.year != 2008]
-train_y = y[y.index.year != 2008]
+print(x.index.year.unique())
+train_x = x[~x.index.year.isin([2007,2008])]
+train_y = y[~y.index.year.isin([2007,2008])]
+splits = len(train_x.index.year.unique())
 
 test_x = x[x.index.year == 2008]
 test_y = y[y.index.year == 2008]
 train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
 test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
 
-eval_set = {"test_x": test_x.to_numpy(), "test_y": test_y.to_numpy()}
 
-hparams = {'lr': 1e-3,
-           'batchsize': 32,
-           'epochs': 5000}
-model_design = {'layersizes': [4, 16]}
-state = "MLPmodel.pth"
+# Load results from NAS
+# Architecture
+res_as = pd.read_csv("NmlpAS.csv")
+a = res_as.loc[res_as.val_loss.idxmin()][1:5]
+b = a.to_numpy()
+layersizes = list(b[np.isfinite(b)].astype(int))
+print('layersizes', layersizes)
 
-training.cv(hparams, model_design, None, train_x, train_y, eval_set, data_dir="./data/", splits=7)
+model_design = {'layersizes': layersizes}
+
+res_hp = pd.read_csv("NmlpHP.csv")
+a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+b = a.to_numpy()
+bs = b[1]
+
+res_hp = pd.read_csv("mlp_lr.csv")
+a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+b = a.to_numpy()
+lr = b[0]
 
 
 
+hp = {'epochs': 5000,
+      'batchsize': int(bs),
+      'lr': lr}
+print('HYPERPARAMETERS', hp)
+data_dir = "./data/"
+data = "mlp"
+#print('DATA', train_x, train_y)
+#print('TX', train_x, train_y)
+tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False)
+#tloss = temb.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
+#tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
+#print("LOSS", tloss)
+#pd.DataFrame(tloss, index=[0]).to_csv('mlp_train2.csv')
 
 
+# Evaluation
+mse = nn.MSELoss()
+mae = nn.L1Loss()
+x_train, y_train = torch.tensor(train_x.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32)
+x_test, y_test = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
 
+train_rmse = []
+train_mae = []
+test_rmse = []
+test_mae = []
 
-
-
-
-
-
-
+preds_train = {}
+preds_test = {}
+'''
+model = models.NMLP(x_train.shape[1], y_train.shape[1], model_design['layersizes'])
+model.load_state_dict(torch.load(''.join((data_dir, 'modelev2.pth'))))
+model.eval()
+with torch.no_grad():
+    train = model(x_train)
+    test = model(x_test)
+    print(mse(train, y_train))
+    print(mae(test, y_test))
+    print(train)
+    print(test)
 
 '''
-# split in train and test
-train_x = x[x.index.year != 2012]
-train_y = y[y.index.year != 2012]
 
-test_x = x[x.index.year == 2012]
-test_y = y[y.index.year == 2012]
-
-train_set = TensorDataset(torch.tensor(train_x.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32))
-
-# Initialize model
-lr = 1e-3
-batchsize = 32
-n_epoch = 5000
-model = models.NMLP(train_x.shape[1], train_y.shape[1], layersizes=[4, 16])
-model.load_state_dict(torch.load("MLPmodel.pth"))
-
-
-criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=lr)
-
-train_set_size = len(train_set)
-sample_id = list(range(train_set_size))
-train_sampler = torch.utils.data.sampler.SequentialSampler(sample_id[:int(train_set_size // 100 * 80)])
-val_sampler = torch.utils.data.sampler.SequentialSampler(sample_id[int(train_set_size // 100 * 80):])
-
-train_loader = torch.utils.data.DataLoader(train_set, batch_size=batchsize, sampler = train_sampler, shuffle=False)
-
-
-val_loader = torch.utils.data.DataLoader(train_set, batch_size=batchsize, sampler=val_sampler, shuffle=False)
-train_loss = []
-val_loss = []
-
-for i in range(n_epoch):
-    model.train()
-    batch_diff = []
-    batch_loss = []
-    for step, train_data in enumerate(train_loader):
-        xt = train_data[0]
-        yt = train_data[1]
-        
-        
-        # zero parameter gradients
-        optimizer.zero_grad()
-        
-        # forward
-        y_hat = model(xt)
-        loss = criterion(y_hat, yt)
-        print('loss', loss)
-        # backward
-        loss.backward()
-        optimizer.step()
-        
-        batch_loss.append(loss.item())
-        
-    # results per epoch
-    train_loss.append(sum(batch_loss)/len(batch_loss))
-    print(train_loss)
-    e_bl = []
+for i in range(splits):
+    i += 1
+    #import model
+    model = models.NMLP(x.shape[1], y.shape[1], model_design['layersizes'])
+    model.load_state_dict(torch.load(''.join((data_dir, f"mlp_model{i}.pth"))))
     model.eval()
     with torch.no_grad():
-        for step, val_sample in enumerate(val_loader):
-            x_v = val_sample[0]
-            y_v = val_sample[1]
+        p_train = model(x_train)
+        p_test = model(x_test)
+        preds_train.update({f'train_mlp{i}': p_train.flatten().numpy()})
+        preds_test.update({f'test_mlp{i}': p_test.flatten().numpy()})
+        train_rmse.append(mse(p_train, y_train).tolist())
+        train_mae.append(mae(p_train, y_train).tolist())
+        test_rmse.append(mse(p_test, y_test).tolist())
+        test_mae.append(mae(p_test, y_test).tolist())
 
-            y_hat_v = model(x_v)
-            eloss = criterion(y_hat_v, y_v)
-            print("eval_loss", eloss)
-            e_bl.append(eloss.item())
+performance = {'train_RMSE': train_rmse,
+               'train_MAE': train_mae,
+               'test_RMSE': test_rmse,
+               'test_mae': test_mae}
 
-    val_loss.append(sum(e_bl)/len(e_bl))
 
-torch.save(model.state_dict(), "MLPft.pth")
-pd.DataFrame({"train": train_loss, "valid": val_loss}).to_csv("./lossEMBbNAS.csv")
+print(preds_train)
+
+
+pd.DataFrame.from_dict(performance).to_csv('mlp_eval_performance2.csv')
+pd.DataFrame.from_dict(preds_train).to_csv('mlp_eval_preds_train2.csv')
+pd.DataFrame.from_dict(preds_test).to_csv('mlp_eval_preds_test2.csv')
+
+
 
 '''
+with open('mlp_eval_performance.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
+    w = csv.DictWriter(f, performance.keys())
+    w.writeheader()
+    w.writerow(performance)
+
+
+with open('mlp_eval_preds.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
+    w = csv.DictWriter(f, preds.keys())
+    w.writeheader()
+    w.writerow(preds)
+'''
+    
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

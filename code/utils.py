@@ -32,7 +32,7 @@ def standardize(var, scaling=None):
         m = scaling[0]
         std = scaling[1]
 
-    return out, m, std
+    return out
 
 
 def encode_doy(doy):
@@ -80,20 +80,26 @@ def read_in(type, data_dir=None):
         out = dataset.ProfoundData(type).__getitem__()
     # subset station
     if type == 'NAS' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'soro.csv')))
+        out = pd.read_csv(''.join((data_dir, 'bilykriz.csv')))
     elif type == 'NASp' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'soro_p.csv')))
+        out = pd.read_csv(''.join((data_dir, 'bilykriz.csv')))
     elif type == 'validation' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'hyytiala.csv')))
+    elif type.startswith('exp2') and data_dir != 'load':
+        out = pd.read_csv(''.join((data_dir, 'data_exp2.csv')))
     return out
 
 
 
 def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
     if data_split.endswith('p'):
-        xcols = ['GPPp', 'ETp']
-        
+        xcols = ['GPPp', 'ETp', 'SWp']
+        ypcols = None
+    elif data_split == "exp2":
+        ypcols = ['GPPp', 'ETp', 'SWp']
+        xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
     else:
+        ypcols = None
         xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
 
     ycols = ['GPP']
@@ -104,18 +110,34 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
 
     data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
     date = data['date']
-    data, mn, sd = standardize(data.drop(['CO2', 'date', 'DOY'], axis=1))
+    y = data['GPP']
+
+    if ypcols:
+        yp = data[ypcols]
+        data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1))
+    else:
+        yp = None
+        data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
 
     if history:
-        x, y = add_history(data[xcols], data[ycols], history, batch_size)
+        print(data, xcols)
+        x, y = add_history(data[xcols], y, history, batch_size)
     else:
-        x, y = data[xcols], data[ycols]
+        x, y = data[xcols], y
 
 
-    
     x.index = pd.DatetimeIndex(date[history:])
     y.index = pd.DatetimeIndex(date[history:])
-    return x, y, mn, sd, rawdata
+    
+    if yp is not None:
+        yp = yp[history:]
+        yp.index = pd.DatetimeIndex(date[history:])
+        out = x, y, rawdata, yp
+        
+    else:
+        out = x, y, rawdata
+    
+    return out
 
 
 
