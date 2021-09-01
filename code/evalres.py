@@ -72,7 +72,8 @@ hp = {'epochs': 5000,
 
 data_dir = "./data/"
 data = "res"
-#tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, mn=None, std=None, res=1, ypreles=yp_tr)
+tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, mn=None, std=None, res=1, ypreles=yp_tr)
+pd.DataFrame.from_dict(tloss).to_csv('res_train.csv')
 
 # Evaluation
 mse = nn.MSELoss()
@@ -96,8 +97,8 @@ for i in range(splits):
     with torch.no_grad():
         p_train = model(x_train)
         p_test = model(x_test)
-        preds_tr.update({f'train_reg{i}':  p_train.flatten().numpy()*std['GPP']+mn['GPP']})
-        preds_te.update({f'test_reg{i}':  p_test.flatten().numpy()*std['GPP']+mn['GPP']})
+        preds_tr.update({f'train_res{i}':  p_train.flatten().numpy()*std['GPP']+mn['GPP']})
+        preds_te.update({f'test_res{i}':  p_test.flatten().numpy()*std['GPP']+mn['GPP']})
         train_rmse.append(mse(p_train, y_train).tolist())
         train_mae.append(mae(p_train, y_train).tolist())
         test_rmse.append(mse(p_test, y_test).tolist())

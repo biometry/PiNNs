@@ -14,7 +14,7 @@ from torch import Tensor
 import csv
 import temb
 
-x, y, mn, std, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
+x, y, xr = utils.loaddata('validation', 1, dir="./data/", raw=True)
 
 yp_tr = pd.read_csv("./data/train_hyt.csv")
 yp_te = pd.read_csv("./data/test_hyt.csv")
@@ -23,15 +23,14 @@ yp_te.index = pd.DatetimeIndex(yp_te['date'])
 yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp']), axis=1)
 ypte = yp_te.drop(yp_te.columns.difference(['GPPp']), axis=1)
 #yp = yptr.merge(ypte, how="outer")
-
+y = y.to_frame()
 #print(len(yptr), len(ypte))
 #print(yptr, ypte)
 #yp = pd.concat([yptr, ypte])
 #print(yp)
 
-reg_tr = (yptr[1:]-mn['GPP'])/std['GPP']
-reg_te = (ypte[1:]-mn['GPP'])/std['GPP']
-
+reg_tr = yptr[1:]
+reg_te = ypte[1:]
 train_x = x[x.index.year != 2008]
 train_y = y[y.index.year != 2008]
 splits = len(train_x.index.year.unique())
@@ -49,11 +48,11 @@ print("train_x", train_x, reg_tr)
 
 # Load results from NAS
 # Architecture
-#res_as = pd.read_csv("Nreg.csv")
-#a = res_as.loc[res_as.val_loss.idxmin()][1:5]
-#b = a.to_numpy(dtype=np.int)
-#layersizes = list(b[np.isfinite(b)])
-layersizes = [4, 32, 2, 16]
+res_as = pd.read_csv("NregAS.csv")
+a = res_as.loc[res_as.val_loss.idxmin()][1:5]
+b = a.to_numpy()
+layersizes = list(b[np.isfinite(b)].astype(int))
+#layersizes = [4, 32, 2, 16]
 print('layersizes', layersizes)
 
 model_design = {'layersizes': layersizes}
@@ -69,11 +68,11 @@ hp = {'epochs': 5000,
       'batchsize': int(bs),
       'lr': lr,
       'eta': eta}
-
+print('Hyperp', hp)
 data_dir = "./data/"
 data = "reg"
-#tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=reg_tr, emb=False, mn=None, std=None)
-
+tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=reg_tr, emb=False)
+pd.DataFrame.from_dict(tloss).to_csv('reg_train.csv')
 # Evaluation
 mse = nn.MSELoss()
 mae = nn.L1Loss()
@@ -96,8 +95,8 @@ for i in range(splits):
     with torch.no_grad():
         p_train = model(x_train)
         p_test = model(x_test)
-        preds_tr.update({f'train_reg{i}':  p_train.flatten().numpy()*std['GPP']+mn['GPP']})
-        preds_te.update({f'test_reg{i}':  p_test.flatten().numpy()*std['GPP']+mn['GPP']})
+        preds_tr.update({f'train_reg{i}':  p_train.flatten().numpy()})
+        preds_te.update({f'test_reg{i}':  p_test.flatten().numpy()})
         train_rmse.append(mse(p_train, y_train).tolist())
         train_mae.append(mae(p_train, y_train).tolist())
         test_rmse.append(mse(p_test, y_test).tolist())

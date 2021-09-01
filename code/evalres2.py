@@ -71,7 +71,8 @@ hp = {'epochs': 5000,
 
 data_dir = "./data/"
 data = "res2"
-#tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, mn=None, std=None, res=2, ypreles=yp_tr)
+tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, mn=None, std=None, res=2, ypreles=yp_tr)
+pd.DataFrame.from_dict(tloss).to_csv('res2_test.csv')
 
 # Evaluation
 mse = nn.MSELoss()

@@ -32,7 +32,7 @@ def standardize(var, scaling=None):
         m = scaling[0]
         std = scaling[1]
 
-    return out, m, std
+    return out
 
 
 def encode_doy(doy):
@@ -85,6 +85,8 @@ def read_in(type, data_dir=None):
         out = pd.read_csv(''.join((data_dir, 'soro_p.csv')))
     elif type == 'validation' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'hyytiala.csv')))
+    elif type == 'exp2' and data_dir != 'load':
+        out = pd.read_csv(''.join((data_dir, 'data_exp2.csv')))
     return out
 
 
@@ -104,18 +106,20 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
 
     data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
     date = data['date']
-    data, mn, sd = standardize(data.drop(['CO2', 'date', 'DOY'], axis=1))
+    y = data['GPP']
+    data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
 
     if history:
-        x, y = add_history(data[xcols], data[ycols], history, batch_size)
+        print(data, xcols)
+        x, y = add_history(data[xcols], y, history, batch_size)
     else:
-        x, y = data[xcols], data[ycols]
+        x, y = data[xcols], y
 
 
     
     x.index = pd.DatetimeIndex(date[history:])
     y.index = pd.DatetimeIndex(date[history:])
-    return x, y, mn, sd, rawdata
+    return x, y, rawdata
 
 
 

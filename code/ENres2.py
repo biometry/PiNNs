@@ -9,7 +9,7 @@ import torch
 import pandas as pd
 import numpy as np
 
-x, y, mn, std, xt = utils.loaddata('NAS', 0, dir="./data/", raw=True)
+x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
 
 yp_tr = pd.read_csv("./data/train_soro.csv")
 yp_te = pd.read_csv("./data/test_soro.csv")
@@ -22,22 +22,23 @@ ypte = yp_te.drop(yp_te.columns.difference(['GPPp']), axis=1)
 #print(len(yptr), len(ypte))
 #print(yptr, ypte)
 yp = pd.concat([yptr, ypte])
-#print(yp)
 
-ypreles = (yp-mn['GPP'])/std['GPP']
+ypreles = yp[1:]
 #print(len(x), len(y))
 splits = len(x.index.year.unique())
 #print(splits)
+y = y.to_frame()
 x.index, y.index, ypreles.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(ypreles))
 
-arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 150, 4)
+print("x",x,"y",y)
+arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 800, 4)
 
 # architecture search
-layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 300, 'batchsize': 8, 'lr':0.01}, x, y, splits, "arSres2", res=2, ypreles=ypreles)
+layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.01}, x, y, splits, "arSres2", res=2, ypreles=ypreles)
 agrid.to_csv("./NresAS2.csv")
 
 # Hyperparameter Search Space
-hpar_grid = HP.HParSearchSpace(150)
+hpar_grid = HP.HParSearchSpace(800)
 
 # Hyperparameter search
 hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpres2", res=2, ypreles=ypreles)

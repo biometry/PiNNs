@@ -26,9 +26,10 @@ def ArchitectureSearchSpace(input_size, output_size, grid_size, max_layers, emb=
             grid.append(nets)
         elif not emb and layer_size not in grid:
             grid.append(layer_size)
+    print("AS Grid", len(grid))
     return grid
 
-def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False, raw=None, mn =None, std = None, res=None, ypreles=None):
+def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False):
 
     mse_train = []
     mse_val = []
@@ -36,7 +37,10 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
     for i in range(len(grid)):
         model_design = {"layersizes": grid[i]}
         print(grid)
-        running_losses = temb.train_cv(parameters, model_design, X, Y, "./data/" , splits, data, reg, emb, raw, mn, std, res, ypreles) # train model
+        if exp == 2:
+            running_losses = temb.train_cv(parameters, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, exp=exp, hp=hp) # train model
+        else:
+            running_losses = temb.train(parameters, model_design, X, Y, "./data/", splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles)
         mse_train.append(np.mean(running_losses["train_loss"]))
         mse_val.append(np.mean(running_losses["val_loss"]))
         print(f"fitted model {i}")
@@ -51,11 +55,15 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
     return layersizes, df
 
 
-def HParSearchSpace(gridsize, reg=False):
+def HParSearchSpace(gridsize, reg=False, emb=False):
     grid = []
     for i in range(gridsize):
-        learning_rate = random.choice(np.round(np.linspace(0.0001, 0.1),4))
-        batchsize = random.choice([2, 4, 8, 16, 32, 64])
+        if emb:
+            learning_rate = random.choice([1e-1, 9e-2, 8e-2, 7e-2, 6e-2, 5e-2, 4e-2, 3e-2, 2e-2, 1e-2, 9e-3, 8e-3, 7e-3, 6e-3, 5e-3, 4e-3, 3e-3, 2e-3, 1e-3, 9e-4, 8e-4, 7e-4, 6e-4, 5e-4, 4e-4, 3e-4, 2e-4, 1e-4])
+            batchsize = random.choice([8, 16, 32, 64, 128])
+        else:
+            learning_rate = random.choice(np.round(np.linspace(0.0001, 0.1),4))
+            batchsize = random.choice([2, 4, 8, 16, 32, 64])
         if reg is not False:
             r = random.choice(np.round(np.linspace(0.000, 1.000, 1000), 4))
             if [learning_rate, batchsize, r] not in grid:
@@ -63,11 +71,12 @@ def HParSearchSpace(gridsize, reg=False):
         else:
             if [learning_rate, batchsize] not in grid:
                 grid.append([learning_rate, batchsize])
+    print('HP Grid', grid)
     return grid
 
 
 
-def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=None, mn = None, std = None, res=None, ypreles=None):
+def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=None, res=None, ypreles=None, exp=None, hp=False):
 
     model_design = {"layersizes": layersizes}
     mse_train = []
@@ -86,8 +95,10 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
                        "lr": grid[i][0]
                        }
                        
-
-        running_losses = temb.train_cv(hparams, model_design, X, Y, "./data/" , splits, data, reg, emb, raw, mn, std, res, ypreles)
+        if exp == 2:
+            running_losses = temb.train_cv(hparams, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, exp=exp, hp=hp)
+        else:
+            running_losses = temb.train(hparams, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles)
         mse_train.append(np.mean(running_losses["train_loss"]))
         mse_val.append(np.mean(running_losses["val_loss"]))
         print(f"fitted model {i}")
