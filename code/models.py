@@ -79,21 +79,13 @@ class EMB(nn.Module):
 
         # Initialize weights of Parameter Layer
 
-<<<<<<< HEAD
+
     def forward(self, x, cin, tp=None, sw=None):
         pinit = self.parnet(x)
         p = parameter_constraint(pinit.type(torch.float64))
         ppreds = physical_forward(p.type(torch.float64), cin, tp, sw)
         y_hat = self.resnet(ppreds.type(torch.float32))
         #print('PARAMETERS', ppreds.flatten())
-=======
-    def forward(self, x, cin):
-        pinit = self.parnet(x)
-        p = parameter_constraint(pinit.type(torch.float64))
-        ppreds = physical_forward(p.type(torch.float64), cin)
-        y_hat = self.resnet(ppreds.type(torch.float32))
-        
->>>>>>> origin/main
 
         return y_hat, ppreds.type(torch.float32)
 
@@ -135,14 +127,9 @@ def parameter_constraint(parameters):
                         (), p16.flatten(), p17.flatten(), p18.flatten(), p19.flatten(), p20.flatten(), p21.flatten(), p22.flatten(), p23.flatten(), p24.flatten(), p25.flatten(), p26.flatten(), p27.flatten()), dim=1)
 
 
-<<<<<<< HEAD
+
 def physical_forward(parameters, input_data, tp=None, sw=None):
-=======
-'''
-torch.stack((p1.flatten(), p2.flatten(), p3.flatten(), p4.flatten(), p5.flatten(), p6.flatten(), p7.flatten(), p8.flatten(), p9.flatten(), p10.flatten(), p11.flatten(), p12.flatten(), p13.flatten(), p14.flatten(), p15.flatten(), p16.flatten(), p17.flatten(), p18.flatten(), p19.flatten(), p20.flatten(), p21.flatten(), p22.flatten(), p23.flatten(), p24.flatten(), p25.flatten(), p26.flatten(), p27.flatten()), dim=1)
-'''
-def physical_forward(parameters, input_data):
->>>>>>> origin/main
+
     # extract Parameters
     p1 = torch.mean(parameters[..., 0:1], dtype=torch.float64)*400
     p2 = torch.mean(parameters[..., 1:2], dtype=torch.float64) #torch.tensor(0.45, dtype=torch.float64) #torch.mean(parameters[..., 1:2], dtype=torch.float64)
@@ -218,7 +205,7 @@ def physical_forward(parameters, input_data):
     S = torch.tensor([0.]*leng, dtype=torch.float64, requires_grad=False)    
     
     op = preles.preles(PAR=PAR, TAir = TAir, VPD = VPD, Precip = Precip, CO2 = CO2, fAPAR = fAPAR, GPPmeas = GPPmeas, ETmeas = ETmeas, SWmeas = SWmeas, GPP = GPP, ET = ET, SW = SW, SOG = SOG, fS = fS, fD = fD, fW = fW, fE = fE, Throughfall = Throughfall, Interception = Interception, Snowmelt = Snowmelt, Drainage = Drainage, Canopywater = Canopywater, S = S, soildepth = p1, ThetaFC = p2,  ThetaPWP = p3  , tauDrainage = p4  , beta = p5  , tau = p6  , S0= p7  , Smax = p8  , kappa= p9  , gamma = p10  , soilthres = p11  , bCO2 = p12  , xCO2 = p13  , ETbeta = p14  , ETkappa = p15  , ETchi = p16  , ETsoilthres = p17  , ETnu = p18  , MeltCoef = p19  , I0 = p20  , CWmax = p21  , SnowThreshold = p22  , T_0 = p23  , SWinit = p24  , CWinit = p25  , SOGinit = p26  , Sinit = p27  , t0 = p28  , tcrit = p29  , tsumcrit = p30  , etmodel = control  , LOGFLAG = logflag, NofDays = NofDays  , day = DOY  , transp = transp  , evap = evap  , fWE = fWE)
-<<<<<<< HEAD
+
 
     GPP = op[0]
     ET = op[1]
@@ -232,17 +219,6 @@ def physical_forward(parameters, input_data):
     return out
 
 
-
-=======
-    
-    GPP = op[0]
-    ET = op[1]
-    
-    return GPP.unsqueeze(-1)
-
-
-
->>>>>>> origin/main
 
 class RES(nn.Module):
 

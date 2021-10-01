@@ -85,11 +85,8 @@ def read_in(type, data_dir=None):
         out = pd.read_csv(''.join((data_dir, 'bilykriz.csv')))
     elif type == 'validation' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'hyytiala.csv')))
-<<<<<<< HEAD
+
     elif type.startswith('exp2') and data_dir != 'load':
-=======
-    elif type == 'exp2' and data_dir != 'load':
->>>>>>> origin/main
         out = pd.read_csv(''.join((data_dir, 'data_exp2.csv')))
     return out
 
@@ -115,7 +112,6 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
     data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
     date = data['date']
     y = data['GPP']
-<<<<<<< HEAD
 
     if ypcols:
         yp = data[ypcols]
@@ -123,20 +119,8 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
     else:
         yp = None
         data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
-=======
+
     data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
->>>>>>> origin/main
-
-    if history:
-        print(data, xcols)
-        x, y = add_history(data[xcols], y, history, batch_size)
-    else:
-        x, y = data[xcols], y
-
-
-    x.index = pd.DatetimeIndex(date[history:])
-    y.index = pd.DatetimeIndex(date[history:])
-<<<<<<< HEAD
     
     if yp is not None:
         yp = yp[history:]
@@ -147,9 +131,6 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
         out = x, y, rawdata
     
     return out
-=======
-    return x, y, rawdata
->>>>>>> origin/main
 
 
 

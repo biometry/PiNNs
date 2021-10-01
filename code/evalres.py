@@ -14,23 +14,18 @@ from torch import Tensor
 import csv
 import temb
 
-<<<<<<< HEAD
+
 x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
-=======
-x, y, mn, std, xt = utils.loaddata('validation', 0, dir="./data/", raw=True)
->>>>>>> origin/main
+
 
 yp_tr = pd.read_csv("./data/train_hyt.csv")
 yp_te = pd.read_csv("./data/test_hyt.csv")
 yp_tr.index = pd.DatetimeIndex(yp_tr['date'])
 yp_te.index = pd.DatetimeIndex(yp_te['date'])
-<<<<<<< HEAD
+
 yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
 ypte = yp_te.drop(yp_te.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
-=======
-yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp']), axis=1)
-ypte = yp_te.drop(yp_te.columns.difference(['GPPp']), axis=1)
->>>>>>> origin/main
+
 #yp = yptr.merge(ypte, how="outer")
 
 #print(len(yptr), len(ypte))
@@ -38,7 +33,7 @@ ypte = yp_te.drop(yp_te.columns.difference(['GPPp']), axis=1)
 #yp = pd.concat([yptr, ypte])
 #print(yp)
 
-<<<<<<< HEAD
+
 n = [1,1]
 x_tr, n = utils.add_history(yptr, n, 1)
 x_te, n = utils.add_history(ypte, n, 1)
@@ -54,30 +49,15 @@ test_x = x_te[x_te.index.year == 2008]
 test_y = y[y.index.year == 2008][1:]
 
 print(train_x, train_y)
-=======
-yp_tr = (yptr-mn['GPP'])/std['GPP']
-yp_te = (ypte-mn['GPP'])/std['GPP']
 
-train_x = x[x.index.year != 2008]
-train_y = y[y.index.year != 2008]
-splits = len(train_x.index.year.unique())
-
-test_x = x[x.index.year == 2008]
-test_y = y[y.index.year == 2008]
-
->>>>>>> origin/main
 
 #print(len(x), len(y))
 splits = len(train_x.index.year.unique())
 #print(splits)
-<<<<<<< HEAD
+
 train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
 test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
 
-=======
-train_x.index, train_y.index, yp_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(yp_tr)) 
-test_x.index, test_y.index, yp_te.index = np.arange(0, len(test_y)), np.arange(0, len(test_y)), np.arange(0, len(yp_te))
->>>>>>> origin/main
 print("train_x", train_x)
 
 # Load results from NAS
@@ -105,24 +85,16 @@ hp = {'epochs': 5000,
 
 data_dir = "./data/"
 data = "res"
-<<<<<<< HEAD
+
 tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, res=1, ypreles=None)
 #pd.DataFrame.from_dict(tloss).to_csv('res_train.csv')
-=======
-tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, mn=None, std=None, res=1, ypreles=yp_tr)
-pd.DataFrame.from_dict(tloss).to_csv('res_train.csv')
->>>>>>> origin/main
 
 # Evaluation
 mse = nn.MSELoss()
 mae = nn.L1Loss()
-<<<<<<< HEAD
 x_train, y_train = torch.tensor(train_x.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32)
 x_test, y_test = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
-=======
-x_train, y_train = torch.tensor(yp_tr.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32)
-x_test, y_test = torch.tensor(yp_te.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
->>>>>>> origin/main
+
 
 train_rmse = []
 train_mae = []
@@ -134,23 +106,14 @@ preds_te = {}
 for i in range(splits):
     i += 1
     #import model
-<<<<<<< HEAD
     model = models.NMLP(x_train.shape[1], y.shape[1], model_design['layersizes'])
-=======
-    model = models.NMLP(yp_tr.shape[1], y.shape[1], model_design['layersizes'])
->>>>>>> origin/main
     model.load_state_dict(torch.load(''.join((data_dir, f"res_model{i}.pth"))))
     model.eval()
     with torch.no_grad():
         p_train = model(x_train)
         p_test = model(x_test)
-<<<<<<< HEAD
         preds_tr.update({f'train_res{i}':  p_train.flatten().numpy()})
         preds_te.update({f'test_res{i}':  p_test.flatten().numpy()})
-=======
-        preds_tr.update({f'train_res{i}':  p_train.flatten().numpy()*std['GPP']+mn['GPP']})
-        preds_te.update({f'test_res{i}':  p_test.flatten().numpy()*std['GPP']+mn['GPP']})
->>>>>>> origin/main
         train_rmse.append(mse(p_train, y_train).tolist())
         train_mae.append(mae(p_train, y_train).tolist())
         test_rmse.append(mse(p_test, y_test).tolist())

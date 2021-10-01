@@ -12,10 +12,7 @@ import os
 from torch.utils.data import TensorDataset, DataLoader
 from torch import Tensor
 import csv
-<<<<<<< HEAD
 import cvreg
-=======
->>>>>>> origin/main
 import temb
 
 x, y, xr = utils.loaddata('validation', 1, dir="./data/", raw=True)
@@ -26,11 +23,7 @@ yp_tr.index = pd.DatetimeIndex(yp_tr['date'])
 yp_te.index = pd.DatetimeIndex(yp_te['date'])
 yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp']), axis=1)
 ypte = yp_te.drop(yp_te.columns.difference(['GPPp']), axis=1)
-<<<<<<< HEAD
 
-
-=======
->>>>>>> origin/main
 #yp = yptr.merge(ypte, how="outer")
 y = y.to_frame()
 #print(len(yptr), len(ypte))
@@ -40,13 +33,10 @@ y = y.to_frame()
 
 reg_tr = yptr[1:]
 reg_te = ypte[1:]
-<<<<<<< HEAD
+
 train_x = x[~x.index.year.isin([2007,2008])]
 train_y = y[~y.index.year.isin([2007,2008])]
-=======
-train_x = x[x.index.year != 2008]
-train_y = y[y.index.year != 2008]
->>>>>>> origin/main
+
 splits = len(train_x.index.year.unique())
 
 test_x = x[x.index.year == 2008]
@@ -80,7 +70,6 @@ eta = b[2]
 
 hp = {'epochs': 5000,
       'batchsize': int(bs),
-<<<<<<< HEAD
       'lr': 1e-4,
       'eta': eta}
 print('Hyperp', hp)
@@ -95,18 +84,6 @@ print(tloss)
 mse = nn.MSELoss()
 mae = nn.L1Loss()
 
-=======
-      'lr': lr,
-      'eta': eta}
-print('Hyperp', hp)
-data_dir = "./data/"
-data = "reg"
-tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=reg_tr, emb=False)
-pd.DataFrame.from_dict(tloss).to_csv('reg_train.csv')
-# Evaluation
-mse = nn.MSELoss()
-mae = nn.L1Loss()
->>>>>>> origin/main
 x_train, y_train, tr_reg = torch.tensor(train_x.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32), torch.tensor(reg_tr.to_numpy(), dtype=torch.float32)
 x_test, y_test, te_reg = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32), torch.tensor(reg_te.to_numpy(), dtype=torch.float32)
 
@@ -120,11 +97,7 @@ preds_te = {}
 for i in range(splits):
     i += 1
     #import model
-<<<<<<< HEAD
     model = models.NMLP(x_train.shape[1], y_train.shape[1], model_design['layersizes'])
-=======
-    model = models.NMLP(x.shape[1], y.shape[1], model_design['layersizes'])
->>>>>>> origin/main
     model.load_state_dict(torch.load(''.join((data_dir, f"reg_model{i}.pth"))))
     model.eval()
     with torch.no_grad():

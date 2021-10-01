@@ -9,23 +9,21 @@ import torch
 import pandas as pd
 import numpy as np
 
-<<<<<<< HEAD
+
 x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True)
-=======
-x, y, xt = utils.loaddata('exp2', 1, dir="./data/", raw=True)
->>>>>>> origin/main
+
 
 
 # select NAS data
 print(x.index)
 x = x[x.index.year == 2004]
 y = y[y.index.year == 2004]
-<<<<<<< HEAD
+
 x = x.drop(pd.DatetimeIndex(['2004-01-01']))
 y = y.drop(pd.DatetimeIndex(['2004-01-01']))
 print(x,y)
-=======
->>>>>>> origin/main
+
+
 
 splits = 8
 print(splits)
@@ -37,11 +35,7 @@ x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
 arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 800, 4)
 
 # architecture search
-<<<<<<< HEAD
 layersizes, argrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001}, x, y, splits, "EX2_arSmlp", exp=2, hp=True)
-=======
-layersizes, argrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.01}, x, y, splits, "EX2_arSmlp", exp=2, hp=True)
->>>>>>> origin/main
 argrid.to_csv("./EX2_mlpAS.csv")
 
 # Hyperparameter Search Space
