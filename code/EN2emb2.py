@@ -24,13 +24,13 @@ print(x, y, yp)
 splits = 8
 x.index, y.index, yp.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(yp))
 
-arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 140, 4, emb=True)
+#arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 140, 4, emb=True)
 
 # architecture search
-layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001, 'eta':0.2}, x, y, splits, "EX2_arSemb2", exp=2, hp=True, emb=True, reg=yp, raw = xt, embtp=2, sw=(swmn, swstd))
-ag.to_csv("./EX2_emb2AS.csv")
+#layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001, 'eta':0.2}, x, y, splits, "EX2_arSemb2", exp=2, hp=True, emb=True, reg=yp, raw = xt, embtp=2, sw=(swmn, swstd))
+#ag.to_csv("./EX2_emb2AS.csv")
 
-#layersizes = [4, 32, 2, 16]
+layersizes = [[8, 8, 32], [4, 8, 8]]
 # Hyperparameter Search Space
 hpar_grid = HP.HParSearchSpace(140, True, emb=True)
 

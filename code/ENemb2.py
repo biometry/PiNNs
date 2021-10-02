@@ -21,12 +21,13 @@ x.index, y.index, ypp.index = np.arange(0, len(x)), np.arange(0, len(y)), np.ara
 
 y = y.to_frame()
 print(x,y,xt)
-arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 140, 4, emb=True)
+#arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 140, 4, emb=True)
 
 # architecture search
-layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 16, 'lr':0.001, 'eta': 0.2}, x, y, splits, "arSemb2", reg=yp, emb=True, raw = xt, embtp=2, hp=True, sw=(swmn, swstd))
-ag.to_csv("./Nemb2AS.csv")
-#layersizes = [[4], [64]]
+#layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 16, 'lr':0.001, 'eta': 0.2}, x, y, splits, "arSemb2", reg=yp, emb=True, raw = xt, embtp=2, hp=True, sw=(swmn, swstd))
+#ag.to_csv("./Nemb2AS.csv")
+
+layersizes = [[64, 4], [2]]
 # Hyperparameter Search Space
 hpar_grid = HP.HParSearchSpace(140, reg=True, emb=True)
 

@@ -13,7 +13,7 @@ def standardize(var, scaling=None):
     :param scaling: other targets to normalize on
     :return: scaled variables in 2-D array
     '''
-    
+
     if not scaling:
         if (isinstance(var, pd.DataFrame)):
             out = (var - np.mean(var)) / np.std(var)
@@ -60,16 +60,16 @@ def add_history(X, Y, history, batch_size=None):
         subset_h = [item for sublist in [list(range(j - history, j)) for j in subset] for item in sublist]
         x = np.concatenate((X.iloc[subset], X.iloc[subset_h]), axis=0)
         y = np.concatenate((Y.iloc[subset], Y.iloc[subset_h]), axis=0)
-
+        
     else:
         x = X[history:]
         y = Y[history:]
         for i in range(1, history+1):
             outx = pd.merge(x, X.shift(periods=i)[history:], left_index=True, right_index=True)
             #outy = pd.merge(y, Y.shift(periods=i)[history:], left_index=True, right_index=True)
-            x = outx
-            # outy
-
+        x = outx
+        # outy
+        
     return x, y
 
 
@@ -85,7 +85,6 @@ def read_in(type, data_dir=None):
         out = pd.read_csv(''.join((data_dir, 'bilykriz.csv')))
     elif type == 'validation' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'hyytiala.csv')))
-
     elif type.startswith('exp2') and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'data_exp2.csv')))
     return out
@@ -102,24 +101,25 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
     else:
         ypcols = None
         xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
-
+        
     ycols = ['GPP']
     data = read_in(data_split, dir)
+    print(data)
     rawdata = []
     if raw:
         rawdata = data.copy()
-
+        
     data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
     date = data['date']
     y = data['GPP']
-
+    
     if ypcols:
         yp = data[ypcols]
         data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1))
     else:
         yp = None
         data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
-
+        
     if history:
         print(data, xcols)
         x, y = add_history(data[xcols], y, history, batch_size)
@@ -130,7 +130,6 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
     x.index = pd.DatetimeIndex(date[history:])
     y.index = pd.DatetimeIndex(date[history:])
     
-    
     if yp is not None:
         yp = yp[history:]
         yp.index = pd.DatetimeIndex(date[history:])
@@ -138,9 +137,8 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
         
     else:
         out = x, y, rawdata
-    
+        
     return out
-
 
 
 
