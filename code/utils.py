@@ -120,7 +120,16 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
         yp = None
         data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
 
-    data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
+    if history:
+        print(data, xcols)
+        x, y = add_history(data[xcols], y, history, batch_size)
+    else:
+        x, y = data[xcols], y
+        
+        
+    x.index = pd.DatetimeIndex(date[history:])
+    y.index = pd.DatetimeIndex(date[history:])
+    
     
     if yp is not None:
         yp = yp[history:]

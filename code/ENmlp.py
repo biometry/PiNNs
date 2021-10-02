@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 
 x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
+print(x,y,xt)
 splits = len(x.index.year.unique())
 print(splits)
 print(x, y)
