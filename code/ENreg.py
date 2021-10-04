@@ -31,7 +31,7 @@ x.index, y.index, reg.index = np.arange(0, len(x)), np.arange(0, len(y)), np.ara
 layersizes = [2, 128, 128, 128]
 
 # Hyperparameter Search Space
-hpar_grid = HP.HParSearchSpace(800, True)
+hpar_grid = HP.HParSearchSpace(500, True)
 
 # Hyperparameter search
 hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpreg", reg, hp=True)
