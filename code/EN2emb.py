@@ -3,8 +3,6 @@
 import utils
 import HP
 import utils
-import trainloaded
-import embtraining
 import torch
 import pandas as pd
 import numpy as np
@@ -30,7 +28,7 @@ x.index, y.index, yp.index = np.arange(0, len(x)), np.arange(0, len(y)), np.aran
 
 layersizes = [[2,8],[4,8,8]]
 # Hyperparameter Search Space
-hpar_grid = HP.HParSearchSpace(140, True, emb=True)
+hpar_grid = HP.HParSearchSpace(100, True, emb=True)
 
 # Hyperparameter search
 hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "EX2_hpemb", exp=2, hp=True, emb=True, reg = yp, raw = xt)

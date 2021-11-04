@@ -12,6 +12,7 @@ x, y, xt = utils.loaddata('NAS', 0, dir="./data/", raw=True)
 
 xt = xt.drop(['date', 'GPP', 'ET', 'GPPp', 'ETp', 'SWp', 'Unnamed: 0'], axis=1)
 print(xt)
+
 l, m, yp = utils.loaddata('NAS', 0, dir="./data/", raw=True)
 
 yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)

@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import random
 import utils
-import temb
+import training
 
 def ArchitectureSearchSpace(input_size, output_size, grid_size, max_layers, emb=False):
     grid = []
@@ -41,9 +41,9 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
         print(grid)
 
         #if exp == 2:
-        running_losses = temb.train_cv(parameters, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, exp=exp, hp=hp, embtp=embtp, sw=sw) # train model
+        running_losses = training.train_cv(parameters, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, exp=exp, hp=hp, embtp=embtp, sw=sw) # train model
         #else:
-        #    running_losses = temb.train(parameters, model_design, X, Y, "./data/", splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, embtp=embtp)
+        #    running_losses = training.train(parameters, model_design, X, Y, "./data/", splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, embtp=embtp)
 
         mse_train.append(np.mean(running_losses["train_loss"]))
         mse_val.append(np.mean(running_losses["val_loss"]))
@@ -92,22 +92,22 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
 
     for i in range(len(grid)):
         if reg is not None:
-            hparams = {"epochs": 500,
+            hparams = {"epochs": 200,
                        "batchsize": grid[i][1],
                        "lr": grid[i][0],
                        "eta": grid[i][2]
                        }
         else:
-            hparams = {"epochs": 500,
+            hparams = {"epochs": 200,
                        "batchsize": grid[i][1],
                        "lr": grid[i][0]
                        }
                        
 
         #if exp == 2:
-        running_losses = temb.train_cv(hparams, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, exp=exp, hp=hp, embtp=embtp, sw=sw)
+        running_losses = training.train_cv(hparams, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, exp=exp, hp=hp, embtp=embtp, sw=sw)
         #else:
-        #    running_losses = temb.train(hparams, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, embtp=embtp)
+        #    running_losses = training.train(hparams, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, embtp=embtp)
 
         mse_train.append(np.mean(running_losses["train_loss"]))
         mse_val.append(np.mean(running_losses["val_loss"]))

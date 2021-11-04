@@ -29,11 +29,11 @@ print(x,y,xt)
 
 layersizes = [[64, 4], [2]]
 # Hyperparameter Search Space
-hpar_grid = HP.HParSearchSpace(140, reg=True, emb=True)
+hpar_grid = HP.HParSearchSpace(200, reg=True, emb=True)
 
 # Hyperparameter search
 hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpemb2", reg=ypp, emb=True, raw=xt, embtp=2, hp=True, sw=(swmn, swstd))
 
 print( 'hyperparameters: ', hpars)
-grid.to_csv("./Nemb2HP.csv")
+grid.to_csv("./Nemb2HP_m300.csv")
 

@@ -2,9 +2,6 @@
 # coding: utf-8
 import utils
 import HP
-import utils
-import trainloaded
-import embtraining
 import torch
 import pandas as pd
 import numpy as np
@@ -32,7 +29,7 @@ x.index, y.index, yp.index = np.arange(0, len(x)), np.arange(0, len(y)), np.aran
 
 layersizes = [[8, 8, 32], [4, 8, 8]]
 # Hyperparameter Search Space
-hpar_grid = HP.HParSearchSpace(140, True, emb=True)
+hpar_grid = HP.HParSearchSpace(150, True, emb=True)
 
 # Hyperparameter search
 hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "EX2_hpemb2", exp=2, hp=True, emb=True, reg = yp, raw = xt, embtp=2, sw=(swmn, swstd))
@@ -40,5 +37,5 @@ hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "EX2_hpemb2", e
 print( 'hyperparameters: ', hpars)
 
 
-grid.to_csv("./EX2_emb2HP.csv")
+grid.to_csv("./EX2_emb2HP_mn300.csv")
 

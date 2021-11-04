@@ -79,6 +79,8 @@ def read_in(type, data_dir=None):
     elif data_dir == 'load':
         out = dataset.ProfoundData(type).__getitem__()
     # subset station
+    if type == 'OF' and data_dir != 'load':
+        out = pd.read_csv(''.join((data_dir, 'soro.csv')))
     if type == 'NAS' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'bilykriz.csv')))
     elif type == 'NASp' and data_dir != 'load':

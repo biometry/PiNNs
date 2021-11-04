@@ -2,14 +2,11 @@
 # coding: utf-8
 import utils
 import HP
-import utils
-import trainloaded
-import embtraining
 import torch
 import pandas as pd
 import numpy as np
 import random
-import temb
+import training
 
 x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
 
@@ -52,7 +49,7 @@ for i in range(300):
     
     data_dir = "./data/"
     data = "mlp"
-    loss = temb.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), data_dir, data, reg=None, emb=False)
+    loss = training.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), data_dir, data, reg=None, emb=False)
     mse_train.append(np.mean(loss['train_loss']))
     mse_val.append(np.mean(loss['val_loss']))
 

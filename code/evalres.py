@@ -12,7 +12,7 @@ import os
 from torch.utils.data import TensorDataset, DataLoader
 from torch import Tensor
 import csv
-import temb
+import training
 
 
 x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
@@ -77,17 +77,54 @@ b = a.to_numpy()
 lr = b[0]
 bs = b[1]
 
+res_hp = pd.read_csv("res_lr.csv")
+a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+b = a.to_numpy()
+lr = b[0]
+
 
 hp = {'epochs': 5000,
       'batchsize': int(bs),
       'lr': lr
       }
 
+
 data_dir = "./data/"
 data = "res"
 
-tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, res=1, ypreles=None)
-#pd.DataFrame.from_dict(tloss).to_csv('res_train.csv')
+tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, res=1, ypreles=None)
+print(tloss)
+train_loss = tloss['train_loss']
+val_loss = tloss['val_loss']
+t1 = []
+t2 = []
+t3 = []
+t4 = []
+t5 = []
+t6 = []
+for i in range(5000):
+    t1.append(train_loss[0][i])
+    t2.append(train_loss[1][i])
+    t3.append(train_loss[2][i])
+    t4.append(train_loss[3][i])
+    t5.append(train_loss[4][i])
+    t6.append(train_loss[5][i])
+pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv('res_trainloss.csv')
+v1 = []
+v2 = []
+v3 = []
+v4 = []
+v5 = []
+v6 = []
+for i in range(5000):
+    v1.append(val_loss[0][i])
+    v2.append(val_loss[1][i])
+    v3.append(val_loss[2][i])
+    v4.append(val_loss[3][i])
+    v5.append(val_loss[4][i])
+    v6.append(val_loss[5][i])
+
+pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv('res_vloss.csv')
 
 # Evaluation
 mse = nn.MSELoss()
