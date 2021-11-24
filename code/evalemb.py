@@ -12,7 +12,7 @@ import os
 from torch.utils.data import TensorDataset, DataLoader
 from torch import Tensor
 import csv
-import temb
+import training
 
 x, y, xt = utils.loaddata('validation', 0, dir="./data/", raw=True)
 yp_tr = pd.read_csv("./data/train_hyt.csv")
@@ -63,7 +63,7 @@ test_x.index, test_y.index, yp_te.index, rte.index = np.arange(0, len(test_x)), 
 print("train_x", train_x, rtr)
 
 
-res_as = pd.read_csv("Nemb2AS.csv")
+res_as = pd.read_csv("results/Nemb2AS.csv")
 a = res_as.loc[res_as.val_loss.idxmin()][1:2]
 b = str(a.values).split("[")[-1].split("]")[0].split(",")
 c = [int(bb) for bb in b]
@@ -75,14 +75,14 @@ print('layersizes', layersizes)
 
 model_design = {'layersizes': layersizes}
 
-res_hp = pd.read_csv("Nemb2HP_m300.csv")
+res_hp = pd.read_csv("results/Nemb2HP_m300.csv")
 a = res_hp.loc[res_hp.val_loss.idxmin()][1:4]
 b = a.to_numpy()
 lrini = b[0]
 bs = b[1]
 eta = b[2]
 
-res_hp = pd.read_csv("emb2_lr.csv")
+res_hp = pd.read_csv("results/emb2_lr.csv")
 a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
 b = a.to_numpy()
 lr = b[0]
@@ -98,7 +98,7 @@ print(hp)
 
 data_dir = "./data/"
 data = "emb1"
-tloss = temb.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data,raw=rtr, reg=yp_tr, emb=True, ypreles=None, exp=1, embtp=2, sw= (swmn, swstd))
+tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data,raw=rtr, reg=yp_tr, emb=True, ypreles=None, exp=1, embtp=2, sw= (swmn, swstd))
 #pd.DataFrame.from_dict(tloss).to_csv('res2_test.csv')
 print(tloss)
 train_loss = tloss['train_loss']

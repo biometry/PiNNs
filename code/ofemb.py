@@ -66,7 +66,7 @@ print("train_x", train_x, rtr)
 
 model_design = {'layersizes': [[128], [128]]}
 
-hp = {'epochs': 50000,
+hp = {'epochs': 1000,
       'batchsize': int(128),
       'lr': 0.01,
       'eta': 0.5
@@ -77,7 +77,7 @@ print("TRAIN_TEST", train_x.shape,  test_x.shape, "END")
 
 data_dir = "./data/"
 data = "embof"
-tloss = training.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), data_dir, data, reg=(yp_tr, yp_te), raw=(rtr, rte) , emb=True, sw= (swmn, swstd), embtp=2)
+tloss = training.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), data_dir, data, reg=(yp_tr, yp_te), raw=(rtr, rte) , emb=True, sw= (swmn, swstd), embtp=2, qn=False)
 #pd.DataFrame.from_dict(tloss).to_csv('res2_test.csv')
 print(tloss)
 train_loss = tloss['train_loss']

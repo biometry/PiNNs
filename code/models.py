@@ -53,7 +53,7 @@ class EMB(nn.Module):
         for i in range(0, self.pnlayers+1):
             if i == 0:
                 self.parnet.add_module(f'P_input{i}', nn.Linear(input_dim, layersizes[0][i]))
-                self.parnet.add_module(f'activation', nn.ReLU())
+                self.parnet.add_module(f'activation', nn.ELU())
                 print('adding input 1', input_dim, layersizes[0][i])
             elif i == (self.pnlayers):
                 print("i", i, "layers", layersizes[0][i-1])
@@ -61,21 +61,21 @@ class EMB(nn.Module):
                 print("add parameters output", layersizes[0][i-1])
             elif i and i < self.pnlayers:
                 self.parnet.add_module(f'P_fc{i}', nn.Linear(layersizes[0][i-1], layersizes[0][i]))
-                self.parnet.add_module(f'activation', nn.ReLU())
+                self.parnet.add_module(f'activation', nn.ELU())
 
                 
         # Add Residual Layers
         for i in range(0, self.rnlayers+1):
             if i == 0:
                 self.resnet.add_module(f'R_input{i}', nn.Linear(pout, layersizes[1][i]))
-                self.resnet.add_module(f'activation', nn.ReLU())
+                self.resnet.add_module(f'activation', nn.ELU())
                 print('adding input 1', pout, layersizes[1][i])
             elif i == self.rnlayers:
                 self.resnet.add_module(f'P_output{i}', nn.Linear(layersizes[1][i-1], output_dim))
                 print("add parameters output", layersizes[1][i-1])
             elif i and i < self.rnlayers:
                 self.resnet.add_module(f'P_fc{i}', nn.Linear(layersizes[1][i-1], layersizes[1][i]))
-                self.resnet.add_module(f'activation', nn.ReLU())
+                self.resnet.add_module(f'activation', nn.ELU())
 
         # Initialize weights of Parameter Layer
 

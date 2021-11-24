@@ -13,7 +13,8 @@ import models
 import os
 from torch.utils.data import TensorDataset, DataLoader
 from torch import Tensor
-
+from torch.autograd import Variable
+from slbfgs import sLBFGS
 
 
 
@@ -101,7 +102,8 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=
 
         criterion = nn.MSELoss()
         optimizer = optim.Adam(model.parameters(), lr = hparams['lr'])
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.2, patience=40, verbose=True)
+        #optimizer = optim.LBFGS(model.parameters())#, lr = hparams['lr'])
+        #scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.2, patience=40, verbose=True)
         train_loss = []
         val_loss = []
         print("Number of parameters:", sum(p.numel() for p in model.parameters() if p.requires_grad))
@@ -290,12 +292,11 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=
 
         
 
-def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, sw=None, embtp=None):
-    nepoch = hparams['epochs']
+def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, sw=None, embtp=None, qn=False):
     batchsize = hparams['batchsize']
+    nepoch = hparams['epochs']
     if reg is not None:
         eta = hparams['eta']
-        
     if reg is not None:
         yp_train, yp_val = torch.tensor(reg[0].to_numpy(), dtype=torch.float32), torch.tensor(reg[1].to_numpy(), dtype=torch.float32)
         if emb:
@@ -343,23 +344,27 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
         model = models.NMLP(train[0].shape[1], train[1].shape[1], model_design['layersizes'])
     print("INIMODEL", model)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr = hparams['lr'])
-    
+    if not qn:
+        optimizer = optim.Adam(model.parameters(), lr = hparams['lr'])
+    else:
+        #optimizer = optim.LBFGS(model.parameters(), history_size=30, max_iter=8)
+        optimizer = sLBFGS(model.parameters(), history_size=10, max_iter=4, line_search_fn=True, batch_mode=True)
     train_loss = []
     val_loss = []
     mse_t = np.empty(nepoch)
     mse_v = np.empty(nepoch)
     
     for ep in range(nepoch):
-        model.train()
-        batch_diff = []
-        batch_loss = []
+        if not qn:
+            model.train()
+            batch_diff = []
+            batch_loss = []
         for step, train_data in enumerate(train_loader):
             xt = train_data[0]
             yt = train_data[1]
-            #print("XX", xt)
-            #print("YY", yt)
-            #print(xt)
+            if qn:
+                xt = Variable(xt, requires_grad=True)
+                
             if reg is not None or res == 2:
                 yp = train_data[2]
                 if exp==2 and not emb:
@@ -368,40 +373,59 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
                 if emb:
                     yp = yp
                     xr = train_data[3]
-                    
-            optimizer.zero_grad()
-            
-            # forward
-            if emb:
-                print(xt.shape, xr.shape)
-                y_hat, p = model(xt, xr, embtp, sw)
-            elif res == 1:
-                y_hat = model(xt)
-            elif res == 2:
-                y_hat = model(xt, yp)
-            else:
-                y_hat = model(xt)
-            if reg is not None and not emb:
-                loss = criterion(y_hat, yt) + eta*criterion(y_hat, yp)
-            elif emb:
-                print("EMBEDDING")
-                if embtp is None:
-                    loss = criterion(y_hat, yt) + eta*criterion(p, yp)
+            if not qn:
+                optimizer.zero_grad()
+                if emb:
+                    print(xt.shape, xr.shape)
+                    y_hat, p = model(xt, xr, embtp, sw)
+                elif res == 1:
+                    y_hat = model(xt)
+                elif res == 2:
+                    y_hat = model(xt, yp)
                 else:
-                    loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
+                    y_hat = model(xt)
+                if reg is not None and not emb:
+                    loss = criterion(y_hat, yt) + eta*criterion(y_hat, yp)
+                elif emb:
+                    print("EMBEDDING")
+                    if embtp is None:
+                        loss = criterion(y_hat, yt) + eta*criterion(p, yp)
+                    else:
+                        loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
+                else:
+                    loss = criterion(y_hat, yt)
+                print('train loss', loss)
+            
+                loss.backward()
+                optimizer.step()
+            
+                batch_loss.append(loss.item())
+
             else:
-                loss = criterion(y_hat, yt)
-            print('loss', loss)
+                # closure
+                def closure():
+                    if torch.is_grad_enabled():
+                        optimizer.zero_grad()
+                    y_hat, p = model(xt, xr, embtp, sw)
+                    loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
+                    print('iteration loss', loss)
+                    if loss.requires_grad:
+                        loss.backward()
+                    return loss
             
-            loss.backward()
-            optimizer.step()
-            
-            batch_loss.append(loss.item())
+                optimizer.step(closure)
+                y_hat, p = model(xt, xr, embtp, sw)
+                loss = closure()
+                running_loss = loss.item()
+
             
         model.eval()
         # results per epoch
-        train_loss = sum(batch_loss)/len(batch_loss)
-        e_bl = []
+        if qn:
+            train_loss = running_loss
+        else:
+            train_loss = sum(batch_loss)/len(batch_loss)
+            e_bl = []
         # deactivate autograd
         
         for step, val_sample in enumerate(val_loader):
@@ -420,7 +444,6 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
             elif res == 1:
                 y_hat_val = model(x_val)
             elif res == 2:
-                print("yval")
                 y_hat_val = model(x_val, yp_val)
             else:
                 y_hat_val = model(x_val)
@@ -436,18 +459,22 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
             else:
                 loss = criterion(y_hat_val, y_val)
             print("val loss", loss)
-            e_bl.append(loss)
-        val_loss = (sum(e_bl) / len(e_bl))
+            if not qn:
+                e_bl.append(loss)
+        if qn:
+            val_loss = loss
+        else:
+            val_loss = sum(e_bl)/len(e_bl)
         mse_t[ep] = train_loss
         mse_v[ep] = val_loss
         
-        
         print('EPOCH', ep)
         #print('MSE V', mse_v, 'MSE T', mse_t)
+
+    #print("Final Prediction: Training: ", model(train_set[0], train_set[3], embtp, sw))
+    #print("Final Prediction: Test: ", model(test_set[0], test_set[3], embtp, sw))
         
     return {'train_loss': mse_t, 'val_loss': mse_v}
-
-
 
 
 
