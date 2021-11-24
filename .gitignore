@@ -4,3 +4,6 @@ log.txt
 EX2_mlpAS.csv
 OFemb_vloss.csv
 src2/
+build/
+preles.log
+notebooks/
