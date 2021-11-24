@@ -7,3 +7,4 @@ src2/
 build/
 preles.log
 notebooks/
+preles.egg-info/

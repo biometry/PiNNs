@@ -1,5 +1,0 @@
-README.md
-preles.egg-info/PKG-INFO
-preles.egg-info/SOURCES.txt
-preles.egg-info/dependency_links.txt
-preles.egg-info/top_level.txt
