@@ -77,7 +77,7 @@ print("TRAIN_TEST", train_x.shape,  test_x.shape, "END")
 
 data_dir = "./data/"
 data = "embof"
-tloss = training.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), data_dir, data, reg=(yp_tr, yp_te), raw=(rtr, rte) , emb=True, sw= (swmn, swstd), embtp=2, qn=False)
+tloss = training.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), data_dir, data, reg=(yp_tr, yp_te), raw=(rtr, rte) , emb=True, sw= (swmn, swstd), embtp=2, qn=True)
 #pd.DataFrame.from_dict(tloss).to_csv('res2_test.csv')
 print(tloss)
 train_loss = tloss['train_loss']

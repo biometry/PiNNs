@@ -348,7 +348,7 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
         optimizer = optim.Adam(model.parameters(), lr = hparams['lr'])
     else:
         #optimizer = optim.LBFGS(model.parameters(), history_size=30, max_iter=8)
-        optimizer = sLBFGS(model.parameters(), history_size=10, max_iter=4, line_search_fn=True, batch_mode=True)
+        optimizer = sLBFGS(model.parameters(), history_size=10, max_iter=5, line_search_fn=True, batch_mode=True)
     train_loss = []
     val_loss = []
     mse_t = np.empty(nepoch)
