@@ -30,5 +30,5 @@ Others:
 
 
 S. Yatawatta, L. De Clercq, H. Spreeuw and F. Diblen, "A Stochastic LBFGS Algorithm for Radio Interferometric Calibration," 2019 IEEE Data Science Workshop (DSW), 2019, pp. 208-212, doi: 10.1109/DSW.2019.8755567
-- (https://github.com/SarodYatawatta/federated-pytorch-test) (algorithm in ./src/lbfgsnew.py)
+- github: https://github.com/SarodYatawatta/federated-pytorch-test (algorithm in ./src/lbfgsnew.py)
 
