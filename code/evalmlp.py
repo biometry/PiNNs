@@ -44,11 +44,13 @@ print('layersizes', layersizes)
 
 model_design = {'layersizes': layersizes}
 
+# Hyperparameters
 res_hp = pd.read_csv("NmlpHP.csv")
 a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
 b = a.to_numpy()
 bs = b[1]
 
+# Learningrate
 res_hp = pd.read_csv("mlp_lr.csv")
 a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
 b = a.to_numpy()
