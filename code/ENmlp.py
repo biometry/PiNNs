@@ -16,14 +16,14 @@ print(x, y)
 y = y.to_frame()
 x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
 
-arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 800, 4)
+arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 10, 4)
 
 # architecture search
 
 layersizes, argrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSmlp", hp=True)
 
 # Hyperparameter Search Space
-hpar_grid = HP.HParSearchSpace(800)
+hpar_grid = HP.HParSearchSpace(10)
 
 # Hyperparameter search
 hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpmlp", hp=True)

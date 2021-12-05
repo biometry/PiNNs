@@ -74,6 +74,14 @@ def add_history(X, Y, history, batch_size=None):
 
 
 def read_in(type, data_dir=None):
+    '''
+    Available types:
+        OF: data split used for overfitting experiment (ADJUST)
+        NAS: data split used for neural archtecture and hyperparameter search (ADJUST)
+        exp2: contains all sites for multisite calibration
+        validation: hyytiala site data (CHANGE TYPE NAME)
+        simulations: simulations from Preles for domain adaptation
+    '''
     if not data_dir:
         data_path = 'C:/Users/Niklas/Desktop/Uni/M.Sc. Environmental Science/Thesis/physics_guided_nn/data/'
     elif data_dir == 'load':
@@ -89,6 +97,8 @@ def read_in(type, data_dir=None):
         out = pd.read_csv(''.join((data_dir, 'hyytiala.csv')))
     elif type.startswith('exp2') and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'data_exp2.csv')))
+    elif type == 'simulations' and data_dir != 'load':
+        out = pd.read_csv(''.join((data_dir, 'DA_preles_sims.csv')))
     return out
 
 
@@ -112,7 +122,8 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
         rawdata = data.copy()
         
     data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
-    date = data['date']
+    if data_split != 'simulations':
+        date = data['date']
     y = data['GPP']
     
     if ypcols:
