@@ -116,6 +116,8 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
     df = pd.DataFrame(grid)
     df["train_loss"] = mse_train
     df["val_loss"] = mse_val
+    print("For architecture:")
+    print(layersizes)
     print("Random hparams search best result:")
     print(df.loc[[df["val_loss"].idxmin()]])
     hparams = grid[df["val_loss"].idxmin()]

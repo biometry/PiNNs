@@ -36,7 +36,7 @@ print('XY: ', x, y)
 
 # Load results from NAS
 # Architecture
-res_as = pd.read_csv("NmlpAS.csv")
+res_as = pd.read_csv("results/NmlpAS.csv")
 a = res_as.loc[res_as.val_loss.idxmin()][1:5]
 b = a.to_numpy()
 layersizes = list(b[np.isfinite(b)].astype(int))
@@ -45,7 +45,7 @@ print('layersizes', layersizes)
 model_design = {'layersizes': layersizes}
 
 # Hyperparameters
-res_hp = pd.read_csv("NmlpHP.csv")
+res_hp = pd.read_csv("results/NmlpHP.csv")
 a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
 b = a.to_numpy()
 bs = b[1]
@@ -97,11 +97,11 @@ for i in range(5000):
     v5.append(val_loss[4][i])
     v6.append(val_loss[5][i])
 
-pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv('mlp_vloss.csv')
+pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv('results/mlp_vloss.csv')
 #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
 #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
 #print("LOSS", tloss)
-pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv('mlp_trainloss.csv')
+pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv('results/mlp_trainloss.csv')
 
 # Evaluation
 mse = nn.MSELoss()
@@ -143,9 +143,9 @@ print(preds_train)
 
 
 
-pd.DataFrame.from_dict(performance).to_csv('mlp_eval_performance.csv')
-pd.DataFrame.from_dict(preds_train).to_csv('mlp_eval_preds_train.csv')
-pd.DataFrame.from_dict(preds_test).to_csv('mlp_eval_preds_test.csv')
+pd.DataFrame.from_dict(performance).to_csv('results/mlp_eval_performance.csv')
+pd.DataFrame.from_dict(preds_train).to_csv('results/mlp_eval_preds_train.csv')
+pd.DataFrame.from_dict(preds_test).to_csv('results/mlp_eval_preds_test.csv')
 
 
 

@@ -18,7 +18,7 @@ from slbfgs import sLBFGS
 
 
 
-def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None):
+def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptation=None, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None):
     print("Hyperparams", hparams)
     nepoch = hparams['epochs']
     batchsize = hparams['batchsize']
@@ -96,6 +96,15 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=
                 model = models.EMB(X.shape[1], Y.shape[1], model_design['layersizes'], 27, 3)
         elif res == 2:
             model = models.RES(X.shape[1], Y.shape[1], model_design['layersizes'])
+        elif not domain_adaptation is None:
+            # Finetuning: reuse weights from pretraining and fully retrain model
+            if domain_adaptation == 1:
+                model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
+                model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i+1}.pth")))
+            # Feature extraction: reuse weight from pretraining and retrain only last layer
+            else:
+                # Enter here.
+                pass
         else:
             model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
         print("INIMODEL", model)
@@ -157,7 +166,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=
             model.eval()
             # results per epoch
             train_loss = sum(batch_loss)/len(batch_loss)
-            scheduler.step(train_loss)
+            #scheduler.step(train_loss)
             if exp == 2 and not hp:
                 mse_t[i, ep] = train_loss
                 
@@ -272,6 +281,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, reg=None, emb=
             
         #pd.DataFrame({'train_loss': mse_t, 'val_loss':mse_v}, index=[0]).to_csv(f"{data}_NAS_model{i}.csv")
         if exp != 2:
+            print("Saving model to: ", os.path.join(data_dir, f"{data}_model{i}.pth"))
             torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
         elif exp == 2:
             torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_model{i}.pth"))

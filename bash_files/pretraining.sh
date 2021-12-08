@@ -32,6 +32,5 @@ ml devel/conda
 # Activate environment
 cd physics_guided_nn
 conda activate pgnn
-
 # Run script with python3
-python3  code/ENmlp.py
+python3 code/pretraining.py
