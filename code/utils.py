@@ -162,26 +162,3 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         
     return out
 
-
-def parameter_samples(n_samples, parameters = ['beta', 'chi', 'X[0]', 'gamma', 'alpha'], datadir = '~/physics_guided_nn/data/'):
-
-    from smt.sampling_methods import LHS
-
-    out = pd.read_csv(''.join((datadir, 'parameterRanges.csv')))
-    xmin = list(out[out['name'].isin(parameters)]['min'])
-    xmax = list(out[out['name'].isin(parameters)]['max'])
-    xs = [list(x) for x in zip(xmin, xmax)]
-    xlimits = np.array(xs)
-
-    sampling = LHS(xlimits = xlimits, criterion='m')
-    num = n_samples
-    x = sampling(num)
-    
-    d = []
-    for i in range(x.shape[0]):
-        out.loc[out['name'].isin(parameters), 'def'] = x[i,:]
-        d.append(out['def'])
-        
-    d = np.array(d)
-
-    return(d)
