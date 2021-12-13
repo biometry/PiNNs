@@ -103,7 +103,7 @@ def read_in(type, data_dir=None):
 
 
 
-def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
+def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True):
     if data_split.endswith('p'):
         xcols = ['GPPp', 'ETp', 'SWp']
         ypcols = None
@@ -112,8 +112,11 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
         xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
     else:
         ypcols = None
-        xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
-        
+        if doy:
+            xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
+        else:
+            xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'DOY', 'date']
+            
     ycols = ['GPP']
     data = read_in(data_split, dir)
     print(data)
@@ -121,7 +124,9 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
     if raw:
         rawdata = data.copy()
         
-    data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
+    if doy:
+        data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
+    
     if data_split != 'simulations':
         date = data['date']
     y = data['GPP']
@@ -129,10 +134,14 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
     if ypcols:
         yp = data[ypcols]
         data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1))
-    else:
+    elif doy:
         yp = None
         data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
-        
+    else:
+        yp = None
+        data = data.drop(['CO2', 'GPP', 'date'], axis=1)
+        data['date'] = date
+
     if history:
         print(data, xcols)
         x, y = add_history(data[xcols], y, history, batch_size)
@@ -154,4 +163,25 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False):
     return out
 
 
+def parameter_samples(n_samples, parameters = ['beta', 'chi', 'X[0]', 'gamma', 'alpha'], datadir = '~/physics_guided_nn/data/'):
 
+    from smt.sampling_methods import LHS
+
+    out = pd.read_csv(''.join((datadir, 'parameterRanges.csv')))
+    xmin = list(out[out['name'].isin(parameters)]['min'])
+    xmax = list(out[out['name'].isin(parameters)]['max'])
+    xs = [list(x) for x in zip(xmin, xmax)]
+    xlimits = np.array(xs)
+
+    sampling = LHS(xlimits = xlimits, criterion='m')
+    num = n_samples
+    x = sampling(num)
+    
+    d = []
+    for i in range(x.shape[0]):
+        out.loc[out['name'].isin(parameters), 'def'] = x[i,:]
+        d.append(out['def'])
+        
+    d = np.array(d)
+
+    return(d)
