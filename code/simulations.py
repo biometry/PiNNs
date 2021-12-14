@@ -150,7 +150,7 @@ def gen_simulations(n, data_dir = '~/physics_guided_nn/data/'):
     #np.savetext('gpp_simulations.csv')
     
     c['GPP'] = out
-    c.to_csv(''.join((data_dir, 'DA_preles_sims.csv')))
+    c.to_csv(''.join((data_dir, 'DA_preles_sims.csv')), index=False)
 
 ''' 
 In case you want to make plots on the cluster computer, save them directly to results.

@@ -98,7 +98,7 @@ def read_in(type, data_dir=None):
     elif type.startswith('exp2') and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'data_exp2.csv')))
     elif type == 'simulations' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'DA_preles_sims.csv')))
+        out = pd.read_csv(''.join((data_dir, 'DA_preles_sims.csv')), index_col=False)
     return out
 
 
@@ -113,7 +113,10 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     else:
         ypcols = None
         if doy:
-            xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
+            if data_split != 'simulations':
+                xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
+            else:
+                xcols = ['PAR', 'TAir', 'VPD', 'Precip', 'fAPAR', 'doy_sin', 'doy_cos']
         else:
             xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'DOY', 'date']
             
@@ -135,8 +138,12 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         yp = data[ypcols]
         data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1))
     elif doy:
-        yp = None
-        data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
+        if data_split != 'simulations':
+            yp = None
+            data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
+        else:
+            yp = None
+            data = standardize(data.drop(['CO2', 'DOY', 'GPP'], axis=1))
     else:
         yp = None
         data = data.drop(['CO2', 'GPP', 'date'], axis=1)
@@ -148,9 +155,9 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     else:
         x, y = data[xcols], y
         
-        
-    x.index = pd.DatetimeIndex(date[history:])
-    y.index = pd.DatetimeIndex(date[history:])
+    if data_split != 'simulations':
+        x.index = pd.DatetimeIndex(date[history:])
+        y.index = pd.DatetimeIndex(date[history:])
     
     if yp is not None:
         yp = yp[history:]

@@ -55,8 +55,8 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
         print("FOLD", i)
         if emb:
             xr_train, xr_val = torch.tensor(raw.loc[t_idx].to_numpy(), dtype=torch.float32), torch.tensor(raw.loc[v_idx].to_numpy(), dtype=torch.float32)
-        x_train, x_val = torch.tensor(X.loc[t_idx].to_numpy(), dtype=torch.float32), torch.tensor(X.loc[v_idx].to_numpy(), dtype=torch.float32)
-        y_train, y_val = torch.tensor(Y.loc[t_idx].to_numpy(), dtype=torch.float32), torch.tensor(Y.loc[v_idx].to_numpy(), dtype=torch.float32)
+        x_train, x_val = torch.tensor(X[X.index.isin(t_idx)].to_numpy(), dtype=torch.float32), torch.tensor(X[X.index.isin(v_idx)].to_numpy(), dtype=torch.float32)
+        y_train, y_val = torch.tensor(Y[Y.index.isin(t_idx)].to_numpy(), dtype=torch.float32), torch.tensor(Y[Y.index.isin(v_idx)].to_numpy(), dtype=torch.float32)
 
         if reg is not None:
             yp_train, yp_val = torch.tensor(reg.loc[t_idx].to_numpy(), dtype=torch.float32), torch.tensor(reg.loc[v_idx].to_numpy(), dtype=torch.float32)
@@ -281,8 +281,15 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             
         #pd.DataFrame({'train_loss': mse_t, 'val_loss':mse_v}, index=[0]).to_csv(f"{data}_NAS_model{i}.csv")
         if exp != 2:
-            print("Saving model to: ", os.path.join(data_dir, f"{data}_model{i}.pth"))
-            torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
+            if domain_adaptation == 1:
+                print("Saving model to: ", os.path.join(data_dir, f"mlpDA1_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"mlpDA1_model{i}.pth"))
+            elif domain_adaptation == 2:
+                print("Saving model to: ", os.path.join(data_dir, f"mlpDA2_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"mlpDA2_model{i}.pth"))
+            else:
+                print("Saving model to: ", os.path.join(data_dir, f"{data}_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
         elif exp == 2:
             torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_model{i}.pth"))
                 
