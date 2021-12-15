@@ -97,14 +97,22 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
         elif res == 2:
             model = models.RES(X.shape[1], Y.shape[1], model_design['layersizes'])
         elif not domain_adaptation is None:
+            
             # Finetuning: reuse weights from pretraining and fully retrain model
             if domain_adaptation == 1:
                 model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
                 model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i+1}.pth")))
+            
             # Feature extraction: reuse weight from pretraining and retrain only last layer
-            else:
-                # Enter here.
-                pass
+            elif domain_adaptation == 2:
+                model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
+                model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i+1}.pth")))
+                feature_extraction = ["fc3.weight", "fc3.bias", "output4.weight", "output4.bias"]
+                for child in model.children():
+                    for name, param in child.named_parameters():
+                        print(name)
+                        if not name in feature_extraction:
+                            param.requires_grad = False
         else:
             model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
         print("INIMODEL", model)

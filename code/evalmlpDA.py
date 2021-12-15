@@ -64,12 +64,12 @@ hp = {'epochs': 10,
 print('HYPERPARAMETERS', hp)
 data_dir = "/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/"
 data = "mlpDA_pretrained"
+
 # da specifies Domain Adaptation:
 # da = 1: using pretrained weight and fully retrain network
 # da = 2: retrain only last layer.
-da = 1
-#print('DATA', train_x, train_y)
-#print('TX', train_x, train_y)
+da = 2
+
 tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, domain_adaptation=da, reg=None, emb=False, hp=False)
 print(tloss)
 train_loss = tloss['train_loss']
