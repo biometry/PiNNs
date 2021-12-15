@@ -35,6 +35,8 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
 
     mse_train = []
     mse_val = []
+    mse_train_sd = []
+    mse_val_sd = []
 
     for i in range(len(grid)):
         model_design = {"layersizes": grid[i]}
@@ -47,14 +49,18 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
 
         mse_train.append(np.mean(running_losses["train_loss"]))
         mse_val.append(np.mean(running_losses["val_loss"]))
+        mse_train_sd.append(np.std(running_losses["train_loss"]))
+        mse_val_sd.append(np.std(running_losses["val_loss"]))
         print(f"fitted model {i}")
 
     df = pd.DataFrame(grid)
     df["train_loss"] = mse_train
     df["val_loss"] = mse_val
+    df["train_loss_sd"] = mse_train_sd
+    df["val_loss_sd"] = mse_val_sd
     print("Random architecture search best result:")
-    print(df.loc[[df["val_loss"].idxmin()]])
-    layersizes = grid[df["val_loss"].idxmin()]
+    print(df.loc[[df["val_loss"].idxmin() & df["val_loss_sd"].idxmin()]])
+    layersizes = grid[df["val_loss"].idxmin() &  df["val_loss_sd"].idxmin()]
 
     return layersizes, df
 

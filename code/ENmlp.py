@@ -7,28 +7,34 @@ import torch
 import pandas as pd
 import numpy as np
 
-x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
-print(x,y,xt)
-splits = len(x.index.year.unique())
-print(splits)
-print(x, y)
+def ENmlp(data_use="full", splits=None):
 
-y = y.to_frame()
-x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
+    x, y, xt = utils.loaddata('NAS', 1, dir="~/physics_guided_nn/data/", raw=True)
+    y = y.to_frame()
+    if data_use == "sparse":
+        x, y = utils.sparse(x, y)
+    
+    if splits is None:
+        splits = len(x.index.year.unique())
+    
+    print(splits)
+    print(x, y)
+    
+    x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
 
-arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 5, 4)
+    arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 5, 4)
 
-# architecture search
-# original: use grid of 800 and epochs:100
-layersizes, argrid = HP.ArchitectureSearch(arch_grid, {'epochs': 10, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSmlp", hp=True)
-argrid.to_csv("./results/NmlpAS.csv")
+    # architecture search
+    # original: use grid of 800 and epochs:100
+    layersizes, argrid = HP.ArchitectureSearch(arch_grid, {'epochs': 10, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSmlp", hp=True)
+    argrid.to_csv(f"~/physics_guided_nn/results/NmlpAS_{data_use}.csv")
 
-# Hyperparameter Search Space
-hpar_grid = HP.HParSearchSpace(5)
-
-# Hyperparameter search
-hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpmlp", hp=True)
-
-print( 'hyperparameters: ', hpars)
-grid.to_csv("./results/NmlpHP.csv")
+    # Hyperparameter Search Space
+    hpar_grid = HP.HParSearchSpace(5)
+    
+    # Hyperparameter search
+    hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpmlp", hp=True)
+    
+    print( 'hyperparameters: ', hpars)
+    grid.to_csv(f"~/physics_guided_nn/results/NmlpHP_{data_use}.csv")
 
