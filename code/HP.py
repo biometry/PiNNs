@@ -65,6 +65,7 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
     return layersizes, df
 
 
+
 def HParSearchSpace(gridsize, reg=False, emb=False):
     grid = []
     for i in range(gridsize):
@@ -129,7 +130,4 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
     hparams = grid[df["val_loss"].idxmin()]
     print("Dataframe:", df)
     return hparams, df
-
-
-
 

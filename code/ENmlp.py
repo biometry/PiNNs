@@ -11,6 +11,7 @@ def ENmlp(data_use="full", splits=None):
 
     x, y, xt = utils.loaddata('NAS', 1, dir="~/physics_guided_nn/data/", raw=True)
     y = y.to_frame()
+
     if data_use == "sparse":
         x, y = utils.sparse(x, y)
     
@@ -33,7 +34,7 @@ def ENmlp(data_use="full", splits=None):
     hpar_grid = HP.HParSearchSpace(5)
     
     # Hyperparameter search
-    hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpmlp", hp=True)
+    hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y,  splits, "hpmlp", hp=True)
     
     print( 'hyperparameters: ', hpars)
     grid.to_csv(f"~/physics_guided_nn/results/NmlpHP_{data_use}.csv")
