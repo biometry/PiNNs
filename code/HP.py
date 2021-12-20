@@ -96,16 +96,19 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
     model_design = {"layersizes": layersizes}
     mse_train = []
     mse_val = []
+    mse_train_sd = []
+    mse_val_sd = []
 
     for i in range(len(grid)):
         if reg is not None:
-            hparams = {"epochs": 200,
+            hparams = {"epochs": 10,
                        "batchsize": grid[i][1],
                        "lr": grid[i][0],
                        "eta": grid[i][2]
                        }
         else:
-            hparams = {"epochs": 200,
+            # original epochs 200
+            hparams = {"epochs": 10,
                        "batchsize": grid[i][1],
                        "lr": grid[i][0]
                        }
@@ -118,16 +121,21 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
 
         mse_train.append(np.mean(running_losses["train_loss"]))
         mse_val.append(np.mean(running_losses["val_loss"]))
+        mse_train_sd.append(np.std(running_losses["train_loss"]))
+        mse_val_sd.append(np.std(running_losses["val_loss"]))
         print(f"fitted model {i}")
 
     df = pd.DataFrame(grid)
     df["train_loss"] = mse_train
     df["val_loss"] = mse_val
+    df["train_loss_sd"] = mse_train_sd
+    df["val_loss_sd"] = mse_val_sd
     print("For architecture:")
     print(layersizes)
+    print(df.head())
     print("Random hparams search best result:")
-    print(df.loc[[df["val_loss"].idxmin()]])
-    hparams = grid[df["val_loss"].idxmin()]
+    print(df.loc[[df["val_loss"].idxmin() & df["val_loss_sd"].idxmin()]])
+    hparams = grid[df["val_loss"].idxmin() & df["val_loss_sd"].idxmin()]
     print("Dataframe:", df)
     return hparams, df
 
