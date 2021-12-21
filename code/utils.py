@@ -124,7 +124,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
             
     ycols = ['GPP']
     data = read_in(data_split, dir)
-    print(data)
+    #print(data)
     rawdata = []
     if raw:
         rawdata = data.copy()
@@ -152,7 +152,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         data['date'] = date
 
     if history:
-        print(data, xcols)
+        #print(data, xcols)
         x, y = add_history(data[xcols], y, history, batch_size)
     else:
         x, y = data[xcols], y

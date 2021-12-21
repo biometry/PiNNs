@@ -17,7 +17,6 @@ from torch.autograd import Variable
 from slbfgs import sLBFGS
 
 
-
 def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptation=None, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None):
     print("Hyperparams", hparams)
     nepoch = hparams['epochs']
@@ -317,7 +316,9 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
 
         
 
-def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, sw=None, embtp=None, qn=False):
+def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, sw=None, embtp=None, qn=False, seed=None):
+    if seed != None:
+        torch.manual_seed(seed)
     batchsize = hparams['batchsize']
     nepoch = hparams['epochs']
     if reg is not None:
@@ -367,7 +368,7 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
         model = models.NMLP(train[0].shape[1], train[1].shape[1], model_design['layersizes'])
     else:
         model = models.NMLP(train[0].shape[1], train[1].shape[1], model_design['layersizes'])
-    print("INIMODEL", model)
+    #print("INIMODEL", model)
     criterion = nn.MSELoss()
     if not qn:
         optimizer = optim.Adam(model.parameters(), lr = hparams['lr'])
@@ -401,7 +402,7 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
             if not qn:
                 optimizer.zero_grad()
                 if emb:
-                    print(xt.shape, xr.shape)
+                    #print(xt.shape, xr.shape)
                     y_hat, p = model(xt, xr, embtp, sw)
                 elif res == 1:
                     y_hat = model(xt)
@@ -412,7 +413,7 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
                 if reg is not None and not emb:
                     loss = criterion(y_hat, yt) + eta*criterion(y_hat, yp)
                 elif emb:
-                    print("EMBEDDING")
+                    #print("EMBEDDING")
                     if embtp is None:
                         loss = criterion(y_hat, yt) + eta*criterion(p, yp)
                     else:
