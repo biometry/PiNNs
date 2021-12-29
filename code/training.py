@@ -86,6 +86,10 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             val_sampler = torch.utils.data.sampler.RandomSampler(vsample_id)
 
         train_loader = torch.utils.data.DataLoader(train_set, batch_size=batchsize, sampler=train_sampler, shuffle=False)
+        batch_validation = False
+        if not batch_validation:
+            batchsize = len(val_set)
+ 
         val_loader = torch.utils.data.DataLoader(val_set, batch_size=batchsize, sampler=val_sampler, shuffle=False)
 
         if emb:
@@ -358,6 +362,9 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
         val_sampler = torch.utils.data.sampler.RandomSampler(vsample_id)
         
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=batchsize, sampler=train_sampler, shuffle=False)
+    batch_validation = False
+    if not batch_validation:
+        batchsize = len(val_set)
     val_loader = torch.utils.data.DataLoader(val_set, batch_size=batchsize, sampler=val_sampler, shuffle=False)
     
     if emb:
