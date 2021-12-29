@@ -90,7 +90,7 @@ def read_in(type, data_dir=None):
     if type == 'OF' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'soro.csv')))
     if type == 'NAS' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'hyytiala.csv')))
+        out = pd.read_csv(''.join((data_dir, 'train_hyt.csv')))
         out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type == 'NASp' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'bilykriz.csv')))
