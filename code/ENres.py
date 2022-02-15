@@ -3,16 +3,20 @@
 import utils
 import HP
 import utils
-#import trainloaded
-#import embtraining
 import torch
 import pandas as pd
 import numpy as np
+import argparse
+
+parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
+#parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
+args = parser.parse_args()
 
 
 def ENres(data_use="full"):
 
-    x, y, xt = utils.loaddata('NASp', 1, dir="~/physics_guided_nn/data/", raw=True)
+    x, y, xt = utils.loaddata('NASp', 1, dir="./data/", raw=True)
     y = y.to_frame()
  
     if data_use == "sparse":
@@ -31,7 +35,7 @@ def ENres(data_use="full"):
     # architecture search
     layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSres", hp=True)
     
-    agrid.to_csv(f"~/physics_guided_nn/results/NresAS_{data_use}.csv")
+    agrid.to_csv(f"./results/NresAS_{data_use}.csv")
     
     # Hyperparameter Search Space
     # original search space size: 800
@@ -43,6 +47,8 @@ def ENres(data_use="full"):
     print( 'hyperparameters: ', hpars)
     
     
-    grid.to_csv(f"~/physics_guided_nn/results/NresHP_{data_use}.csv")
+    grid.to_csv(f"./results/NresHP_{data_use}.csv")
 
+if __name__ == '__main__':
+    ENres(args.d)
 
