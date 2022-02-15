@@ -2,7 +2,7 @@
 ########## Begin MOAB/Slurm header ##########
 #
 # Give job a reasonable name
-#MOAB -N ENres
+#MOAB -N ENres2
 #
 # Request number of nodes and CPU cores per node for job
 #MOAB -l nodes=2:ppn=20
@@ -32,7 +32,7 @@ cd $( ws_find conda )
 cd ./physics_guided_nn
 echo 'begin python'
 
-python ./code/ENres.py -d full
+python ./code/ENres2.py -d full
 
 conda deactivate
 

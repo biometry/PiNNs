@@ -30,7 +30,7 @@ def ENres(data_use="full"):
     x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
     
     # orignial grid size: 800
-    arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 8, 4)
+    arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 800, 4)
     
     # architecture search
     layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSres", hp=True)

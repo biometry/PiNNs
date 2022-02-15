@@ -5,10 +5,10 @@
 #MOAB -N ENmlp
 #
 # Request number of nodes and CPU cores per node for job
-#MOAB -l nodes=1:ppn=20
+#MOAB -l nodes=2:ppn=20
 #
 # Estimated wallclock time for job
-#MOAB -l walltime=00:02:00:00
+#MOAB -l walltime=04:00:00:00
 #
 # Write standard output and errors in same file
 #MOAB -j oe 
@@ -25,13 +25,15 @@ echo "Job name:                             $MOAB_JOBNAME"
 echo "Number of nodes allocated to job:     $MOAB_NODECOUNT"
 echo "Number of cores allocated to job:     $MOAB_PROCCOUNT"
 
-
-# Load conda
-ml devel/conda
-
-# Activate environment
-cd physics_guided_nn
+echo 'Start now'
+source $( ws_find conda )/conda/etc/profile.d/conda.sh
 conda activate pgnn
+cd $( ws_find conda )
+cd ./physics_guided_nn
+echo 'begin python'
 
-# Run script with python3
-python3  code/ENmlp.py
+python ./code/ENmlp.py -d full
+
+conda deactivate
+
+
