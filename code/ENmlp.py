@@ -45,7 +45,7 @@ def ENmlp(data_use="full", splits=None):
     hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y,  splits, "hpmlp", hp=True)
     
     print( 'hyperparameters: ', hpars)
-    grid.to_csv(f"~/physics_guided_nn/results/NmlpHP_{data_use}.csv")
+    grid.to_csv(f"./results/NmlpHP_{data_use}.csv")
 
 
 if __name__ == '__main__':
