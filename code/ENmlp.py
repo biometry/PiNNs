@@ -6,10 +6,18 @@ import utils
 import torch
 import pandas as pd
 import numpy as np
+import argparse
+
+parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
+#parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
+args = parser.parse_args()
+
+print(args)
 
 def ENmlp(data_use="full", splits=None):
 
-    x, y, xt = utils.loaddata('NAS', 1, dir="~/physics_guided_nn/data/", raw=True)
+    x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
     y = y.to_frame()
 
     if data_use == "sparse":
@@ -39,3 +47,6 @@ def ENmlp(data_use="full", splits=None):
     print( 'hyperparameters: ', hpars)
     grid.to_csv(f"~/physics_guided_nn/results/NmlpHP_{data_use}.csv")
 
+
+if __name__ == '__main__':
+    ENmlp(args.d)
