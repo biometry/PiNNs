@@ -10,13 +10,13 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
-#parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
+parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
 args = parser.parse_args()
 
 
-def ENres(data_use="full"):
+def ENres(data_use="full", splits=None):
 
-    x, y, xt = utils.loaddata('NASp', 1, dir="./data/", raw=True)
+    x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
     y = y.to_frame()
  
     if data_use == "sparse":
@@ -30,7 +30,7 @@ def ENres(data_use="full"):
     x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
     
     # orignial grid size: 800
-    arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 800, 4)
+    arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 500, 4)
     
     # architecture search
     layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSres", hp=True)
@@ -39,7 +39,7 @@ def ENres(data_use="full"):
     
     # Hyperparameter Search Space
     # original search space size: 800
-    hpar_grid = HP.HParSearchSpace(8)
+    hpar_grid = HP.HParSearchSpace(500)
     
     # Hyperparameter search
     hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpres", hp=True)

@@ -26,13 +26,14 @@ echo "Number of nodes allocated to job:     $MOAB_NODECOUNT"
 echo "Number of cores allocated to job:     $MOAB_PROCCOUNT"
 
 echo 'Start now'
-source $( ws_find conda )/conda/etc/profile.d/conda.sh
+#source $( ws_find conda )/conda/etc/profile.d/conda.sh
+ml devel/conda
 conda activate pgnn
-cd $( ws_find conda )
+#cd $( ws_find conda )
 cd ./physics_guided_nn
 echo 'begin python'
 
-python ./code/ENreg.py -d full
+python ./code/ENreg.py -d sparse
 
 conda deactivate
 

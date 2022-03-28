@@ -2,13 +2,13 @@
 ########## Begin MOAB/Slurm header ##########
 #
 # Give job a reasonable name
-#MOAB -N ENmlp
+#MOAB -N pretraining
 #
 # Request number of nodes and CPU cores per node for job
-#MOAB -l nodes=1:ppn=20
+#MOAB -l nodes=10:ppn=20
 #
 # Estimated wallclock time for job
-#MOAB -l walltime=00:02:00:00
+#MOAB -l walltime=04:00:00:00
 #
 # Write standard output and errors in same file
 #MOAB -j oe 
@@ -32,5 +32,6 @@ ml devel/conda
 # Activate environment
 cd physics_guided_nn
 conda activate pgnn
+
 # Run script with python3
-python3 code/pretraining.py
+python3 code/pretraining.py -d full

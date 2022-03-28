@@ -58,9 +58,12 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
     df["val_loss"] = mse_val
     df["train_loss_sd"] = mse_train_sd
     df["val_loss_sd"] = mse_val_sd
+    df["ind_mini"] = ((np.array(mse_val)**2 + np.array(mse_val_sd)**2)/2)
     print("Random architecture search best result:")
-    print(df.loc[[df["val_loss"].idxmin() & df["val_loss_sd"].idxmin()]])
-    layersizes = grid[df["val_loss"].idxmin() &  df["val_loss_sd"].idxmin()]
+    #print(df.loc[[df["val_loss"].idxmin() & df["val_loss_sd"].idxmin()]])
+    print(df.loc[df["ind_mini"].idxmin()])
+    # layersizes = grid[df["val_loss"].idxmin() &  df["val_loss_sd"].idxmin()]
+    layersizes = grid[df["ind_mini"].idxmin()]
 
     return layersizes, df
 
@@ -101,14 +104,14 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
 
     for i in range(len(grid)):
         if reg is not None:
-            hparams = {"epochs": 10,
+            hparams = {"epochs": 200,
                        "batchsize": grid[i][1],
                        "lr": grid[i][0],
                        "eta": grid[i][2]
                        }
         else:
             # original epochs 200
-            hparams = {"epochs": 10,
+            hparams = {"epochs": 200,
                        "batchsize": grid[i][1],
                        "lr": grid[i][0]
                        }
@@ -130,12 +133,17 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
     df["val_loss"] = mse_val
     df["train_loss_sd"] = mse_train_sd
     df["val_loss_sd"] = mse_val_sd
+    df["ind_mini"] = ((np.array(mse_val)**2 + np.array(mse_val_sd)**2)/2)
+    #print(df.loc[[df["val_loss"].idxmin() & df["val_loss_sd"].idxmin()]])                       
+
     print("For architecture:")
     print(layersizes)
     print(df.head())
     print("Random hparams search best result:")
-    print(df.loc[[df["val_loss"].idxmin() & df["val_loss_sd"].idxmin()]])
-    hparams = grid[df["val_loss"].idxmin() & df["val_loss_sd"].idxmin()]
+    #print(df.loc[[df["val_loss"].idxmin() & df["val_loss_sd"].idxmin()]])
+    print(df.loc[df["ind_mini"].idxmin()])
+    hparams = grid[df["ind_mini"].idxmin()]
+    # hparams = grid[df["val_loss"].idxmin() &  df["val_loss_sd"].idxmin()]
     print("Dataframe:", df)
     return hparams, df
 

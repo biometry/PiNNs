@@ -329,10 +329,17 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
         eta = hparams['eta']
     if reg is not None:
         yp_train, yp_val = torch.tensor(reg[0].to_numpy(), dtype=torch.float32), torch.tensor(reg[1].to_numpy(), dtype=torch.float32)
+
+        print("Check train and val split for ft FIRST TIME")
+        print(yp_train.size(), yp_val.size())
+
         if emb:
             xr_train, xr_val = torch.tensor(raw[0].to_numpy(), dtype=torch.float32), torch.tensor(raw[1].to_numpy(), dtype=torch.float32)
     x_train, y_train = torch.tensor(train[0].to_numpy(), dtype=torch.float32), torch.tensor(train[1].to_numpy(), dtype=torch.float32)
     x_val, y_val = torch.tensor(val[0].to_numpy(), dtype=torch.float32), torch.tensor(val[1].to_numpy(), dtype=torch.float32)
+
+    print(x_train.size(), y_train.size())
+    print(x_val.size(), y_val.size())
     
     if reg is not None:
         if emb:
@@ -341,17 +348,24 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
         else:
             train_set = TensorDataset(x_train, y_train, yp_train)
             val_set = TensorDataset(x_val, y_val, yp_val)
+            print("Check training and validation set for finetuning:")
+            print(train_set)
+            print(val_set)
+
     elif res == 2:
         yp_train, yp_val = torch.tensor(ypreles[0].to_numpy(), dtype=torch.float32), torch.tensor(ypreles[1].to_numpy(), dtype=torch.float32)
         train_set = TensorDataset(x_train, y_train, yp_train)
         val_set = TensorDataset(x_val, y_val, yp_val)
     else:
         train_set = TensorDataset(x_train, y_train)
+
         val_set = TensorDataset(x_val, y_val)
         
     train_set_size = len(train_set)
     sample_id = list(range(train_set_size))
     val_set_size = len(val_set)
+    print("Validation set size:")
+    print(val_set_size)
     vsample_id = list(range(val_set_size))
     
     if emb:

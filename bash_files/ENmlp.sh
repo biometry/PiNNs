@@ -8,7 +8,7 @@
 #MOAB -l nodes=2:ppn=20
 #
 # Estimated wallclock time for job
-#MOAB -l walltime=04:00:00:00
+#MOAB -l walltime=00:08:00:00
 #
 # Write standard output and errors in same file
 #MOAB -j oe 
@@ -26,13 +26,15 @@ echo "Number of nodes allocated to job:     $MOAB_NODECOUNT"
 echo "Number of cores allocated to job:     $MOAB_PROCCOUNT"
 
 echo 'Start now'
-source $( ws_find conda )/conda/etc/profile.d/conda.sh
+#source $( ws_find conda )/conda/etc/profile.d/conda.sh
+ml devel/conda
 conda activate pgnn
-cd $( ws_find conda )
+
+#cd $( ws_find conda )
 cd ./physics_guided_nn
 echo 'begin python'
 
-python ./code/ENmlp.py -d full
+python ./code/ENmlp.py -d sparse
 
 conda deactivate
 

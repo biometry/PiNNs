@@ -102,15 +102,26 @@ def parameter_samples(n_samples, parameters = ['beta', 'chi', 'X[0]', 'gamma', '
     sampling = LHS(xlimits = xlimits, criterion='m')
     num = n_samples
     x = sampling(num)
+    print("Parameter LHS samples.")
+    print("Shape: ", x.shape)
+    print(x)
 
-    d = []
+    d = np.zeros((num,30)) 
     for i in range(x.shape[0]):
+        print("Joint sample of: ")
+        print(x[i,:])
         out.loc[out['name'].isin(parameters), 'def'] = x[i,:]
-        d.append(out['def'])
+#        print("Replace the following values: ")
+#        print(out['name'].isin(parameters))
+#        print("New parameter vector: ")
+#        print(out['def'])
+        d[i,:] = out['def'].to_numpy()[:30]
 
-    d = np.array(d)
+    # d = np.array(d)
+    print("Parameter array: ")
+    print(d[:5, :])
 
-    return(d[:,:30])
+    return(d)
 
 
 def gen_simulations(n, data_dir = '~/physics_guided_nn/data/'):
@@ -144,6 +155,8 @@ def gen_simulations(n, data_dir = '~/physics_guided_nn/data/'):
         pickle.dump(gamfapar, f)
 
     p = parameter_samples(n_samples = n)
+    pdd = pd.DataFrame(p)
+    pdd.to_csv('~/physics_guided_nn/data/DA_parameter_samples.csv', index=False)
     #np.savetext('parameter_simulations.csv', p, delimiter=';')
     pt = torch.tensor(p, dtype=torch.float64)
     
@@ -159,6 +172,7 @@ def gen_simulations(n, data_dir = '~/physics_guided_nn/data/'):
         #np.savetext('gpp_simulations.csv')
         
         c['GPP'] = out
+        print(c)
         d.append(c)
 
     d = pd.concat(d)

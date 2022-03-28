@@ -91,12 +91,12 @@ def read_in(type, data_dir=None):
         out = pd.read_csv(''.join((data_dir, 'soro.csv')))
     if type == 'NAS' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'train_hyt.csv')))
-        out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
+        out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005,2009])]
     elif type == 'NASp' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'bilykriz.csv')))
     elif type == 'validation' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'hyytiala.csv')))
-        out = out[~pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
+       # out = out[~pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type.startswith('exp2') and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'data_exp2.csv')))
     elif type == 'simulations' and data_dir != 'load':
@@ -172,9 +172,13 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     return out
 
 
-def sparse(x, y, it=7):
+def sparse(x, y, reg=None, it=7):
 
     x_small = x.iloc[::it,:]
     y_small = y.iloc[::it]
 
-    return x_small, y_small
+    if reg is not None:
+        reg_small = reg.iloc[::it,:]
+        return x_small, y_small, reg_small
+    else:
+        return x_small, y_small
