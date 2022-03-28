@@ -44,7 +44,7 @@ def evalmlp(data_use="full"):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"~/physics_guided_nn/results/NmlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -53,13 +53,13 @@ def evalmlp(data_use="full"):
     model_design = {'layersizes': layersizes}
     
     # Hyperparameters
-    res_hp = pd.read_csv(f"~/physics_guided_nn/results/NmlpHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
     a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
     
     # Learningrate
-    res_hp = pd.read_csv(f"~/physics_guided_nn/results/mlp_lr_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
     a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
@@ -103,11 +103,11 @@ def evalmlp(data_use="full"):
         v5.append(val_loss[4][i])
         v6.append(val_loss[5][i])
         
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv(f'~/physics_guided_nn/results/mlp_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv(f'./results/mlp_vloss_{data_use}.csv')
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
     #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
     #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv('results/mlp_trainloss.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv('./results/mlp_trainloss.csv')
     
     # Evaluation
     mse = nn.MSELoss()
@@ -147,9 +147,9 @@ def evalmlp(data_use="full"):
     
     print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'~/physics_guided_nn/results/mlp_eval_performance_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'~/physics_guided_nn/results/mlp_eval_preds_train_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'~/physics_guided_nn/results/mlp_eval_preds_test_{data_use}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlp_eval_performance_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlp_eval_preds_train_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlp_eval_preds_test_{data_use}.csv')
 
 
 if __name__ == '__main__':

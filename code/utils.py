@@ -91,12 +91,14 @@ def read_in(type, data_dir=None):
         out = pd.read_csv(''.join((data_dir, 'soro.csv')))
     if type == 'NAS' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'train_hyt.csv')))
-        out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005,2009])]
+        out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type == 'NASp' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'bilykriz.csv')))
+        #out = pd.read_csv(''.join((data_dir, 'bilykriz.csv')))
+        out = pd.read_csv(''.join((data_dir, 'train_hyt.csv')))
+        out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type == 'validation' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'hyytiala.csv')))
-       # out = out[~pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
+        out = out[pd.DatetimeIndex(out['date']).year.isin([2008, 2009, 2010, 2011, 2012])]
     elif type.startswith('exp2') and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'data_exp2.csv')))
     elif type == 'simulations' and data_dir != 'load':
@@ -106,6 +108,7 @@ def read_in(type, data_dir=None):
 
 
 def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True):
+
     if data_split.endswith('p'):
         xcols = ['GPPp', 'ETp', 'SWp']
         ypcols = None

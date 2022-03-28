@@ -72,7 +72,7 @@ def evalemb(data_use="full"):
     print("train_x", train_x, rtr)
     
     
-    res_as = pd.read_csv(f"~/physics_guided_nn/results/NembAS_{data_use}.csv")
+    res_as = pd.read_csv(f"./results/NembAS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:2]
     b = str(a.values).split("[")[-1].split("]")[0].split(",")
     c = [int(bb) for bb in b]
@@ -85,14 +85,14 @@ def evalemb(data_use="full"):
     model_design = {'layersizes': layersizes}
     
     # used before: Nemb2HP_m300.csv
-    res_hp = pd.read_csv(f"~/physics_guided_nn/results/NembHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/NembHP_{data_use}.csv")
     a = res_hp.loc[res_hp.val_loss.idxmin()][1:4]
     b = a.to_numpy()
     lrini = b[0]
     bs = b[1]
     eta = b[2]
     
-    res_hp = pd.read_csv(f"~/physics_guided_nn/results/emb_lr_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/emb_lr_{data_use}.csv")
     a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
@@ -125,7 +125,7 @@ def evalemb(data_use="full"):
         t4.append(train_loss[3][i])
         t5.append(train_loss[4][i])
         t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv(f'~/physics_guided_nn/results/Nemb_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv(f'./results/Nemb_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -140,7 +140,7 @@ def evalemb(data_use="full"):
         v5.append(val_loss[4][i])
         v6.append(val_loss[5][i])
         
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv(f'~/physics_guided_nn/results/emb_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv(f'./results/emb_vloss_{data_use}.csv')
     
     # Evaluation
     mse = nn.MSELoss()
@@ -185,11 +185,11 @@ def evalemb(data_use="full"):
                    'test_mae': test_mae}
     
     
-    pd.DataFrame.from_dict(performance).to_csv(f'~/physics_guided_nn/results/emb_eval_performance_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'~/physics_guided_nn/results/emb_eval_preds_train_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'~/physics_guided_nn/results/emb_eval_preds_test_{data_use}.csv')
-    pd.DataFrame.from_dict(parameters_tr).to_csv(f'~/physics_guided_nn/results/emb_parameters_train_{data_use}.csv')
-    pd.DataFrame.from_dict(parameters_te).to_csv(f'~/physics_guided_nn/results/emb_parameters_test_{data_use}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/emb_eval_performance_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'./results/emb_eval_preds_train_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'./results/emb_eval_preds_test_{data_use}.csv')
+    pd.DataFrame.from_dict(parameters_tr).to_csv(f'./results/emb_parameters_train_{data_use}.csv')
+    pd.DataFrame.from_dict(parameters_te).to_csv(f'./results/emb_parameters_test_{data_use}.csv')
 
 if __name__ == '__main__':
     evalemb(args.d)

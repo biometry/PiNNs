@@ -61,7 +61,7 @@ def evalreg(data_use="full"):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"~/physics_guided_nn/results/NregAS_{data_use}.csv")
+    res_as = pd.read_csv(f"./results/NregAS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -70,14 +70,14 @@ def evalreg(data_use="full"):
     
     model_design = {'layersizes': layersizes}
     
-    res_hp = pd.read_csv(f"~/physics_guided_nn/results/NregHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/NregHP_{data_use}.csv")
     a = res_hp.loc[res_hp.val_loss.idxmin()][1:4]
     b = a.to_numpy()
     lr = b[0]
     bs = b[1]
     eta = b[2]
     
-    res_hp = pd.read_csv(f"~/physics_guided_nn/results/reg_lr_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/reg_lr_{data_use}.csv")
     a = res_hp.loc[res_hp.val_loss.idxmin()][1:2]
     b = a.to_numpy()
     lr = b[0]
@@ -112,7 +112,7 @@ def evalreg(data_use="full"):
         t4.append(train_loss[3][i])
         t5.append(train_loss[4][i])
         t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv(f'~/physics_guided_nn/results/reg_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv(f'./results/reg_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -127,7 +127,7 @@ def evalreg(data_use="full"):
         v5.append(val_loss[4][i])
         v6.append(val_loss[5][i])
         
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv(f'~/physics_guided_nn/results/reg_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv(f'./results/reg_vloss_{data_use}.csv')
 
     mse = nn.MSELoss()
     mae = nn.L1Loss()
@@ -167,9 +167,9 @@ def evalreg(data_use="full"):
     print(performance)
     
     
-    pd.DataFrame.from_dict(performance).to_csv(f'~/physics_guided_nn/results/reg_eval_performance_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'~/physics_guided_nn/results/reg_eval_preds_train_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'~/physics_guided_nn/results/reg_eval_preds_test_{data_use}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/reg_eval_performance_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'./results/reg_eval_preds_train_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'./results/reg_eval_preds_test_{data_use}.csv')
 
 if __name__ == '__main__':
     evalreg(args.d)                                
