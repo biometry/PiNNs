@@ -24,8 +24,8 @@ def regft(data_use="full"):
     ypreles = xt.drop(xt.columns.difference(['GPPp']), axis=1)[1:]
     ypreles.index = x.index
 
-    train_x, train_y, train_yp = x[x.index.year.isin([2004, 2005])], y[y.index.year.isin([2004, 2005])].to_frame(), ypreles[ypreles.index.year.isin([2004, 2005])]
-    test_x, test_y, test_yp = x[x.index.year == 2009], y[y.index.year == 2009].to_frame(),  ypreles[ypreles.index.year == 2009]
+    train_x, train_y, train_yp = x[x.index.year.isin([2004])], y[y.index.year.isin([2004])].to_frame(), ypreles[ypreles.index.year.isin([2004])]
+    test_x, test_y, test_yp = x[x.index.year == 2005], y[y.index.year == 2005].to_frame(),  ypreles[ypreles.index.year == 2005]
 
 
     train_x.index, train_y.index, train_yp.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(train_yp))
@@ -34,7 +34,7 @@ def regft(data_use="full"):
     print(train_x, train_y, train_yp)
 
     res_as = pd.read_csv(f"./results/NregAS_{data_use}.csv")
-    a = res_as.loc[res_as.val_loss.idxmin()][1:5]
+    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
     print('layersizes', layersizes)
@@ -42,7 +42,7 @@ def regft(data_use="full"):
     model_design = {'layersizes': layersizes}
     
     res_hp = pd.read_csv(f"./results/NregHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:4]
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:4]
     b = a.to_numpy()
     lrini = b[0]
     bs = b[1]
@@ -55,10 +55,12 @@ def regft(data_use="full"):
             lrs.append(l)
             
     print(lrs, len(lrs))
-    mse_train = []
-    mse_val = []
+    mse_train_mean = []
+    mse_val_mean = []
+    mse_train_sd = []
+    mse_val_sd = []
     
-    for i in range(300):
+    for i in range(len(lrs)):
 
         hp = {'epochs': 1000, #originally 2000
               'batchsize': int(bs),
@@ -68,15 +70,21 @@ def regft(data_use="full"):
         data_dir = "./data/"
         data = "reg"
         loss = training.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), data_dir, data, emb=False, reg=(train_yp, test_yp))
-        mse_train.append(np.mean(loss['train_loss']))
-        mse_val.append(np.mean(loss['val_loss']))
+        mse_train_mean.append(np.mean(loss['train_loss']))
+        mse_val_mean.append(np.mean(loss['val_loss']))
+        mse_train_sd.append(np.std(loss['train_loss']))
+        mse_val_sd.append(np.std(loss['val_loss']))
 
     df = pd.DataFrame(lrs)
-    df['train_loss'] = mse_train
-    df['val_loss'] = mse_val
+    df['train_loss'] = mse_train_mean
+    df['val_loss'] = mse_val_mean
+    df['train_loss_sd'] = mse_train_sd
+    df['val_loss_sd'] = mse_val_sd
+    df["ind_mini"] = ((np.array(mse_val_mean)**2 + np.array(mse_val_sd)**2)/2)
+
     print("Random hparams search best result:")
-    print(df.loc[[df["val_loss"].idxmin()]])
-    lr = lrs[df["val_loss"].idxmin()]
+    print(df.loc[[df["ind_mini"].idxmin()]])
+    lr = lrs[df["ind_mini"].idxmin()]
     print("Dataframe:", df)
 
     df.to_csv(f"./results/reg_lr_{data_use}.csv")

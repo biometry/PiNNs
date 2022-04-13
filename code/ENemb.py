@@ -11,17 +11,16 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
-parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
+#parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
 args = parser.parse_args()
 
 print(args)
 
-
-def ENemb(data_use="full", splits=None):
+def ENemb(data_use="full", splits=2):
 
     x, y, xt = utils.loaddata('NAS', 0, dir="./data/", raw=True)
     
-    xt = xt.drop(['date', 'GPP', 'ET', 'GPPp', 'ETp', 'SWp', 'Unnamed: 0'], axis=1)
+    xt = xt.drop(['date', 'GPP', 'ET', 'GPPp', 'ETp', 'SWp'], axis=1)
     print(xt)
 
     l, m, yp = utils.loaddata('NAS', 0, dir="./data/", raw=True)

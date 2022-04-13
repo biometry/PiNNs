@@ -9,10 +9,10 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
-parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
+#parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
 args = parser.parse_args()
 
-def ENres2(data_use='full'):
+def ENres2(data_use='full', splits = 2):
     x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
 
     ypreles = xt.drop(xt.columns.difference(['GPPp']), axis=1)[1:]
@@ -34,7 +34,7 @@ def ENres2(data_use='full'):
     agrid.to_csv(f"./results/NresAS2_{data_use}.csv")
 
     # Hyperparameter Search Space
-    hpar_grid = HP.HParSearchSpace(200)
+    hpar_grid = HP.HParSearchSpace(500)
 
     # Hyperparameter search
 

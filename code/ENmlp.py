@@ -10,12 +10,12 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
-parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
+#parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
 args = parser.parse_args()
 
 print(args)
 
-def ENmlp(data_use="full", splits=None):
+def ENmlp(data_use="full", splits=2):
 
     x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
     y = y.to_frame()
@@ -30,7 +30,8 @@ def ENmlp(data_use="full", splits=None):
     print(x, y)
     
     x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
-
+    
+    # grid size: 500
     arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 500, 4)
 
     # architecture search
@@ -38,7 +39,7 @@ def ENmlp(data_use="full", splits=None):
     layersizes, argrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSmlp", hp=True)
     argrid.to_csv(f"./results/NmlpAS_{data_use}.csv")
 
-    # Hyperparameter Search Space
+    # Hyperparameter Search Space: 500
     hpar_grid = HP.HParSearchSpace(500)
     
     # Hyperparameter search

@@ -23,8 +23,8 @@ def mlpft(data_use="full"):
     print(x.shape)
     print(xt.shape)
     
-    train_x, train_y = x[x.index.year.isin([2004, 2005])], y[y.index.year.isin([2004, 2005])].to_frame()
-    test_x, test_y = x[x.index.year.isin([2009])], y[y.index.year.isin([2009])].to_frame()
+    train_x, train_y = x[x.index.year.isin([2004])], y[y.index.year.isin([2004])].to_frame()
+    test_x, test_y = x[x.index.year.isin([2005])], y[y.index.year.isin([2005])].to_frame()
     
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
@@ -32,7 +32,7 @@ def mlpft(data_use="full"):
     print(test_x.shape, test_y.shape)
     
     res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
-    a = res_as.loc[res_as.val_loss.idxmin()][1:5]
+    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
     print('layersizes', layersizes)
@@ -40,7 +40,7 @@ def mlpft(data_use="full"):
     model_design = {'layersizes': layersizes}
 
     res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     print(b)
     lrini = b[0]
@@ -53,9 +53,11 @@ def mlpft(data_use="full"):
             lrs.append(l)
             
     print(lrs, len(lrs))
-    mse_train = []
-    mse_val = []
-    
+    mse_train_mean = []
+    mse_val_mean = []
+    mse_train_sd = []
+    mse_val_sd = []
+
     for i in range(300):
         
         hp = {'epochs': 1000, #orignially: 2000
@@ -65,15 +67,21 @@ def mlpft(data_use="full"):
         data_dir = "./data/"
         data = "mlp"
         loss = training.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), data_dir, data, reg=None, emb=False)
-        mse_train.append(np.mean(loss['train_loss']))
-        mse_val.append(np.mean(loss['val_loss']))
+        mse_train_mean.append(np.mean(loss['train_loss']))
+        mse_val_mean.append(np.mean(loss['val_loss']))
+        mse_train_sd.append(np.std(loss['train_loss']))
+        mse_val_sd.append(np.std(loss['val_loss']))
 
     df = pd.DataFrame(lrs)
-    df['train_loss'] = mse_train
-    df['val_loss'] = mse_val
+    df['train_loss'] = mse_train_mean
+    df['val_loss'] = mse_val_mean
+    df["train_loss_sd"] = mse_train_sd
+    df["val_loss_sd"] = mse_val_sd
+    df["ind_mini"] = ((np.array(mse_val_mean)**2 + np.array(mse_val_sd)**2)/2)
+
     print("Random hparams search best result:")
-    print(df.loc[[df["val_loss"].idxmin()]])
-    lr = lrs[df["val_loss"].idxmin()]
+    print(df.loc[[df["ind_mini"].idxmin()]])
+    lr = lrs[df["ind_mini"].idxmin()]
     print("Dataframe:", df)
 
     df.to_csv(f"./results/mlp_lr_{data_use}.csv")

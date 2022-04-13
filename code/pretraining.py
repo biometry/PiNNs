@@ -25,9 +25,14 @@ print(args)
 
 def pretraining(data_use="full"):
     
-    ## Load data for pretraining
-    
-    x, y, r  = utils.loaddata('simulations', 1, dir="~/physics_guided_nn/data/")
+    ## Load data for defining splits
+    x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
+    print(x.index.year.unique())
+    train_x = x[~x.index.year.isin([2007,2008])]
+    splits = len(train_x.index.year.unique())
+
+    # Load data for pretraining
+    x, y, r  = utils.loaddata('simulations', 1, dir="./data/")
     y = y.to_frame()
     
     ## Split into training and test
@@ -41,7 +46,7 @@ def pretraining(data_use="full"):
     print(type(train_y))
     
     ## Pretraining in n-fold CV: choose n the same as in evalmlpDA.py
-    splits = 6
+    #splits = 6
 
     ## OR: Evaluate on observed data from Hyytiala?
     
@@ -53,8 +58,8 @@ def pretraining(data_use="full"):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"~/physics_guided_nn/results/NmlpAS_{data_use}.csv")
-    a = res_as.loc[res_as.val_loss.idxmin()][1:5]
+    res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
+    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
     print('layersizes', layersizes)
@@ -62,14 +67,14 @@ def pretraining(data_use="full"):
     model_design = {'layersizes': layersizes}
     
     # Hyperparameters
-    res_hp = pd.read_csv(f"~/physics_guided_nn/results/NmlpHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+    res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
     
     # Learningrate
-    res_hp = pd.read_csv(f"~/physics_guided_nn/results/mlp_lr_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+    res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
     
@@ -80,7 +85,7 @@ def pretraining(data_use="full"):
           'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/"
-    data = "mlpDA_pretrained"
+    data = f"mlpDA_pretrained_{data_use}"
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
     
@@ -115,11 +120,11 @@ def pretraining(data_use="full"):
         v5.append(val_loss[4][i])
         v6.append(val_loss[5][i])
         
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6":v6}).to_csv(f'~/physics_guided_nn/results/mlpDA_pretrained_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6":v6}).to_csv(f'./results/mlpDA_pretrained_vloss_{data_use}.csv')
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
     #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
     #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6":t6}).to_csv(f'~/physics_guided_nn/results/mlpDA_pretrained_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6":t6}).to_csv(f'./results/mlpDA_pretrained_trainloss_{data_use}.csv')
     
     # Evaluation
     mse = nn.MSELoss()
@@ -139,7 +144,7 @@ def pretraining(data_use="full"):
         i += 1
         #import model
         model = models.NMLP(x.shape[1], y.shape[1], model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"mlpDA_pretrained_model{i}.pth"))))
+        model.load_state_dict(torch.load(''.join((data_dir, f"mlpDA_pretrained_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)
@@ -158,9 +163,9 @@ def pretraining(data_use="full"):
     
     #print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'~/physics_guided_nn/results/mlpDA_pretrained_eval_performance_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'~/physics_guided_nn/results/mlpDA_pretrained_eval_preds_train_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'~/physics_guided_nn/results/mlpDA_pretrained_eval_preds_test_{data_use}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA_pretrained_eval_performance_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA_pretrained_eval_preds_train_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA_pretrained_eval_preds_test_{data_use}.csv')
 
 if __name__ == '__main__':
     pretraining(args.d)

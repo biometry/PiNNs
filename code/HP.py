@@ -47,11 +47,19 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
         #else:
         #    running_losses = training.train(parameters, model_design, X, Y, "./data/", splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, embtp=embtp)
 
+        print("SHAPE TRAIN LOSS IN CV: ")
+        print(running_losses["train_loss"].shape)
+        print("SHAPE MEAN TRAIN LOSS IN CV: ")
+        print(np.mean(running_losses["train_loss"]).shape)
+        
         mse_train.append(np.mean(running_losses["train_loss"]))
         mse_val.append(np.mean(running_losses["val_loss"]))
         mse_train_sd.append(np.std(running_losses["train_loss"]))
         mse_val_sd.append(np.std(running_losses["val_loss"]))
         print(f"fitted model {i}")
+        print("FORM OF MEAN(Train_losses):")
+        print("(Expected: list containing vector of length 5")
+        print(mse_train)
 
     df = pd.DataFrame(grid)
     df["train_loss"] = mse_train
@@ -104,14 +112,14 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
 
     for i in range(len(grid)):
         if reg is not None:
-            hparams = {"epochs": 200,
+            hparams = {"epochs": 100,
                        "batchsize": grid[i][1],
                        "lr": grid[i][0],
                        "eta": grid[i][2]
                        }
         else:
             # original epochs 200
-            hparams = {"epochs": 200,
+            hparams = {"epochs": 100,
                        "batchsize": grid[i][1],
                        "lr": grid[i][0]
                        }
@@ -126,11 +134,18 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
         mse_val.append(np.mean(running_losses["val_loss"]))
         mse_train_sd.append(np.std(running_losses["train_loss"]))
         mse_val_sd.append(np.std(running_losses["val_loss"]))
-        print(f"fitted model {i}")
+#        mse_train.append(np.mean(np.mean(running_losses["train_loss"], axis=1)))
+#        mse_val.append(np.mean(np.mean(running_losses["val_loss"], axis=1)))
+#        mse_train_sd.append(np.mean(np.std(running_losses["train_loss"], axis=1)))
+#        mse_val_sd.append(np.mean(np.std(running_losses["val_loss"], axis=1)))        
 
+        print(f"fitted model {i}")
+        
     df = pd.DataFrame(grid)
     df["train_loss"] = mse_train
     df["val_loss"] = mse_val
+    print("VAL_loss:")
+    print(mse_val)
     df["train_loss_sd"] = mse_train_sd
     df["val_loss_sd"] = mse_val_sd
     df["ind_mini"] = ((np.array(mse_val)**2 + np.array(mse_val_sd)**2)/2)

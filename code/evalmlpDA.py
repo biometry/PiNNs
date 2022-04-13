@@ -37,7 +37,7 @@ def evalmlpDA(data_use="full", da=1, splits=6):
     train_x = x[~x.index.year.isin([2007, 2008])]
     train_y = y[~y.index.year.isin([2007, 2008])]
     
-    #splits = len(train_x.index.year.unique())
+    splits = len(train_x.index.year.unique())
     
     test_x = x[x.index.year == 2008]
     test_y = y[y.index.year == 2008]
