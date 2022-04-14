@@ -23,12 +23,20 @@ args = parser.parse_args()
 def evalres(data_use="full"):
     
     x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
+    y = y.to_frame()
 
 
-    yp_tr = pd.read_csv("./data/train_hyt.csv")
-    yp_te = pd.read_csv("./data/test_hyt.csv")
-    yp_tr.index = pd.DatetimeIndex(yp_tr['date'])
-    yp_te.index = pd.DatetimeIndex(yp_te['date'])
+    print(x.index.year.unique()) 
+    yp_te = x[x.index.year.isin([2008])]
+    yp_tr= x[~x.index.year.isin([2007,2008])]
+
+    print(yp_te)
+    print(yp_tr)
+
+#    yp_tr = pd.read_csv("./data/train_hyt.csv")
+#    yp_te = pd.read_csv("./data/test_hyt.csv")
+#    yp_tr.index = pd.DatetimeIndex(yp_tr.index) #yp_tr['date']
+#    yp_te.index = pd.DatetimeIndex(yp_te.index)
     
     yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
     ypte = yp_te.drop(yp_te.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
@@ -47,7 +55,6 @@ def evalres(data_use="full"):
     # standardize training and test data together
     x_tr = utils.standardize(pd.concat([x_tr, x_te]))
     
-    y = y.to_frame()
     train_x = x_tr[~x_tr.index.year.isin([2007,2008])]
     train_y = y[~y.index.year.isin([2007,2008])]
     splits = len(train_x.index.year.unique())
@@ -58,11 +65,6 @@ def evalres(data_use="full"):
     
     print("train_x dimensions:", train_x.shape)
     print("train_y dimensions:", train_y.shape)
-    
-    
-    #print(len(x), len(y))
-    splits = len(train_x.index.year.unique())
-    #print(splits)
     
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
@@ -112,31 +114,31 @@ def evalres(data_use="full"):
     t2 = []
     t3 = []
     t4 = []
-    t5 = []
-    t6 = []
+#    t5 = []
+#    t6 = []
     for i in range(1000):
         t1.append(train_loss[0][i])
         t2.append(train_loss[1][i])
         t3.append(train_loss[2][i])
         t4.append(train_loss[3][i])
-        t5.append(train_loss[4][i])
-        t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv(f'./results/res_trainloss_{data_use}.csv')
+#        t5.append(train_loss[4][i])
+#        t6.append(train_loss[5][i])
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/res_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
     v4 = []
-    v5 = []
-    v6 = []
+#    v5 = []
+#    v6 = []
     for i in range(1000):
         v1.append(val_loss[0][i])
         v2.append(val_loss[1][i])
         v3.append(val_loss[2][i])
         v4.append(val_loss[3][i])
-        v5.append(val_loss[4][i])
-        v6.append(val_loss[5][i])
+#        v5.append(val_loss[4][i])
+#        v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv(f'./results/res_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/res_vloss_{data_use}.csv')
     
     # Evaluation
     mse = nn.MSELoss()

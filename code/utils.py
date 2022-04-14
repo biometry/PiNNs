@@ -98,6 +98,8 @@ def read_in(type, data_dir=None):
         #out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type == 'validation' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'hyytialaF.csv')), index_col=False)
+    elif type == 'validationp' and data_dir != 'load':
+        out = pd.read_csv(''.join((data_dir, 'hyytialaF.csv')), index_col=False)
         #out = out[pd.DatetimeIndex(out['date']).year.isin([2008, 2009, 2010, 2011, 2012])]
     elif type.startswith('exp2') and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'data_exp2.csv')))

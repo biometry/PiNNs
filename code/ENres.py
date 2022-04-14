@@ -16,7 +16,7 @@ args = parser.parse_args()
 
 def ENres(data_use="full", splits=2):
 
-    x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
+    x, y, xt = utils.loaddata('NASp', 1, dir="./data/", raw=True)
     y = y.to_frame()
  
     if data_use == "sparse":
