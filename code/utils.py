@@ -105,7 +105,7 @@ def read_in(type, data_dir=None):
 
 
 
-def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True):
+def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True, sparse=False):
     if data_split.endswith('p'):
         xcols = ['GPPp', 'ETp', 'SWp']
         ypcols = None
@@ -134,6 +134,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     
     if data_split != 'simulations':
         date = data['date']
+        print(date)
     y = data['GPP']
     
     if ypcols:
@@ -151,11 +152,17 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         data = data.drop(['CO2', 'GPP', 'date'], axis=1)
         data['date'] = date
 
+    if sparse:
+        if yp is not None:
+            data, y, yp, date = make_sparse(data[xcols], y, yp, date)
+        else:
+            data, y, rawdata, date = make_sparse(data[xcols], y, rawdata, date=date)
+    
     if history:
         #print(data, xcols)
         x, y = add_history(data[xcols], y, history, batch_size)
     else:
-        x, y = data[xcols], y
+        x, y = x, y
         
     if data_split != 'simulations':
         x.index = pd.DatetimeIndex(date[history:])
@@ -163,7 +170,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     
     if yp is not None:
         yp = yp[history:]
-        yp.index = pd.DatetimeIndex(date[history:])
+        yp.index = pd.DatetimeIndex(data.date[history:])
         out = x, y, rawdata, yp
         
     else:
@@ -172,9 +179,12 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     return out
 
 
-def sparse(x, y, it=7):
-
+def make_sparse(x, y, sparse=False, date=False, it=7):
     x_small = x.iloc[::it,:]
     y_small = y.iloc[::it]
-
-    return x_small, y_small
+    date_small = date.iloc[::it]
+    if sparse is not False:
+        yp_small = sparse.iloc[::it, :]
+        return x_small, y_small, yp_small, date_small
+    else:
+        return x_small, y_small, date_small

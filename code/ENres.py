@@ -33,13 +33,13 @@ def ENres(data_use="full"):
     arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 800, 4)
     
     # architecture search
-    layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSres", hp=True)
+    layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 200, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSres", hp=True)
     
     agrid.to_csv(f"./results/NresAS_{data_use}.csv")
     
     # Hyperparameter Search Space
     # original search space size: 800
-    hpar_grid = HP.HParSearchSpace(8)
+    hpar_grid = HP.HParSearchSpace(800)
     
     # Hyperparameter search
     hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpres", hp=True)

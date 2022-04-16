@@ -35,11 +35,11 @@ def ENmlp(data_use="full", splits=None):
 
     # architecture search
     # original: use grid of 800 and epochs:100
-    layersizes, argrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSmlp", hp=True)
-    argrid.to_csv(f"~/physics_guided_nn/results/NmlpAS_{data_use}.csv")
+    layersizes, argrid = HP.ArchitectureSearch(arch_grid, {'epochs': 200, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSmlp", hp=True)
+    argrid.to_csv(f"./results/NmlpAS_{data_use}.csv")
 
     # Hyperparameter Search Space
-    hpar_grid = HP.HParSearchSpace(5)
+    hpar_grid = HP.HParSearchSpace(800)
     
     # Hyperparameter search
     hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y,  splits, "hpmlp", hp=True)

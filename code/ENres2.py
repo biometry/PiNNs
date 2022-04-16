@@ -13,25 +13,25 @@ parser.add_argument('-d', metavar='data', type=str, help='define data usage: ful
 args = parser.parse_args()
 
 def ENres2(data_use='full'):
-    x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
-
+    if data_use == 'sparse':
+        x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True, sparse=True)
+    else:
+        x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
     ypreles = xt.drop(xt.columns.difference(['GPPp']), axis=1)[1:]
 
     splits = len(x.index.year.unique())
 
     y = y.to_frame()
 
-    if data_use=='sparse':
-        x, y, ypreles = utils.sparse(x, y, ypreles)
     x.index, y.index, ypreles.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(ypreles))
 
-    print("x",x,"y",y, ypreles)
+    print("x----",x,"y",y, ypreles)
     arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 800, 4)
 
     # architecture search
-    layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSres2", res=2, ypreles=ypreles, hp=True)
+    layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 200, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSres2", res=2, ypreles=ypreles, hp=True)
 
-    agrid.to_csv("./NresAS2.csv")
+    agrid.to_csv(f"./results/Nres2AS_{data_use}.csv")
 
     # Hyperparameter Search Space
     hpar_grid = HP.HParSearchSpace(800)
@@ -44,7 +44,7 @@ def ENres2(data_use='full'):
     print( 'hyperparameters: ', hpars)
 
 
-    grid.to_csv("./NresHP2.csv")
+    grid.to_csv(f"./results/Nres2HP_{data_use}.csv")
 
 if __name__ == '__main__':
     ENres2(args.d)
