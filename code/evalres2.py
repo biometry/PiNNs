@@ -24,7 +24,7 @@ def evalres2(data_use='full', of=False):
     if data_use=='sparse':
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
         yp_tr = utils.make_sparse(pd.read_csv("./data/train_hyt.csv"))
-        yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv"))
+        yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv")[6:])
     else:
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
         yp_tr = pd.read_csv("./data/train_hyt.csv")
@@ -35,27 +35,20 @@ def evalres2(data_use='full', of=False):
     yp_te.index = pd.DatetimeIndex(yp_te['date'])
     yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp']), axis=1)
     ypte = yp_te.drop(yp_te.columns.difference(['GPPp']), axis=1)
-    yp_tr = yptr[~yptr.index.year.isin([2004,2005,2007,2008])]
-    yp_te = ypte
+    yp_tr = yptr[~yptr.index.year.isin([2004,2005,2007,2008])][1:]
+    yp_te = ypte[1:]
     y = y.to_frame()
-    train_x = x[~x.index.year.isin([2004,2005,2007,2008])]
-    train_y = y[~y.index.year.isin([2004,2005,2007,2008])]
+    train_x = x[~x.index.year.isin([2004,2005,2007,2008])][1:]
+    train_y = y[~y.index.year.isin([2004,2005,2007,2008])][1:]
     splits = len(train_x.index.year.unique())
-    print('TRAINX AND YP TRAIN', train_x)
-    print(yp_tr)
 
-
-    test_x = x[x.index.year == 2008]
-    test_y = y[y.index.year == 2008]
-    print(test_x)
-
-
-
+    test_x = x[x.index.year == 2008][1:]
+    test_y = y[y.index.year == 2008][1:]
+    print('TEST X und YP test', train_x, train_y, yp_tr)
     splits = len(train_x.index.year.unique())
     #print(splits)
     train_x.index, train_y.index, yp_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(yp_tr)) 
     test_x.index, test_y.index, yp_te.index = np.arange(0, len(test_x)), np.arange(0, len(test_y)), np.arange(0, len(yp_te))
-    print("train_x", train_x)
 
     # Load results from NAS
     # Architecture
@@ -63,8 +56,6 @@ def evalres2(data_use='full', of=False):
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(np.int))
-    
-    print('layersizes', layersizes)
     
     model_design = {'layersizes': layersizes}
      
@@ -85,13 +76,10 @@ def evalres2(data_use='full', of=False):
            'lr': lr
            }
 
-    print(hp)
-
     data_dir = "./data/"
     data = f"res2_{data_use}"
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, res=2, ypreles=yp_tr, exp=1)
     #pd.DataFrame.from_dict(tloss).to_csv('res2_test.csv')
-    print(tloss)
     train_loss = tloss['train_loss']
     val_loss = tloss['val_loss']
     t1 = []
@@ -128,14 +116,11 @@ def evalres2(data_use='full', of=False):
     mse = nn.MSELoss()
     mae = nn.L1Loss()
     x_train, y_train, tr_yp = torch.tensor(train_x.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32), torch.tensor(yp_tr.to_numpy(), dtype=torch.float32)
-
-    x_test, y_test, te_yp = torch.tensor(test_x.to_numpy()[1:], dtype=torch.float32), torch.tensor(test_y.to_numpy()[1:], dtype=torch.float32), torch.tensor(yp_te.to_numpy(), dtype=torch.float32)
-
+    x_test, y_test, te_yp = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32), torch.tensor(yp_te.to_numpy(), dtype=torch.float32)
     train_rmse = []
     train_mae = []
     test_rmse = []
     test_mae = []
-
     preds_tr = {}
     preds_te = {}
     for i in range(splits):

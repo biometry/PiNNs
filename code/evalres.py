@@ -25,7 +25,7 @@ def evalres(data_use='full', of=False):
         # Load hyytiala
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
         yp_tr = utils.make_sparse(pd.read_csv("./data/train_hyt.csv"))
-        yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv"))
+        yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv")[6:])
     else:
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
         yp_tr = pd.read_csv("./data/train_hyt.csv")
@@ -44,32 +44,23 @@ def evalres(data_use='full', of=False):
     x_te = utils.standardize(x_te, [m, std])
 
     y = y.to_frame()
-    train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])]
-    train_y = y[~y.index.year.isin([2004,2005,2007,2008])]
+    train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])][1:]
+    train_y = y[~y.index.year.isin([2004,2005,2007,2008])][1:]
     splits = len(train_x.index.year.unique())
 
     test_x = x_te[x_te.index.year == 2008]
     test_y = y[y.index.year == 2008][1:]
-
-    print(train_x, train_y)
-
-    #print(len(x), len(y))
+    print('TRAIN_X', train_x)
     splits = len(train_x.index.year.unique())
-    print('splits = ', splits, train_x.index.year.unique())
 
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
-
-    print("train_x", train_x)
-
     # Load results from NAS
     # Architecture
     res_as = pd.read_csv(f"results/NresAS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(np.int))
-
-    print('layersizes', layersizes)
 
     model_design = {'layersizes': layersizes}
 
@@ -93,7 +84,7 @@ def evalres(data_use='full', of=False):
 
 
     data_dir = "./data/"
-    data = "res"
+    data = f"res_{data_use}"
 
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, res=1, ypreles=None)
     print(tloss)
@@ -112,7 +103,7 @@ def evalres(data_use='full', of=False):
         t4.append(train_loss[3][i])
         #t5.append(train_loss[4][i])
         #t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv('res_trainloss.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'results/res_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -127,7 +118,7 @@ def evalres(data_use='full', of=False):
         #v5.append(val_loss[4][i])
         #v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv('res_vloss.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'results/res_vloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -147,7 +138,7 @@ def evalres(data_use='full', of=False):
         i += 1
         #import model
         model = models.NMLP(x_train.shape[1], y.shape[1], model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"res_model{i}.pth"))))
+        model.load_state_dict(torch.load(''.join((data_dir, f"res_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)
@@ -168,9 +159,9 @@ def evalres(data_use='full', of=False):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv('res_eval_performance.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv('res_eval_preds_train.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv('res_eval_preds_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'results/res_eval__{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'results/res_eval_preds__{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'results/res_eval_preds__{data_use}_test.csv')
 
 if __name__ == '__main__':
     evalres(args.d)

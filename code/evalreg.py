@@ -24,7 +24,7 @@ def evalreg(data_use='full', of=False):
     if data_use=='sparse':
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
         yp_tr = utils.make_sparse(pd.read_csv("./data/train_hyt.csv"))
-        yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv"))
+        yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv")[6:])
     else:
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
         yp_tr = pd.read_csv("./data/train_hyt.csv")
@@ -43,24 +43,22 @@ def evalreg(data_use='full', of=False):
     #yp = pd.concat([yptr, ypte])
     #print(yp)
 
-    reg_tr = yptr[1:]
-    reg_te = ypte[1:]
+    reg_tr = yptr[~yptr.index.year.isin([2004, 2005, 2007,2008])][1:]
+    reg_te = ypte[ypte.index.year == 2008][1:]
 
-    train_x = x[~x.index.year.isin([2004, 2005, 2007,2008])]
-    train_y = y[~y.index.year.isin([2004, 2005, 2007,2008])]
+    train_x = x[~x.index.year.isin([2004, 2005, 2007,2008])][1:]
+    train_y = y[~y.index.year.isin([2004, 2005, 2007,2008])][1:]
 
     splits = len(train_x.index.year.unique())
 
-    test_x = x[x.index.year == 2008]
-    test_y = y[y.index.year == 2008]
-
+    test_x = x[x.index.year == 2008][1:]
+    test_y = y[y.index.year == 2008][1:]
 
     #print(len(x), len(y))
     splits = len(train_x.index.year.unique())
     #print(splits)
     train_x.index, train_y.index, reg_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(reg_tr)) 
     test_x.index, test_y.index, reg_te.index = np.arange(0, len(test_x)), np.arange(0, len(test_y)), np.arange(0, len(reg_te))
-    print("train_x", train_x, reg_tr)
 
     # Load results from NAS
     # Architecture
@@ -68,8 +66,6 @@ def evalreg(data_use='full', of=False):
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
-    #layersizes = [4, 32, 2, 16]
-    print('layersizes', layersizes)
 
     model_design = {'layersizes': layersizes}
 
