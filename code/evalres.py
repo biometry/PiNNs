@@ -44,8 +44,8 @@ def evalres(data_use='full', of=False):
     x_te = utils.standardize(x_te, [m, std])
 
     y = y.to_frame()
-    train_x = x_tr[~x_tr.index.year.isin([2007,2008])]
-    train_y = y[~y.index.year.isin([2007,2008])]
+    train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])]
+    train_y = y[~y.index.year.isin([2004,2005,2007,2008])]
     splits = len(train_x.index.year.unique())
 
     test_x = x_te[x_te.index.year == 2008]
@@ -55,7 +55,7 @@ def evalres(data_use='full', of=False):
 
     #print(len(x), len(y))
     splits = len(train_x.index.year.unique())
-    #print(splits)
+    print('splits = ', splits, train_x.index.year.unique())
 
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
@@ -103,31 +103,31 @@ def evalres(data_use='full', of=False):
     t2 = []
     t3 = []
     t4 = []
-    t5 = []
-    t6 = []
+    #t5 = []
+    #t6 = []
     for i in range(5000):
         t1.append(train_loss[0][i])
         t2.append(train_loss[1][i])
         t3.append(train_loss[2][i])
         t4.append(train_loss[3][i])
-        t5.append(train_loss[4][i])
-        t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv('res_trainloss.csv')
+        #t5.append(train_loss[4][i])
+        #t6.append(train_loss[5][i])
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv('res_trainloss.csv')
     v1 = []
     v2 = []
     v3 = []
     v4 = []
-    v5 = []
-    v6 = []
+    #v5 = []
+    #v6 = []
     for i in range(5000):
         v1.append(val_loss[0][i])
         v2.append(val_loss[1][i])
         v3.append(val_loss[2][i])
         v4.append(val_loss[3][i])
-        v5.append(val_loss[4][i])
-        v6.append(val_loss[5][i])
+        #v5.append(val_loss[4][i])
+        #v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv('res_vloss.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv('res_vloss.csv')
 
     # Evaluation
     mse = nn.MSELoss()
