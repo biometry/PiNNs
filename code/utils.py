@@ -6,7 +6,7 @@ import random
 import torch
 import dataset
 
-def standardize(var, scaling=None):
+def standardize(var, scaling=None, get_p=False):
     '''
     This function standardizes variables around the mean and the standard deviation
     :param var: two dimensional array of data points to normalize e.g. pd.DataFrame, torch.tensor
@@ -31,8 +31,10 @@ def standardize(var, scaling=None):
         out = (var - scaling[0]) / scaling[1]
         m = scaling[0]
         std = scaling[1]
-
-    return out
+    if get_p:
+        return out, m, std
+    else:
+        return out
 
 
 def encode_doy(doy):
@@ -179,10 +181,13 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     return out
 
 
-def make_sparse(x, y, sparse=False, date=False, it=7):
+def make_sparse(x, y=False, sparse=False, date=False, it=7):
     x_small = x.iloc[::it,:]
-    y_small = y.iloc[::it]
-    date_small = date.iloc[::it]
+    if y is False and sparse is False and date is False:
+        return x_small
+    if y is not False:
+        y_small = y.iloc[::it]
+        date_small = date.iloc[::it]
     if sparse is not False:
         yp_small = sparse.iloc[::it, :]
         return x_small, y_small, yp_small, date_small
