@@ -24,10 +24,10 @@ args = parser.parse_args()
 
 
 
-def predict(test_x, test_y, model, data_use):
+def predict(test_x, test_y, m, data_use):
     
     # Architecture
-    res_as = pd.read_csv(f"results/NmlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"results/N{m}AS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -46,12 +46,17 @@ def predict(test_x, test_y, model, data_use):
     for i in range(4):
         i += 1
         #import model
-        model = models.NMLP(x_test.shape[1], 1, model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"mlp_{data_use}_model{i}.pth"))))
+        if m == 'mlp' or m == 'res' or m == 'reg':
+            model = models.NMLP(x_test.shape[1], 1, model_design['layersizes'])
+        elif m == 'res2':
+            model = models.RES(x_test.shape[1], 1, model_design['layersizes'])
+        
+
+        model.load_state_dict(torch.load(''.join((data_dir, f"{m}_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_test = model(x_test)
-            preds_test.update({f'test_mlp{i}': p_test.flatten().numpy()})
+            preds_test.update({f'test_{m}{i}': p_test.flatten().numpy()})
 
 
 
@@ -65,8 +70,14 @@ def via(data_use, model):
 
     if data_use == 'sparse':
         x, y, xt, mn, std = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True, via=True)
+        if model == 'res':
+            yp_tr = utils.make_sparse(pd.read_csv("./data/train_hyt.csv"))
+            yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv")[6:])
     else:
         x, y, xt, mn, std = utils.loaddata('validation', 1, dir="./data/", raw=True, via=True)
+        if model == 'res':
+            yp_tr = pd.read_csv("./data/train_hyt.csv")
+            yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv"))
 
 
     thresholds = {'PAR': [0, 200], 
@@ -82,11 +93,26 @@ def via(data_use, model):
 
     gridsize = 200
 
-    test_x = x[x.index.year == 2008][1:]
-    test_y = y[y.index.year == 2008][1:]
-
+    if model == 'res':
+        yp_tr.index = pd.DatetimeIndex(yp_tr['date'])
+        yp_te.index = pd.DatetimeIndex(yp_te['date'])
+        yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
+        ypte = yp_te.drop(yp_te.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
+        n = [1,1]
+        x_tr, n = utils.add_history(yptr, n, 1)
+        x_te, n = utils.add_history(ypte, n, 1)
+        x_tr, m, std = utils.standardize(x_tr, get_p=True)
+        x_te = utils.standardize(x_te, [m, std])
+        test_x = x_te[x_te.index.year == 2008]
+        test_y = y[y.index.year == 2008][1:]
+        variables = ['GPPp', 'ETp', 'SWp']
+        
+    elif model == 'mlp':
+        test_x = x[x.index.year == 2008][1:]
+        test_y = y[y.index.year == 2008][1:]
+        variables = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar']
     dates = test_x.index.copy()
-    variables = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar'] 
+    
 
     for v in variables:
 
@@ -104,8 +130,7 @@ def via(data_use, model):
 
             output[output_cols[i]] = pd.DataFrame.from_dict(ps).apply(lambda row: np.mean(row.to_numpy()), axis=1)
 
-        print(output.T)
-
+        output.T.to_csv(f'results/{model}_{data_use}_{v}_via.csv')
 
 
 if __name__ == '__main__':
