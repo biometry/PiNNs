@@ -17,8 +17,14 @@ import csv
 import training
 import argparse
 
+parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
+parser.add_argument('-m', metavar='model', type=str, help='define model: mlp, res, res2, reg, emb, da')
+args = parser.parse_args()
 
-def predict(test_x, test_y):
+
+
+def predict(test_x, test_y, model, data_use):
     
     # Architecture
     res_as = pd.read_csv(f"results/NmlpAS_{data_use}.csv")
@@ -54,48 +60,53 @@ def predict(test_x, test_y):
 
 
 
-data_use='full'
-
-if data_use == 'sparse':
-    x, y, xt, mn, std = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True, via=True)
-else:
-    x, y, xt, mn, std = utils.loaddata('validation', 1, dir="./data/", raw=True, via=True)
+def via(data_use, model):
 
 
-thresholds = {'PAR': [0, 200], 
-              'Tair': [-20, 40],
-              'VPD': [0, 60],
-              'Precip': [0, 100],
-              #'co2': [],
-              'fapar': [0, 1],
-              'GPPp': [0, 30],
-              'ETp': [0, 800],
-              'SWp': [0, 400]
-}
-    
-gridsize = 200
-
-test_x = x[x.index.year == 2008][1:]
-test_y = y[y.index.year == 2008][1:]
-
-t = test_x.index
-var = 'Tair'
-var_range = (np.linspace(thresholds[var][0], thresholds[var][1], gridsize)-mn[var])/std[var] 
-dates = test_x.index
-
-output_cols = np.linspace(thresholds[var][0], thresholds[var][1], gridsize)
-output = pd.DataFrame()
-output['date'] = dates
-
-for i in range(gridsize):
-    test_x[''.join((var, '_x'))] = [var_range[i]]*len(dates)
-    test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
-    
-    ps = predict(test_x, test_y)
-
-    output[output_cols[i]] = pd.DataFrame.from_dict(ps).apply(lambda row: np.mean(row.to_numpy()), axis=1)
-
-print(output.T)
+    if data_use == 'sparse':
+        x, y, xt, mn, std = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True, via=True)
+    else:
+        x, y, xt, mn, std = utils.loaddata('validation', 1, dir="./data/", raw=True, via=True)
 
 
+    thresholds = {'PAR': [0, 200], 
+                  'Tair': [-20, 40],
+                  'VPD': [0, 60],
+                  'Precip': [0, 100],
+                  #'co2': [],
+                  'fapar': [0, 1],
+                  'GPPp': [0, 30],
+                  'ETp': [0, 800],
+                  'SWp': [0, 400]
+    }
 
+    gridsize = 200
+
+    test_x = x[x.index.year == 2008][1:]
+    test_y = y[y.index.year == 2008][1:]
+
+    dates = test_x.index.copy()
+    variables = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar'] 
+
+    for v in variables:
+
+        var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[v])/std[v] 
+        output_cols = np.linspace(thresholds[v][0], thresholds[v][1], gridsize)
+        output = pd.DataFrame()
+        output['date'] = dates
+
+        for i in range(gridsize):
+            test_x[''.join((v, '_x'))] = [var_range[i]]*len(dates)
+            test_x[''.join((v, '_y'))] = [var_range[i]]*len(dates)
+            test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
+
+            ps = predict(test_x, test_y, model, data_use)
+
+            output[output_cols[i]] = pd.DataFrame.from_dict(ps).apply(lambda row: np.mean(row.to_numpy()), axis=1)
+
+        print(output.T)
+
+
+
+if __name__ == '__main__':
+    via(args.d, args.m)
