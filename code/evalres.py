@@ -25,7 +25,7 @@ def evalres(data_use='full', of=False):
         # Load hyytiala
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
         yp_tr = utils.make_sparse(pd.read_csv("./data/train_hyt.csv"))
-        yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv")[6:])
+        yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv"))
     else:
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
         yp_tr = pd.read_csv("./data/train_hyt.csv")
@@ -33,7 +33,7 @@ def evalres(data_use='full', of=False):
     
     yp_tr.index = pd.DatetimeIndex(yp_tr['date'])
     yp_te.index = pd.DatetimeIndex(yp_te['date'])
-
+    
     yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
     ypte = yp_te.drop(yp_te.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
 
@@ -45,12 +45,12 @@ def evalres(data_use='full', of=False):
 
     y = y.to_frame()
     train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])][1:]
-    train_y = y[~y.index.year.isin([2004,2005,2007,2008])][1:]
+    train_y = y_te[~y_te.index.year.isin([2004,2005,2007,2008])][1:]
     splits = len(train_x.index.year.unique())
 
     test_x = x_te[x_te.index.year == 2008]
-    test_y = y[y.index.year == 2008][1:]
-    print('TRAIN_X', train_x)
+    test_y = y[y.index.year == 2008]
+    print('TRAIN_X', train_x, test_x, test_y)
     splits = len(train_x.index.year.unique())
 
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 

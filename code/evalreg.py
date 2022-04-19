@@ -127,7 +127,7 @@ def evalreg(data_use='full', of=False):
         #v5.append(val_loss[4][i])
         #v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'reg_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'results/reg_vloss_{data_use}.csv')
 
     mse = nn.MSELoss()
     mae = nn.L1Loss()

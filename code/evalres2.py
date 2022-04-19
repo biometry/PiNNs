@@ -110,7 +110,7 @@ def evalres2(data_use='full', of=False):
         # v5.append(val_loss[4][i])
         # v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv('results/res2_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'results/res2_vloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()

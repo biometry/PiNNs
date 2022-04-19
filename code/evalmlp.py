@@ -36,7 +36,7 @@ def evalmlp(data_use='full', of=False):
     splits = len(train_x.index.year.unique())
     test_x = x[x.index.year == 2008][1:]
     test_y = y[y.index.year == 2008][1:]
-    print(train_x, train_y, test_x, test_y)
+    print('CHECK DATA', train_x, train_y, test_x, test_y)
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
     
