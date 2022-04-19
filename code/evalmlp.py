@@ -45,7 +45,7 @@ def evalmlp(data_use="full"):
     # Load results from NAS
     # Architecture
     res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
-    a = res_as.loc[res_as.val_loss.idxmin()][1:5]
+    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
     print('layersizes', layersizes)
@@ -54,13 +54,13 @@ def evalmlp(data_use="full"):
     
     # Hyperparameters
     res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
     
     # Learningrate
     res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
     
@@ -107,7 +107,7 @@ def evalmlp(data_use="full"):
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
     #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
     #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv('./results/mlp_trainloss.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/mlp_trainloss_{data_use}.csv')
     
     # Evaluation
     mse = nn.MSELoss()

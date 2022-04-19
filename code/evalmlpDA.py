@@ -23,14 +23,14 @@ args = parser.parse_args()
 
 print(args)
 
-def evalmlpDA(data_use="full", da=1, splits=6):
+def evalmlpDA(data_use="full", da=1):
     '''
     da specifies Domain Adaptation:                                                                                                                                       da = 1: using pretrained weight and fully retrain network                                                                                                 
         da = 2: retrain only last layer.
     '''
 
     # Load hyytiala
-    x, y, xt = utils.loaddata('validation', 1, dir="~/physics_guided_nn/data/", raw=True)
+    x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
     y = y.to_frame()
     
     print(x.index.year.unique())
@@ -47,8 +47,8 @@ def evalmlpDA(data_use="full", da=1, splits=6):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"~/physics_guided_nn/results/NmlpAS_{data_use}.csv")
-    a = res_as.loc[res_as.val_loss.idxmin()][1:5]
+    res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
+    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
     print('layersizes', layersizes)
@@ -57,14 +57,14 @@ def evalmlpDA(data_use="full", da=1, splits=6):
     model_design = {'layersizes': layersizes}
     
     # Hyperparameters
-    res_hp = pd.read_csv(f"~/physics_guided_nn/results/NmlpHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+    res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
     
     # Learningrate
-    res_hp = pd.read_csv(f"~/physics_guided_nn/results/mlp_lr_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+    res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
     
@@ -84,35 +84,35 @@ def evalmlpDA(data_use="full", da=1, splits=6):
     t2 = []
     t3 = []
     t4 = []
-    t5 = []
-    t6 = []
+    #t5 = []
+    #t6 = []
     #originally use 5000 epochs!
     for i in range(200):
         t1.append(train_loss[0][i])
         t2.append(train_loss[1][i])
         t3.append(train_loss[2][i])
         t4.append(train_loss[3][i])
-        t5.append(train_loss[4][i])
-        t6.append(train_loss[5][i])
+     #   t5.append(train_loss[4][i])
+     #   t6.append(train_loss[5][i])
     v1 = []
     v2 = []
     v3 = []
     v4 = []
-    v5 = []
-    v6 = []
+    # v5 = []
+    # v6 = []
     for i in range(200):
         v1.append(val_loss[0][i])
         v2.append(val_loss[1][i])
         v3.append(val_loss[2][i])
         v4.append(val_loss[3][i])
-        v5.append(val_loss[4][i])
-        v6.append(val_loss[5][i])
+      #  v5.append(val_loss[4][i])
+      #  v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6}).to_csv(f'~/physics_guided_nn/results/mlpDA{da}_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/mlpDA{da}_vloss_{data_use}.csv')
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
     #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
     #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6": t6}).to_csv(f'~/physics_guided_nn/results/mlpDA{da}_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/mlpDA{da}_trainloss_{data_use}.csv')
     
     # Evaluation
     mse = nn.MSELoss()

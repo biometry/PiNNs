@@ -77,7 +77,7 @@ def evalres(data_use="full"):
     # Load results from NAS
     # Architecture
     res_as = pd.read_csv(f"./results/NresAS_{data_use}.csv")
-    a = res_as.loc[res_as.val_loss.idxmin()][1:5]
+    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(np.int))
     
@@ -86,13 +86,13 @@ def evalres(data_use="full"):
     model_design = {'layersizes': layersizes}
     
     res_hp = pd.read_csv(f"./results/NresHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
     bs = b[1]
     
     res_hp = pd.read_csv(f"./results/res_lr_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
     
