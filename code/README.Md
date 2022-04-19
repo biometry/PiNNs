@@ -15,6 +15,7 @@ Specific experiments:
 
 Models:
 - Naive Neural Network ("mlp")
+- Pretrained Naive Neural Network ("mlpDA")
 - Bias Correction ("res")
 - Residual Physics ("res2")
 - Physical Regularisation ("reg")
@@ -27,6 +28,7 @@ Others:
 - Data cleaning pipeline is defined in *dataset.py*
 - Stochastic L-BFGS algorithm is defined in *slbfgs.py* according to Yatawatta *et al.* (2019)
 - Simulations from preles with simulated climate and LHS parameter samples can be generated with *simulations.py*
+- Pretraining of a network on simulations is defined in *pretraining.py*
 
 
 S. Yatawatta, L. De Clercq, H. Spreeuw and F. Diblen, "A Stochastic LBFGS Algorithm for Radio Interferometric Calibration," 2019 IEEE Data Science Workshop (DSW), 2019, pp. 208-212, doi: 10.1109/DSW.2019.8755567
