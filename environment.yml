@@ -1,4 +1,4 @@
-name: pgnn
+name: pgnn2
 channels:
   - pytorch
   - conda-forge
@@ -178,6 +178,7 @@ dependencies:
     - pluggy==1.0.0
     - preles==0.0.0
     - py==1.10.0
+    - pygam==0.8.0
     - py-cpuinfo==8.0.0
     - pybind11-global==2.6.1
     - pyqt5-sip==4.19.18
@@ -187,6 +188,7 @@ dependencies:
     - pytest-benchmark==3.4.1
     - pytest-forked==1.3.0
     - pytest-xdist==2.4.0
+    - smt==1.2.0
     - toml==0.10.2
     - torch==1.10.0a0+git1f6e393
     - zipp==3.6.0
