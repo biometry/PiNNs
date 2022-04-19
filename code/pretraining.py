@@ -97,34 +97,34 @@ def pretraining(data_use="full"):
     t2 = []
     t3 = []
     t4 = []
-    t5 = []
-    t6 = []
+#    t5 = []
+#    t6 = []
     for i in range(eps):
         t1.append(train_loss[0][i])
         t2.append(train_loss[1][i])
         t3.append(train_loss[2][i])
         t4.append(train_loss[3][i])
-        t5.append(train_loss[4][i])
-        t6.append(train_loss[5][i])
+#        t5.append(train_loss[4][i])
+#        t6.append(train_loss[5][i])
     v1 = []
     v2 = []
     v3 = []
     v4 = []
-    v5 = []
-    v6 = []
+#    v5 = []
+#    v6 = []
     for i in range(eps):
         v1.append(val_loss[0][i])
         v2.append(val_loss[1][i])
         v3.append(val_loss[2][i])
         v4.append(val_loss[3][i])
-        v5.append(val_loss[4][i])
-        v6.append(val_loss[5][i])
+#        v5.append(val_loss[4][i])
+#        v6.append(val_loss[5][i])
         
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6":v6}).to_csv(f'./results/mlpDA_pretrained_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/mlpDA_pretrained_vloss_{data_use}.csv')
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
     #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
     #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4, "f5": t5, "f6":t6}).to_csv(f'./results/mlpDA_pretrained_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/mlpDA_pretrained_trainloss_{data_use}.csv')
     
     # Evaluation
     mse = nn.MSELoss()
