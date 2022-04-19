@@ -107,7 +107,7 @@ def read_in(type, data_dir=None):
 
 
 
-def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True, sparse=False):
+def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True, sparse=False, via=False):
     if data_split.endswith('p'):
         xcols = ['GPPp', 'ETp', 'SWp']
         ypcols = None
@@ -141,14 +141,23 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     
     if ypcols:
         yp = data[ypcols]
-        data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1))
+        if via:
+            data, mn, std = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1), get_p=True)
+        else:
+            data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1))
     elif doy:
         if data_split != 'simulations':
             yp = None
-            data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
+            if via:
+                data, mn, std = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1), get_p=True)
+            else:
+                data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP'], axis=1))
         else:
             yp = None
-            data = standardize(data.drop(['CO2', 'DOY', 'GPP'], axis=1))
+            if via:
+                data, mn, std = standardize(data.drop(['CO2', 'DOY', 'GPP'], axis=1), get_p=True)
+            else:
+                data = standardize(data.drop(['CO2', 'DOY', 'GPP'], axis=1))
     else:
         yp = None
         data = data.drop(['CO2', 'GPP', 'date'], axis=1)
@@ -173,10 +182,16 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     if yp is not None:
         yp = yp[history:]
         yp.index = pd.DatetimeIndex(data.date[history:])
-        out = x, y, rawdata, yp
+        if via:
+            out = x, y, rawdata, yp, mn, std
+        else:
+            out = x, y, rawdata, yp
         
     else:
-        out = x, y, rawdata
+        if via:
+            out = x, y, rawdata, mn, std
+        else:
+            out = x, y, rawdata
         
     return out
 
