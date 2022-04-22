@@ -23,7 +23,7 @@ args = parser.parse_args()
 
 print(args)
 
-def evalmlpDA(data_use="full", da=1):
+def evalmlpDA(data_use="full", da=3):
     '''
     da specifies Domain Adaptation:                                                                                                                                       da = 1: using pretrained weight and fully retrain network                                                                                                 
         da = 2: retrain only last layer.
@@ -69,12 +69,12 @@ def evalmlpDA(data_use="full", da=1):
     lr = b[0]
     
     # originally 5000 epochs
-    hp = {'epochs': 200,
+    hp = {'epochs': 100,
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/"
-    data = "mlpDA_pretrained"
+    data = f"mlpDA_pretrained_{data_use}"
     
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, domain_adaptation=da, reg=None, emb=False, hp=False)
     print(tloss)
@@ -87,7 +87,7 @@ def evalmlpDA(data_use="full", da=1):
     #t5 = []
     #t6 = []
     #originally use 5000 epochs!
-    for i in range(200):
+    for i in range(hp['epochs']):
         t1.append(train_loss[0][i])
         t2.append(train_loss[1][i])
         t3.append(train_loss[2][i])
@@ -100,7 +100,7 @@ def evalmlpDA(data_use="full", da=1):
     v4 = []
     # v5 = []
     # v6 = []
-    for i in range(200):
+    for i in range(hp['epochs']):
         v1.append(val_loss[0][i])
         v2.append(val_loss[1][i])
         v3.append(val_loss[2][i])
