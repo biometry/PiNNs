@@ -92,17 +92,17 @@ def read_in(type, data_dir=None):
     if type == 'OF' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'soro.csv')))
     if type == 'NAS' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'train_hyt.csv')))
+        out = pd.read_csv(''.join((data_dir, 'hyytialaNAS.csv')))
         out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type == 'NASp' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'bilykriz.csv')))
+        out = pd.read_csv(''.join((data_dir, 'hyytialaNAS.csv')))
     elif type == 'validation' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'hyytiala.csv')))
+        out = pd.read_csv(''.join((data_dir, 'hyytialaF.csv')))
         out = out[~pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type.startswith('exp2') and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'data_exp2.csv')))
+        out = pd.read_csv(''.join((data_dir, 'allsites.csv')))
     elif type == 'simulations' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'DA_preles_sims.csv')), index_col=False)
+        out = pd.read_csv(''.join((data_dir, 'DA_preles_sims.csv')))
     return out
 
 
@@ -130,7 +130,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     rawdata = []
     if raw:
         rawdata = data.copy()
-        
+    print(data)    
     if doy:
         data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
     
@@ -171,9 +171,10 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     
     if history:
         #print(data, xcols)
+        print(data)
         x, y = add_history(data[xcols], y, history, batch_size)
     else:
-        x, y = x, y
+        x, y = data[xcols], y
         
     if data_split != 'simulations':
         x.index = pd.DatetimeIndex(date[history:])
@@ -181,7 +182,9 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     
     if yp is not None:
         yp = yp[history:]
-        yp.index = pd.DatetimeIndex(data.date[history:])
+        if data_split != 'exp2':
+            yp.index = pd.DatetimeIndex(yp.date[history:])
+        
         if via:
             out = x, y, rawdata, yp, mn, std
         else:

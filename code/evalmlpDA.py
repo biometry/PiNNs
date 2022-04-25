@@ -23,7 +23,7 @@ args = parser.parse_args()
 
 print(args)
 
-def evalmlpDA(data_use="full", da=3):
+def evalmlpDA(data_use="full", da=3, of=False):
     '''
     da specifies Domain Adaptation:                                                                                                                                       da = 1: using pretrained weight and fully retrain network                                                                                                 
         da = 2: retrain only last layer.
@@ -43,12 +43,12 @@ def evalmlpDA(data_use="full", da=3):
     test_y = y[y.index.year == 2008]
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
-    print('XY: ', x, y)
+    print('XY: ', train_x, train_y)
     
     # Load results from NAS
     # Architecture
     res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
-    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
+    a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
     print('layersizes', layersizes)
@@ -58,22 +58,24 @@ def evalmlpDA(data_use="full", da=3):
     
     # Hyperparameters
     res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
-    
-    # Learningrate
-    res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
-    b = a.to_numpy()
     lr = b[0]
+
+    # Learningrate
+    if of:
+        res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+        b = a.to_numpy()
+        lr = b[0]
     
     # originally 5000 epochs
     hp = {'epochs': 100,
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/"
+    data_dir = "./data/"
     data = f"mlpDA_pretrained_{data_use}"
     
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, domain_adaptation=da, reg=None, emb=False, hp=False)
@@ -151,9 +153,9 @@ def evalmlpDA(data_use="full", da=3):
         
         print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'~/physics_guided_nn/results/mlpDA{da}_eval_performance_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'~/physics_guided_nn/results/mlpDA{da}_eval_preds_train_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'~/physics_guided_nn/results/mlpDA{da}_eval_preds_test_{data_use}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA{da}_eval_performance_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA{da}_eval_preds_train_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA{da}_eval_preds_test_{data_use}.csv')
 
 
 

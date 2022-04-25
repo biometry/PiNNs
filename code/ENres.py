@@ -20,7 +20,7 @@ def ENres(data_use="full"):
     y = y.to_frame()
  
     if data_use == "sparse":
-        x, y = utils.sparse(x, y)
+        x, y = utils.make_sparse(x, y)
         
     print("X",x, "Y",y)
     print('Length' ,len(x), len(y))

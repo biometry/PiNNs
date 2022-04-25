@@ -17,12 +17,13 @@ print(args)
 
 def ENmlp(data_use="full", splits=None):
 
-    x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
+    if data_use == 'sparse':
+        x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True, sparse=True)
+    else:
+        x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
     y = y.to_frame()
 
-    if data_use == "sparse":
-        x, y = utils.sparse(x, y)
-    
+        
     if splits is None:
         splits = len(x.index.year.unique())
     

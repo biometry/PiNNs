@@ -23,7 +23,7 @@ args = parser.parse_args()
 print(args)
 
 
-def pretraining(data_use="full"):
+def pretraining(data_use="full", of=False):
     
     ## Load data for defining splits
     x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
@@ -59,7 +59,7 @@ def pretraining(data_use="full"):
     # Load results from NAS
     # Architecture
     res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
-    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
+    a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
     print('layersizes', layersizes)
@@ -68,15 +68,17 @@ def pretraining(data_use="full"):
     
     # Hyperparameters
     res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
+    lr = b[0]
     
     # Learningrate
-    res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
-    b = a.to_numpy()
-    lr = b[0]
+    if of:
+        res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
+        a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+        b = a.to_numpy()
+        lr = b[0]
     
     # Original: Use 5000 Epochs
     eps = 1000
@@ -84,7 +86,7 @@ def pretraining(data_use="full"):
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/"
+    data_dir = "./data/"
     data = f"mlpDA_pretrained_{data_use}"
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
@@ -97,28 +99,28 @@ def pretraining(data_use="full"):
     t2 = []
     t3 = []
     t4 = []
-#    t5 = []
-#    t6 = []
+    #    t5 = []
+    #    t6 = []
     for i in range(eps):
         t1.append(train_loss[0][i])
         t2.append(train_loss[1][i])
         t3.append(train_loss[2][i])
         t4.append(train_loss[3][i])
-#        t5.append(train_loss[4][i])
-#        t6.append(train_loss[5][i])
+        #        t5.append(train_loss[4][i])
+        #        t6.append(train_loss[5][i])
     v1 = []
     v2 = []
     v3 = []
     v4 = []
-#    v5 = []
-#    v6 = []
+    #    v5 = []
+    #    v6 = []
     for i in range(eps):
         v1.append(val_loss[0][i])
         v2.append(val_loss[1][i])
         v3.append(val_loss[2][i])
         v4.append(val_loss[3][i])
-#        v5.append(val_loss[4][i])
-#        v6.append(val_loss[5][i])
+        #        v5.append(val_loss[4][i])
+        #        v6.append(val_loss[5][i])
         
     pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/mlpDA_pretrained_vloss_{data_use}.csv')
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)

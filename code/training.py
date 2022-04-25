@@ -103,19 +103,24 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             
             # Finetuning: reuse weights from pretraining and fully retrain model
             if domain_adaptation == 1:
+                print("DOMAIN ADAPTAION: FINETUNING WEIGHTS")
                 model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
                 model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i+1}.pth")))
             
             # Feature extraction: reuse weight from pretraining and retrain only last layer
-            elif domain_adaptation == 2:
+            elif domain_adaptation > 1:
                 model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
                 model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i+1}.pth")))
-                feature_extraction = ["fc3.weight", "fc3.bias", "output4.weight", "output4.bias"]
-                for child in model.children():
-                    for name, param in child.named_parameters():
-                        print(name)
-                        if not name in feature_extraction:
-                            param.requires_grad = False
+                nlayers = len(model.layers)
+                if domain_adaptation == 2:
+                    freeze = nlayers-1
+                    for p in model.layers[freeze].parameters():
+                        p.requires_grad = False
+                else:
+                    freeze = 3
+                    for layer in model.layers[-freeze::2]:
+                        for p in layer.parameters():
+                            p.requires_grad = False
         else:
             model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
         print("INIMODEL", model)
@@ -292,12 +297,9 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             
         #pd.DataFrame({'train_loss': mse_t, 'val_loss':mse_v}, index=[0]).to_csv(f"{data}_NAS_model{i}.csv")
         if exp != 2:
-            if domain_adaptation == 1:
-                print("Saving model to: ", os.path.join(data_dir, f"mlpDA1_model{i}.pth"))
-                torch.save(model.state_dict(), os.path.join(data_dir, f"mlpDA1_model{i}.pth"))
-            elif domain_adaptation == 2:
-                print("Saving model to: ", os.path.join(data_dir, f"mlpDA2_model{i}.pth"))
-                torch.save(model.state_dict(), os.path.join(data_dir, f"mlpDA2_model{i}.pth"))
+            if domain_adaptation is not None:
+                print("Saving model to: ", os.path.join(data_dir, f"mlpDA{domain_adaptation}_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"mlpDA{domain_adaptation}_model{i}.pth"))
             else:
                 print("Saving model to: ", os.path.join(data_dir, f"{data}_model{i}.pth"))
                 torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
@@ -329,10 +331,17 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
         eta = hparams['eta']
     if reg is not None:
         yp_train, yp_val = torch.tensor(reg[0].to_numpy(), dtype=torch.float32), torch.tensor(reg[1].to_numpy(), dtype=torch.float32)
+
+        print("Check train and val split for ft FIRST TIME")
+        print(yp_train.size(), yp_val.size())
+
         if emb:
             xr_train, xr_val = torch.tensor(raw[0].to_numpy(), dtype=torch.float32), torch.tensor(raw[1].to_numpy(), dtype=torch.float32)
     x_train, y_train = torch.tensor(train[0].to_numpy(), dtype=torch.float32), torch.tensor(train[1].to_numpy(), dtype=torch.float32)
     x_val, y_val = torch.tensor(val[0].to_numpy(), dtype=torch.float32), torch.tensor(val[1].to_numpy(), dtype=torch.float32)
+
+    print(x_train.size(), y_train.size())
+    print(x_val.size(), y_val.size())
     
     if reg is not None:
         if emb:
@@ -341,17 +350,24 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
         else:
             train_set = TensorDataset(x_train, y_train, yp_train)
             val_set = TensorDataset(x_val, y_val, yp_val)
+            print("Check training and validation set for finetuning:")
+            print(train_set)
+            print(val_set)
+
     elif res == 2:
         yp_train, yp_val = torch.tensor(ypreles[0].to_numpy(), dtype=torch.float32), torch.tensor(ypreles[1].to_numpy(), dtype=torch.float32)
         train_set = TensorDataset(x_train, y_train, yp_train)
         val_set = TensorDataset(x_val, y_val, yp_val)
     else:
         train_set = TensorDataset(x_train, y_train)
+
         val_set = TensorDataset(x_val, y_val)
         
     train_set_size = len(train_set)
     sample_id = list(range(train_set_size))
     val_set_size = len(val_set)
+    print("Validation set size:")
+    print(val_set_size)
     vsample_id = list(range(val_set_size))
     
     if emb:

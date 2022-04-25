@@ -28,15 +28,15 @@ def climate_simulations(train_x):
     X_new['year'] = year_new[0]
     
     #%% Predict to new data set
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamTair', 'rb') as f:
+    with open('./results/gamTair', 'rb') as f:
         gamTair = pickle.load(f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPrecip', 'rb') as f:
+    with open('./results/gamPrecip', 'rb') as f:
         gamPrecip = pickle.load(f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamVPD', 'rb') as f:
+    with open('./results/gamVPD', 'rb') as f:
         gamVPD = pickle.load(f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPAR', 'rb') as f:
+    with open('./results/gamPAR', 'rb') as f:
         gamPAR = pickle.load(f)    
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamfapar', 'rb') as f:
+    with open('./results/gamfapar', 'rb') as f:
         gamfapar = pickle.load(f)
 
     Tair_hat = gamTair.predict(X_new)
@@ -111,10 +111,10 @@ def parameter_samples(n_samples, parameters = ['beta', 'chi', 'X[0]', 'gamma', '
         print("Joint sample of: ")
         print(x[i,:])
         out.loc[out['name'].isin(parameters), 'def'] = x[i,:]
-#        print("Replace the following values: ")
-#        print(out['name'].isin(parameters))
-#        print("New parameter vector: ")
-#        print(out['def'])
+        #        print("Replace the following values: ")
+        #        print(out['name'].isin(parameters))
+        #        print("New parameter vector: ")
+        #        print(out['def'])
         d[i,:] = out['def'].to_numpy()[:30]
 
     # d = np.array(d)
@@ -124,9 +124,9 @@ def parameter_samples(n_samples, parameters = ['beta', 'chi', 'X[0]', 'gamma', '
     return(d)
 
 
-def gen_simulations(n, data_dir = '~/physics_guided_nn/data/'):
+def gen_simulations(n, data_dir = './data/'):
     
-    x, y, xt = utils.loaddata('validation', None, dir="~/physics_guided_nn/data/", raw=True, doy=False)
+    x, y, xt = utils.loaddata('validation', None, dir="./data/", raw=True, doy=False)
     y = y.to_frame()
 
     # Hold out a year as test data                                                                                                          
@@ -139,24 +139,24 @@ def gen_simulations(n, data_dir = '~/physics_guided_nn/data/'):
     train_x = train_x.drop(['date'], axis=1)
 
     gamTair = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['Tair'])
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamTair', 'wb') as f:
+    with open('./results/gamTair', 'wb') as f:
         pickle.dump(gamTair, f)
     gamPrecip = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['Precip'])
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPrecip', 'wb') as f:
+    with open('./results/gamPrecip', 'wb') as f:
         pickle.dump(gamPrecip, f)
     gamVPD = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['VPD'])
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamVPD', 'wb') as f:
+    with open('./results/gamVPD', 'wb') as f:
         pickle.dump(gamVPD, f)
     gamPAR = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['PAR'])
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPAR', 'wb') as f:
+    with open('./results/gamPAR', 'wb') as f:
         pickle.dump(gamPAR, f)
     gamfapar = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['fapar'])
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamfapar', 'wb') as f:
+    with open('./results/gamfapar', 'wb') as f:
         pickle.dump(gamfapar, f)
 
     p = parameter_samples(n_samples = n)
     pdd = pd.DataFrame(p)
-    pdd.to_csv('~/physics_guided_nn/data/DA_parameter_samples.csv', index=False)
+    pdd.to_csv('./data/DA_parameter_samples.csv', index=False)
     #np.savetext('parameter_simulations.csv', p, delimiter=';')
     pt = torch.tensor(p, dtype=torch.float64)
     
@@ -178,6 +178,8 @@ def gen_simulations(n, data_dir = '~/physics_guided_nn/data/'):
     d = pd.concat(d)
     d.to_csv(''.join((data_dir, 'DA_preles_sims.csv')), index=False)
 
+
+
 ''' 
 In case you want to make plots on the cluster computer, save them directly to results.
 
@@ -186,3 +188,7 @@ ax = fig.add_subplot(111)
 ax.plot(predsTair)
 fig.savefig('results/temp.png')
 ''' 
+
+
+if __name__ == '__main__':
+    gen_simulations(n=1000)
