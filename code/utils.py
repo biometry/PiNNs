@@ -97,7 +97,7 @@ def read_in(type, data_dir=None):
     elif type == 'NASp' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'hyytialaNAS.csv')))
     elif type == 'validation' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'hyytialaF.csv')))
+        out = pd.read_csv(''.join((data_dir, 'Hyytiala.csv')))
         out = out[~pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type.startswith('exp2') and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'allsites.csv')))

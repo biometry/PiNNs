@@ -24,18 +24,17 @@ def evalres(data_use='full', of=False):
     if data_use == 'sparse':
         # Load hyytiala
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
-        yp_tr = utils.make_sparse(pd.read_csv("./data/train_hyt.csv"))
-        yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv"))
+        print('XT', xt)
+        yp = utils.make_sparse(pd.read_csv("./data/Hyytiala.csv"))        
     else:
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
-        yp_tr = pd.read_csv("./data/train_hyt.csv")
-        yp_te = pd.read_csv("./data/test_hyt.csv")
+        yp = pd.read_csv("./data/Hyytiala.csv")
+        
     
-    yp_tr.index = pd.DatetimeIndex(yp_tr['date'])
-    yp_te.index = pd.DatetimeIndex(yp_te['date'])
+    yp.index = pd.DatetimeIndex(yp['date'])
     
-    yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
-    ypte = yp_te.drop(yp_te.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
+    yptr = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
+    ypte = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
 
     n = [1,1]
     x_tr, n = utils.add_history(yptr, n, 1)
@@ -45,7 +44,7 @@ def evalres(data_use='full', of=False):
 
     y = y.to_frame()
     train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])][1:]
-    train_y = y_te[~y_te.index.year.isin([2004,2005,2007,2008])][1:]
+    train_y = y[~y.index.year.isin([2004,2005,2007,2008])][1:]
     splits = len(train_x.index.year.unique())
 
     test_x = x_te[x_te.index.year == 2008]
