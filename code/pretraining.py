@@ -23,16 +23,22 @@ args = parser.parse_args()
 print(args)
 
 
-def pretraining(data_use="full", of=False):
+def pretraining(data_use="full", exp=None, of=False):
     
     ## Load data for defining splits
-    x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
-    print(x.index.year.unique())
-    train_x = x[~x.index.year.isin([2007,2008])]
-    splits = len(train_x.index.year.unique())
+    if exp == "exp2":
+        splits = 8
+    else:
+        x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
+        print(x.index.year.unique())
+        train_x = x[~x.index.year.isin([2007,2008])]
+        splits = len(train_x.index.year.unique())
 
     # Load data for pretraining
-    x, y, r  = utils.loaddata('simulations', 1, dir="./data/")
+    if data_use == 'full':
+        x, y, r  = utils.loaddata('simulations', 1, dir="./data/", exp=exp)
+    else:
+        x, y, r = utils.loaddata('simulations', 1, dir="./data/", sparse=True, exp=exp)
     y = y.to_frame()
     
     ## Split into training and test

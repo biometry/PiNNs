@@ -75,7 +75,7 @@ def add_history(X, Y, history, batch_size=None):
     return x, y
 
 
-def read_in(type, data_dir=None):
+def read_in(type, data_dir=None, data_use=None, exp=None):
     '''
     Available types:
         OF: data split used for overfitting experiment (ADJUST)
@@ -102,12 +102,12 @@ def read_in(type, data_dir=None):
     elif type.startswith('exp2') and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'allsites.csv')))
     elif type == 'simulations' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'DA_preles_sims.csv')))
+        out = pd.read_csv(''.join((data_dir, f'simulations_{data_use}_{exp}.csv')))
     return out
 
 
 
-def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True, sparse=False, via=False):
+def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True, sparse=False, exp = None, via=False):
     if data_split.endswith('p'):
         xcols = ['GPPp', 'ETp', 'SWp']
         ypcols = None
@@ -125,7 +125,15 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
             xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'DOY', 'date']
             
     ycols = ['GPP']
-    data = read_in(data_split, dir)
+
+    # Define arguments for correct simulation load. Ignored if data_split != simulations.
+    if sparse:
+        data_use = 'sparse'
+    else:
+        data_use = 'full'
+    if exp != 'exp2':
+        exp = ''
+    data = read_in(data_split, dir, data_use, exp)
     #print(data)
     rawdata = []
     if raw:
