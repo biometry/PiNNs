@@ -254,6 +254,6 @@ fig.savefig('results/temp.png')
 if __name__ == '__main__':
     #gen_simulations(n = 10)
     #gen_simulations(n = 10, data_use='sparse')
-    gen_simulations(n=10, exp='exp2')
+    #gen_simulations(n=10, exp='exp2')
     gen_simulations(n=10, data_use='sparse', exp='exp2')
 

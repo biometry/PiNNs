@@ -174,6 +174,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     if sparse:
         if yp is not None:
             data, y, yp, date = make_sparse(data[xcols], y, yp, date)
+            rawdata = make_sparse(rawdata)
         else:
             data, y, rawdata, date = make_sparse(data[xcols], y, rawdata, date=date)
     
