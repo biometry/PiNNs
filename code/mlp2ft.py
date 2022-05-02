@@ -16,7 +16,7 @@ args = parser.parse_args()
 
 print(args)
 
-def mlpft(data_use="full"):
+def mlp2ft(data_use="full"):
 
     x, y, xt, yp = utils.loaddata('exp2', 1, dir="/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/", raw=True)
 
@@ -42,7 +42,7 @@ def mlpft(data_use="full"):
 
     print("TRAINTEST",train_x, test_x)
 
-    res_as = pd.read_csv("/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/EX2_mlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/EX2_mlpAS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -50,7 +50,7 @@ def mlpft(data_use="full"):
 
     model_design = {'layersizes': layersizes}
 
-    res_hp = pd.read_csv("/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/EX2_mlpHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/EX2_mlpHP_{data_use}.csv")
     a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
     b = a.to_numpy()
     lrini = b[0]
@@ -87,4 +87,7 @@ def mlpft(data_use="full"):
     lr = lrs[df["val_loss"].idxmin()]
     print("Dataframe:", df)
 
-    df.to_csv("/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/2mlp_lr_{data_use}.csv")
+    df.to_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/2mlp_lr_{data_use}.csv")
+
+if __name__ == '__main__':
+    mlp2ft(args.d)
