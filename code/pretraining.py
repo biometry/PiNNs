@@ -26,16 +26,16 @@ print(args)
 def pretraining(data_use="full", exp=None, of=False):
     
     ## Load data for defining splits
-    x, y, xt = utils.loaddata('validation', 1, dir="/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/", raw=True)
+    x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
     print(x.index.year.unique())
     train_x = x[~x.index.year.isin([2007,2008])]
     splits = len(train_x.index.year.unique())
 
     # Load data for pretraining
     if data_use == 'full':
-        x, y, r  = utils.loaddata('simulations', 1, dir="/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/", exp=exp)
+        x, y, r  = utils.loaddata('simulations', 1, dir="./data/", exp=exp)
     else:
-        x, y, r = utils.loaddata('simulations', 1, dir="/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/", sparse=True, exp=exp)
+        x, y, r = utils.loaddata('simulations', 1, dir="./data/", sparse=True, exp=exp)
     y = y.to_frame()
     
     ## Split into training and test
@@ -61,7 +61,7 @@ def pretraining(data_use="full", exp=None, of=False):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/NmlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -70,7 +70,7 @@ def pretraining(data_use="full", exp=None, of=False):
     model_design = {'layersizes': layersizes}
     
     # Hyperparameters
-    res_hp = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/NmlpHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
     a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
@@ -78,7 +78,7 @@ def pretraining(data_use="full", exp=None, of=False):
     
     # Learningrate
     if of:
-        res_hp = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/mlp_lr_{data_use}.csv")
+        res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
         a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
         b = a.to_numpy()
         lr = b[0]
@@ -89,7 +89,7 @@ def pretraining(data_use="full", exp=None, of=False):
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/"
+    data_dir = "./data/"
     data = f"mlpDA_pretrained_{data_use}"
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
@@ -125,11 +125,11 @@ def pretraining(data_use="full", exp=None, of=False):
         #        v5.append(val_loss[4][i])
         #        v6.append(val_loss[5][i])
         
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/mlpDA_pretrained_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/mlpDA_pretrained_vloss_{data_use}.csv')
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
     #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
     #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/mlpDA_pretrained_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/mlpDA_pretrained_trainloss_{data_use}.csv')
     
     # Evaluation
     mse = nn.MSELoss()

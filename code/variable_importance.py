@@ -24,7 +24,7 @@ args = parser.parse_args()
 
 def predict(test_x, test_y, m, data_use, yp=None):
     # Architecture
-    res_as = pd.read_csv(f"results/N{m}AS_{data_use}.csv")
+    res_as = pd.read_csv(f"./results/N{m}AS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -137,7 +137,7 @@ def via(data_use, model, yp=None):
 
             output[output_cols[i]] = pd.DataFrame.from_dict(ps).apply(lambda row: np.mean(row.to_numpy()), axis=1)
 
-        output.T.to_csv(f'results/{model}_{data_use}_{v}_via.csv')
+        output.T.to_csv(f'./results/{model}_{data_use}_{v}_via.csv')
 
 
 if __name__ == '__main__':

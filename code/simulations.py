@@ -27,15 +27,15 @@ def climate_simulations(train_x, exp):
         X_new['site_num'] = site_new[0]
     
     #%% Predict to new data set
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamTair', 'rb') as f:
+    with open('./results/gamTair', 'rb') as f:
         gamTair = pickle.load(f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPrecip', 'rb') as f:
+    with open('./results/gamPrecip', 'rb') as f:
         gamPrecip = pickle.load(f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamVPD', 'rb') as f:
+    with open('./results/gamVPD', 'rb') as f:
         gamVPD = pickle.load(f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPAR', 'rb') as f:
+    with open('./results/gamPAR', 'rb') as f:
         gamPAR = pickle.load(f)    
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamfapar', 'rb') as f:
+    with open('./results/gamfapar', 'rb') as f:
         gamfapar = pickle.load(f)
 
     Tair_hat = gamTair.predict(X_new)
@@ -204,15 +204,15 @@ def gen_simulations(n, data_use = 'full', exp = None, data_dir = '~/physics_guid
         gamPAR = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['PAR'])
         gamfapar = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['fapar'])
 
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamTair', 'wb') as f:
+    with open('./results/gamTair', 'wb') as f:
         pickle.dump(gamTair, f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPrecip', 'wb') as f:
+    with open('./results/gamPrecip', 'wb') as f:
         pickle.dump(gamPrecip, f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamVPD', 'wb') as f:
+    with open('./results/gamVPD', 'wb') as f:
         pickle.dump(gamVPD, f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPAR', 'wb') as f:
+    with open('./results/gamPAR', 'wb') as f:
         pickle.dump(gamPAR, f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamfapar', 'wb') as f:
+    with open('./results/gamfapar', 'wb') as f:
         pickle.dump(gamfapar, f)
 
     p = parameter_samples(n_samples = n)

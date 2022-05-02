@@ -30,7 +30,7 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
     '''
 
     # Load hyytiala
-    x, y, xt, yp = utils.loaddata('exp2', 1, dir="/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/", raw=True)
+    x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True)
 
     # select NAS data
     print(x.index)
@@ -51,7 +51,7 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/EX2_mlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"./results/EX2_mlpAS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -61,7 +61,7 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
     model_design = {'layersizes': layersizes}
     
     # Hyperparameters
-    res_hp = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/EX2_mlpHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/EX2_mlpHP_{data_use}.csv")
     a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
@@ -69,7 +69,7 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
 
     # Learningrate
     if of:
-        res_hp = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/2mlp_lr_{data_use}.csv")
+        res_hp = pd.read_csv(f"./results/2mlp_lr_{data_use}.csv")
         a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
         b = a.to_numpy()
         lr = b[0]
@@ -79,7 +79,7 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/"
+    data_dir = "./data/"
     data = f"mlpDA_pretrained_{data_use}_{exp}"
     
     td, se, ae  = training.train_cv(hp, model_design, x, y, data_dir, splits, data, domain_adaptation=da, reg=None, emb=False, hp=False, exp=2)
