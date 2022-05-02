@@ -15,13 +15,14 @@ args = parser.parse_args()
 
 
 def ENres(data_use="full"):
-
-    x, y, xt = utils.loaddata('NASp', 1, dir="./data/", raw=True)
+    
+    if data_use == 'sparse':
+        x, y, xt = utils.loaddata('NASp', 1, dir="./data/", raw=True, sparse=True)
+    else:
+        x, y, xt = utils.loaddata('NASp', 1, dir="./data/", raw=True)
     y = y.to_frame()
  
-    if data_use == "sparse":
-        x, y = utils.make_sparse(x, y)
-        
+            
     print("X",x, "Y",y)
     print('Length' ,len(x), len(y))
     

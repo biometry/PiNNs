@@ -23,18 +23,17 @@ args = parser.parse_args()
 def evalreg(data_use='full', of=False):
     if data_use=='sparse':
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
-        yp_tr = utils.make_sparse(pd.read_csv("./data/train_hyt.csv"))
-        yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv")[6:])
+        yp = utils.make_sparse(pd.read_csv("./data/Hyytiala.csv"))
+        
     else:
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
-        yp_tr = pd.read_csv("./data/train_hyt.csv")
-        yp_te = pd.read_csv("./data/test_hyt.csv")
+        yp = pd.read_csv("./data/Hyytiala.csv")
 
 
-    yp_tr.index = pd.DatetimeIndex(yp_tr['date'])
-    yp_te.index = pd.DatetimeIndex(yp_te['date'])
-    yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp']), axis=1)
-    ypte = yp_te.drop(yp_te.columns.difference(['GPPp']), axis=1)
+    yp.index = pd.DatetimeIndex(yp['date'])
+    
+    yptr = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+    ypte = yp.drop(yp.columns.difference(['GPPp']), axis=1)
 
     #yp = yptr.merge(ypte, how="outer")
     y = y.to_frame()
@@ -51,10 +50,10 @@ def evalreg(data_use='full', of=False):
 
     splits = len(train_x.index.year.unique())
 
-    test_x = x[x.index.year == 2008][1:]
-    test_y = y[y.index.year == 2008][1:]
+    test_x = x[x.index.year == 2008]
+    test_y = y[y.index.year == 2008]
 
-    #print(len(x), len(y))
+    print('XYREG', train_x, train_y, reg_tr)
     splits = len(train_x.index.year.unique())
     #print(splits)
     train_x.index, train_y.index, reg_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(reg_tr)) 
