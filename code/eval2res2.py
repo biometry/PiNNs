@@ -32,22 +32,25 @@ def eval2res2(data_use='full', of=False):
     # select NAS data
     print(x.index)
 
-    x = x[x.index.year==2005]
-    y = y[y.index.year==2005]
-    train_x = x.drop(pd.DatetimeIndex(['2005-01-01']))
-    train_y = y.drop(pd.DatetimeIndex(['2005-01-01']))
+    train_x = x[x.index.year==2005]
+    train_y = y[y.index.year==2005]
+    train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
+    train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
     test_x = x[x.index.year==2008]
     test_y = y[y.index.year==2008]
-
-    yp = yp[yp.index.year == 2005]
-    yp = yp.drop(pd.DatetimeIndex(['2005-01-01']))
-    yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+    yp.index = x.index
+    yp_tr = yp[yp.index.year == 2005]
+    yp_tr = yp_tr.drop(pd.DatetimeIndex(['2005-01-01']))
+    yp_tr = yp_tr.drop(yp.columns.difference(['GPPp']), axis=1)
+    yp_te = yp[yp.index.year == 2008]
+    yp_te = yp_te.drop(yp.columns.difference(['GPPp']), axis=1)
 
     splits = 5
     print(splits)
-    print(x, y)
-    y = y.to_frame()
-    train_x.index, train_y.index, yp.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(yp))
+    print('test',train_x, train_y, yp_tr)
+    train_y = train_y.to_frame()
+    test_y = test_y.to_frame()
+    train_x.index, train_y.index, yp_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(yp_tr))
 
     mlp_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_res2AS_{data_use}.csv")
     a = mlp_as.loc[mlp_as.val_loss.idxmin()][1:5]
@@ -80,7 +83,7 @@ def eval2res2(data_use='full', of=False):
     data = f"res2_{data_use}"
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
-    td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2, res=2, ypreles = yp)
+    td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2, res=2, ypreles = yp_tr)
     print(td, se, ae)
     pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/2res2_{data_use}_eval_tloss.csv')
     pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/2res2_{data_use}_eval_vseloss.csv')
@@ -98,10 +101,11 @@ def eval2res2(data_use='full', of=False):
     test_mae = []
     preds_tr = {}
     preds_te = {}
+    print(x_train.shape, tr_yp.shape)
     for i in range(splits):
         i += 1
         #import model
-        model = models.RES(x_train.shape[1], y_train.shape[1], model_design['layersizes'])
+        model = models.RES(x_train.shape[1], 1, model_design['layersizes'])
         model.load_state_dict(torch.load(''.join((data_dir, f"2res2_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():

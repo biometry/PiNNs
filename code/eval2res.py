@@ -31,10 +31,10 @@ def eval2res(data_use='full', of=False):
     print("OUUTT",x,y,xt)
     # select NAS data
     print(x.index)
-    x = x[x.index.year==2005]
-    y = y[y.index.year==2005]
-    x = x.drop(pd.DatetimeIndex(['2005-01-01']))
-    y = y.drop(pd.DatetimeIndex(['2005-01-01']))
+    train_x = x[x.index.year==2005]
+    train_y = y[y.index.year==2005]
+    train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
+    train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
 
     test_x = x[x.index.year==2008]
     test_y = y[y.index.year==2008]
@@ -42,8 +42,9 @@ def eval2res(data_use='full', of=False):
     splits = 5
     print(splits)
     print(x, y)
-    y = y.to_frame()
-    x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
+    train_y = train_y.to_frame()
+    test_y = test_y.to_frame()
+    train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
 
     mlp_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_resAS_{data_use}.csv")
     a = mlp_as.loc[mlp_as.val_loss.idxmin()][1:5]
@@ -77,7 +78,7 @@ def eval2res(data_use='full', of=False):
     data = f"res_{data_use}"
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
-    td, se, ae = training.train_cv(hp, model_design, x, y, data_dir, splits, data, reg=None, emb=False, exp=2)
+    td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2)
     print(td, se, ae)
     pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/2res_{data_use}_eval_tloss.csv')
     pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/2res_{data_use}_eval_vseloss.csv')
@@ -86,7 +87,7 @@ def eval2res(data_use='full', of=False):
     # Evaluation
     mse = nn.MSELoss()
     mae = nn.L1Loss()
-    x_train, y_train = torch.tensor(x.to_numpy(), dtype=torch.float32), torch.tensor(y.to_numpy(), dtype=torch.float32)
+    x_train, y_train = torch.tensor(train_x.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32)
     x_test, y_test = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
 
     train_rmse = []
@@ -100,7 +101,7 @@ def eval2res(data_use='full', of=False):
     for i in range(splits):
         i += 1
         #import model
-        model = models.NMLP(x.shape[1], y.shape[1], model_design['layersizes'])
+        model = models.NMLP(test_x.shape[1], 1, model_design['layersizes'])
         model.load_state_dict(torch.load(''.join((data_dir, f"2res_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
