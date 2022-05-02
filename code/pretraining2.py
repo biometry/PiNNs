@@ -23,7 +23,7 @@ args = parser.parse_args()
 print(args)
 
 
-def pretraining(data_use="full", exp="exp2", of=False):
+def pretraining2(data_use="full", exp="exp2", of=False):
     
     ## Define splits
     splits = 8
@@ -58,7 +58,7 @@ def pretraining(data_use="full", exp="exp2", of=False):
     
     # Load results from NAS
     # Architecture
-    mlp_as = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/EX2_mlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/EX2_mlpAS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -91,94 +91,15 @@ def pretraining(data_use="full", exp="exp2", of=False):
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
     
-    tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, hp=False, exp=2)
-    #print(tloss)
-    train_loss = tloss['train_loss']
-    val_loss = tloss['val_loss']
-    t1 = []
-    t2 = []
-    t3 = []
-    t4 = []
-    t5 = []
-    t6 = []
-    t7 = []
-    t8 = []
-    for i in range(eps):
-        t1.append(train_loss[0][i])
-        t2.append(train_loss[1][i])
-        t3.append(train_loss[2][i])
-        t4.append(train_loss[3][i])
-        t5.append(train_loss[4][i])
-        t6.append(train_loss[5][i])
-        t7.append(train_loss[6][i])
-        t8.append(train_loss[7][i])
-    v1 = []
-    v2 = []
-    v3 = []
-    v4 = []
-    v5 = []
-    v6 = []
-    v7 = []
-    v8 = []
-    for i in range(eps):
-        v1.append(val_loss[0][i])
-        v2.append(val_loss[1][i])
-        v3.append(val_loss[2][i])
-        v4.append(val_loss[3][i])
-        v5.append(val_loss[4][i])
-        v6.append(val_loss[5][i])
-        v7.append(val_loss[6][i])
-        v8.append(val_loss[7][i])
-        
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4, "f5": v5, "f6": v6, "f7": v7, "f8": v8}).to_csv(f'/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/mlpDA_pretrained_vloss_{data_use}_{exp}.csv')
-    #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
-    #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
-    #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3": t3, "f4": t4, "t5": t5, "t6": t6, "t7": t7, "t8": t8}).to_csv(f'/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/mlpDA_pretrained_trainloss_{data_use}_{exp}.csv')
-    
-    # Evaluation
-    mse = nn.MSELoss()
-    mae = nn.L1Loss()
-    x_train, y_train = torch.tensor(train_x.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32)
-    x_test, y_test = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
-    
-    train_rmse = []
-    train_mae = []
-    test_rmse = []
-    test_mae = []
-    
-    preds_train = {}
-    preds_test = {}
-    
-    for i in range(splits):
-        i += 1
-        #import model
-        model = models.NMLP(x.shape[1], y.shape[1], model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"mlpDA_pretrained_{data_use}_{exp}_model{i}.pth"))))
-        model.eval()
-        with torch.no_grad():
-            p_train = model(x_train)
-            p_test = model(x_test)
-            preds_train.update({f'train_mlp{i}': p_train.flatten().numpy()})
-            preds_test.update({f'test_mlp{i}': p_test.flatten().numpy()})
-            train_rmse.append(mse(p_train, y_train).tolist())
-            train_mae.append(mae(p_train, y_train).tolist())
-            test_rmse.append(mse(p_test, y_test).tolist())
-            test_mae.append(mae(p_test, y_test).tolist())
-            
-    performance = {'train_RMSE': train_rmse,
-                   'train_MAE': train_mae,
-                   'test_RMSE': test_rmse,
-                   'test_mae': test_mae}
-    
-    #print(preds_train)
+    td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, hp=False, exp=2)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA_pretrained_eval_performance_{data_use}_{exp}.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA_pretrained_eval_preds_train_{data_use}_{exp}.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA_pretrained_eval_preds_test_{data_use}_{exp}.csv')
+    print(td, se, ae)
+    pd.DataFrame.from_dict(td).to_csv(f'2mlp_eval_tloss_{data_use}_{exp}.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'2mlp_eval_vseloss_{data_use}_{exp}.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'2mlp_eval_vaeloss_{data_use}_{exp}.csv')
 
 if __name__ == '__main__':
-    pretraining(args.d)
+    pretraining2(data_use="full")
 
 
 '''

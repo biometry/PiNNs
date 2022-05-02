@@ -173,10 +173,17 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
 
     if sparse:
         if yp is not None:
-            data, y, yp, date = make_sparse(data[xcols], y, yp, date)
-            rawdata = make_sparse(rawdata)
+            if data_split != 'simulations':
+                data, y, yp, date = make_sparse(data[xcols], y, yp, date)
+                rawdata = make_sparse(rawdata)
+            else:
+                data, y, yp, date = make_sparse(data[xcols], y, yp, date=False)
+                rawdata = make_sparse(rawdata)
         else:
-            data, y, rawdata, date = make_sparse(data[xcols], y, rawdata, date=date)
+            if data_split != 'simulations':
+                data, y, rawdata, date = make_sparse(data[xcols], y, rawdata, date=date)
+            else:
+                data, y, date = make_sparse(data[xcols], y, sparse=False, date=False)
     
     if history:
         #print(data, xcols)
@@ -214,7 +221,10 @@ def make_sparse(x, y=False, sparse=False, date=False, it=7):
         return x_small
     if y is not False:
         y_small = y.iloc[::it]
-        date_small = date.iloc[::it]
+        if date is not False:
+            date_small = date.iloc[::it]
+        else:
+            date_small = False
     if sparse is not False:
         yp_small = sparse.iloc[::it, :]
         return x_small, y_small, yp_small, date_small
