@@ -100,6 +100,7 @@ def pretraining2(data_use="full", exp="exp2", of=False):
 
 if __name__ == '__main__':
     pretraining2(data_use="full")
+    pretraining2(data_use="sparse")
 
 
 '''

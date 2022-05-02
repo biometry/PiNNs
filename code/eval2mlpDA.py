@@ -17,20 +17,20 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
-parser.add_argument('-a', metavar='da', type=int, help='define type of domain adaptation')
-parser.add_argument('-s', metavar='splits', type=int, help='number of splits for CV')
+#parser.add_argument('-a', metavar='da', type=int, help='define type of domain adaptation')
+#parser.add_argument('-s', metavar='splits', type=int, help='number of splits for CV')
 args = parser.parse_args()
 
 print(args)
 
-def evalmlpDA(data_use="full", da=3, exp = "exp2", of=False):
+def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
     '''
     da specifies Domain Adaptation:                                                                                                                                       da = 1: using pretrained weight and fully retrain network                                                                                                 
         da = 2: retrain only last layer.
     '''
 
     # Load hyytiala
-    x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True)
+    x, y, xt, yp = utils.loaddata('exp2', 1, dir="/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/", raw=True)
 
     # select NAS data
     print(x.index)
@@ -41,6 +41,7 @@ def evalmlpDA(data_use="full", da=3, exp = "exp2", of=False):
 
     y = y.to_frame()
     splits = 8
+    x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
 
     print(x, y)
 
@@ -50,7 +51,7 @@ def evalmlpDA(data_use="full", da=3, exp = "exp2", of=False):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"./results/EX2_mlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/EX2_mlpAS_{data_use}.csv")
     a = res_as.loc[res_as.val_loss.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -60,7 +61,7 @@ def evalmlpDA(data_use="full", da=3, exp = "exp2", of=False):
     model_design = {'layersizes': layersizes}
     
     # Hyperparameters
-    res_hp = pd.read_csv(f"./results/EX2_mlpHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/EX2_mlpHP_{data_use}.csv")
     a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
@@ -68,7 +69,7 @@ def evalmlpDA(data_use="full", da=3, exp = "exp2", of=False):
 
     # Learningrate
     if of:
-        res_hp = pd.read_csv(f"./results/2mlp_lr_{data_use}.csv")
+        res_hp = pd.read_csv(f"/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/2mlp_lr_{data_use}.csv")
         a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
         b = a.to_numpy()
         lr = b[0]
@@ -78,7 +79,7 @@ def evalmlpDA(data_use="full", da=3, exp = "exp2", of=False):
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "./data/"
+    data_dir = "/home/fr/fr_fr/fr_mw1205/physics_guided_nn/data/"
     data = f"mlpDA_pretrained_{data_use}_{exp}"
     
     td, se, ae  = training.train_cv(hp, model_design, x, y, data_dir, splits, data, domain_adaptation=da, reg=None, emb=False, hp=False, exp=2)
@@ -90,7 +91,8 @@ def evalmlpDA(data_use="full", da=3, exp = "exp2", of=False):
 
 
 if __name__ == '__main__':
-   eval2mlpDA(args.d)
+   eval2mlpDA(data_use="full")
+   eval2mlpDA(data_use="sparse")
 
 
 '''

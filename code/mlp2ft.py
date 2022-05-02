@@ -57,7 +57,7 @@ def mlp2ft(data_use="full"):
     bs = b[1]
 
     lrs = []
-    for i in range(30): #300
+    for i in range(10): #300
         l = round(random.uniform(1e-8, lrini),8)
         if l not in lrs:
             lrs.append(l)
@@ -69,7 +69,7 @@ def mlp2ft(data_use="full"):
 
     for i in range(len(lrs)):
 
-        hp = {'epochs': 500, # 2000
+        hp = {'epochs': 200, # 2000
               'batchsize': int(bs),
             'lr': lrs[i]}
     
