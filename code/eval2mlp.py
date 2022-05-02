@@ -29,14 +29,12 @@ def eval2mlp(data_use='full'):
     else:
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True)
 
-
-
     # select NAS data
     print(x.index)
-    x = x[x.index.year==2005]
-    y = y[y.index.year==2005]
-    x = x.drop(pd.DatetimeIndex(['2005-01-01']))
-    y = y.drop(pd.DatetimeIndex(['2005-01-01']))
+    train_x = x[x.index.year==2005]
+    train_y = y[y.index.year==2005]
+    train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
+    train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
 
     test_x = x[x.index.year==2008]
     test_y = y[y.index.year==2008]
@@ -45,9 +43,10 @@ def eval2mlp(data_use='full'):
 
     splits = 5
     print(splits)
-    print(test_x, test_y)
-    y = y.to_frame()
-    x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
+    print('TRAINTEST', train_x, train_y, test_x, test_y)
+    train_y = train_y.to_frame()
+    test_y = test_y.to_frame()
+    train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
 
     mlp_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_mlpAS_{data_use}.csv")
     a = mlp_as.loc[mlp_as.val_loss.idxmin()][1:5]
@@ -73,8 +72,7 @@ def eval2mlp(data_use='full'):
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
 
-
-    td, se, ae = training.train_cv(hp, model_design, x, y, data_dir, splits, data, reg=None, emb=False, exp=2)
+    td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2)
     print(td, se, ae)
     pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_trainloss.csv')
     pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_vseloss.csv')
@@ -84,21 +82,21 @@ def eval2mlp(data_use='full'):
      # Evaluation
     mse = nn.MSELoss()
     mae = nn.L1Loss()
-    x_train, y_train = torch.tensor(x.to_numpy(), dtype=torch.float32), torch.tensor(y.to_numpy(), dtype=torch.float32)
+    x_train, y_train = torch.tensor(train_x.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32)
     x_test, y_test = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
 
     train_rmse = []
     train_mae = []
     test_rmse = []
     test_mae = []
-    
+    print(train_x.shape, train_y.shape, test_x.shape, test_y.shape)
     preds_train = {}
     preds_test = {}
 
     for i in range(splits):
         i += 1
         #import model
-        model = models.NMLP(x.shape[1], y.shape[1], model_design['layersizes'])
+        model = models.NMLP(test_x.shape[1], 1, model_design['layersizes'])
         model.load_state_dict(torch.load(''.join((data_dir, f"2mlp_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
@@ -122,7 +120,7 @@ def eval2mlp(data_use='full'):
 
 
     pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_eval_preds_train.csv')
+    #pd.DataFrame.from_dict(preds_train).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_eval_preds_train.csv')
     pd.DataFrame.from_dict(preds_test).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_eval_preds_test.csv')
 
 
