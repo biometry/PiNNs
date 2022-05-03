@@ -17,21 +17,22 @@ args = parser.parse_args()
 print(args)
 
 def mlpft(data_use="full"):
-
-    x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
-
+    if data_use == 'sparse':
+        x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True, sparse=True)
+    else:
+        x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
     print(x.shape)
     print(xt.shape)
     
     train_x, train_y = x[x.index.year.isin([2004])], y[y.index.year.isin([2004])].to_frame()
-    test_x, test_y = x[x.index.year.isin([2005])], y[y.index.year.isin([2005])].to_frame()
+    test_x, test_y = x[x.index.year.isin([2005])][1:], y[y.index.year.isin([2005])][1:].to_frame()
+    print('TRAINTEST_', train_x, train_y)
+    print(test_x, test_y)
     
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
-    print(train_x.shape, train_y.shape)
-    print(test_x.shape, test_y.shape)
     
-    res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpAS_{data_use}.csv")
     a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -39,7 +40,7 @@ def mlpft(data_use="full"):
 
     model_design = {'layersizes': layersizes}
 
-    res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpHP_{data_use}.csv")
     a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     print(b)
@@ -84,7 +85,7 @@ def mlpft(data_use="full"):
     lr = lrs[df["ind_mini"].idxmin()]
     print("Dataframe:", df)
 
-    df.to_csv(f"./results/mlp_lr_{data_use}.csv")
+    df.to_csv(f"/scratch/project_2000527/pgnn/results/mlp_lr_{data_use}.csv")
 
 if __name__ == '__main__':
     mlpft(args.d)
