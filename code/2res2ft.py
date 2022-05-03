@@ -1,66 +1,78 @@
 # !/usr/bin/env python
 # coding: utf-8
+import random
 import utils
 import HP
+import training
+import utils
 import torch
 import pandas as pd
 import numpy as np
-import random
-import training
+import argparse
+
+parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
+#parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
+args = parser.parse_args()
+
+def ft2res2(data_use='full'):
+    if data_use=='sparse':
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, sparse=True)
+    else:
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True)
+        yp.index = y.index
+        x = x.drop(pd.DatetimeIndex(['2004-01-01']))
+        y = y.drop(pd.DatetimeIndex(['2004-01-01']))
+        yp = yp.drop(pd.DatetimeIndex(['2004-01-01']))
+
+    yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+
+    train_yp = yp[yp.index.year == 2004]
+    train_x = x[x.index.year == 2004]
+    train_y = y[y.index.year == 2004]
+    test_yp = yp[yp.index.year == 2005][1:]
+    test_x = x[x.index.year == 2005][1:]
+    test_y = y[y.index.year == 2005][1:]
 
 
-x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True)
-x = x.drop(pd.DatetimeIndex(['2004-01-01']))
-y = y.drop(pd.DatetimeIndex(['2004-01-01']))
-yp = yp.drop(pd.DatetimeIndex(['2004-01-01']))
-yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+    train_x.index = np.arange(0, len(train_x))
+    train_y.index = np.arange(0, len(train_y))
+    train_yp.index = np.arange(0, len(train_yp))
+    test_x.index = np.arange(0, len(test_x))
+    test_y.index = np.arange(0, len(test_y))
+    test_yp.index = np.arange(0, len(test_yp))
+    print("TRAINTEST",train_x, test_x)
 
-yp = yp[yp.index.year == 2004]
-x = x[x.index.year == 2004]
-y = y[y.index.year == 2004]
-splits = 8
+    res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_res2AS_{data_use}.csv")
+    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
+    b = a.to_numpy()
+    layersizes = list(b[np.isfinite(b)].astype(int))
+    print('layersizes', layersizes)
 
-x.index = np.arange(0, len(x))
-y.index = np.arange(0, len(y))
-yp.index = np.arange(0, len(yp))
-train_idx = np.arange(0, np.ceil(len(x)/splits)*7)
-test_idx = np.arange(np.ceil(len(x)/splits)*7, len(x))
+    model_design = {'layersizes': layersizes}
 
-train_x, train_y, train_yp = x[x.index.isin(train_idx)], y[y.index.isin(train_idx)], yp[yp.index.isin(train_idx)]
-test_x, test_y, test_yp = x[x.index.isin(test_idx)], y[y.index.isin(test_idx)], yp[yp.index.isin(test_idx)]
+    res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_res2HP_{data_use}.csv")
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+    b = a.to_numpy()
+    lrini = b[0]
+    bs = b[1]
 
-print("TRAINTEST",train_x, test_x)
+    lrs = []
+    for i in range(300):
+        l = round(random.uniform(1e-8, lrini),8)
+        if l not in lrs:
+            lrs.append(l)
 
-res_as = pd.read_csv("EX2_res2AS.csv")
-a = res_as.loc[res_as.val_loss.idxmin()][1:5]
-b = a.to_numpy()
-layersizes = list(b[np.isfinite(b)].astype(int))
-print('layersizes', layersizes)
+    print(lrs, len(lrs))
+    mse_train = []
+    mse_val = []
+    print("trainshape",train_x.shape, train_y.to_frame().shape)
 
-model_design = {'layersizes': layersizes}
+    for i in range(300):
 
-res_hp = pd.read_csv("EX2_res2HP.csv")
-a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
-b = a.to_numpy()
-lrini = b[0]
-bs = b[1]
-
-lrs = []
-for i in range(300):
-    l = round(random.uniform(1e-8, lrini),8)
-    if l not in lrs:
-        lrs.append(l)
-
-print(lrs, len(lrs))
-mse_train = []
-mse_val = []
-print("trainshape",train_x.shape, train_y.to_frame().shape)
-
-for i in range(300):
-
-    hp = {'epochs': 2000,
-          'batchsize': int(bs),
-          'lr': lrs[i]}
+        hp = {'epochs': 2000,
+              'batchsize': int(bs),
+              'lr': lrs[i]}
     
     data_dir = "./data/"
     data = "2res2"
@@ -68,12 +80,28 @@ for i in range(300):
     mse_train.append(np.mean(loss['train_loss']))
     mse_val.append(np.mean(loss['val_loss']))
 
-df = pd.DataFrame(lrs)
-df['train_loss'] = mse_train
-df['val_loss'] = mse_val
-print("Random hparams search best result:")
-print(df.loc[[df["val_loss"].idxmin()]])
-lr = lrs[df["val_loss"].idxmin()]
-print("Dataframe:", df)
+    df = pd.DataFrame(lrs)
+    df['train_loss'] = mse_train
+    df['val_loss'] = mse_val
+    df["train_loss_sd"] = mse_train_sd
+    df["val_loss_sd"] = mse_val_sd
+    df["ind_mini"] = ((np.array(mse_val_mean)**2 + np.array(mse_val_sd)**2)/2)
 
-df.to_csv("2res2_lr.csv")
+    print("Random hparams search best result:")
+    print(df.loc[[df["ind_mini"].idxmin()]])
+    lr = lrs[df["ind_mini"].idxmin()]
+    print("Dataframe:", df)
+    df["train_loss_sd"] = mse_train_sd
+    df["val_loss_sd"] = mse_val_sd
+    df["ind_mini"] = ((np.array(mse_val_mean)**2 + np.array(mse_val_sd)**2)/2)
+
+    print("Random hparams search best result:")
+    print(df.loc[[df["ind_mini"].idxmin()]])
+    lr = lrs[df["ind_mini"].idxmin()]
+    print("Dataframe:", df)
+
+    df.to_csv(f"/scratch/project_2000527/pgnn/results/2res2_lr_{data_use}.csv")
+
+
+if __name__ == '__main__':
+    ft2res2(args.d)
