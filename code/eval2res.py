@@ -47,7 +47,7 @@ def eval2res(data_use='full', of=False):
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
 
     mlp_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_resAS_{data_use}.csv")
-    a = mlp_as.loc[mlp_as.val_loss.idxmin()][1:5]
+    a = mlp_as.loc[mlp_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
     print('layersizes', layersizes)
@@ -56,15 +56,15 @@ def eval2res(data_use='full', of=False):
 
         
     mlp_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_resHP_{data_use}.csv")
-    a = mlp_hp.loc[mlp_hp.val_loss.idxmin()][1:3]
+    a = mlp_hp.loc[mlp_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
     bs = b[1]
     print(lr)
     
     if of:
-        mlp_hp = pd.read_csv("2res_lr.csv")
-        a = mlp_hp.loc[mlp_hp.val_loss.idxmin()][1:3]
+        mlp_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/2res_lr_{data_use}.csv")
+        a = mlp_hp.loc[mlp_hp.ind_mini.idxmin()][1:3]
         b = a.to_numpy()
         lr = b[0]
         print(lr)

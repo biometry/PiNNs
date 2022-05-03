@@ -49,7 +49,7 @@ def eval2mlp(data_use='full'):
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
 
     mlp_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_mlpAS_{data_use}.csv")
-    a = mlp_as.loc[mlp_as.val_loss.idxmin()][1:5]
+    a = mlp_as.loc[mlp_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
     print('layersizes', layersizes)
@@ -58,11 +58,19 @@ def eval2mlp(data_use='full'):
 
     
     mlp_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_mlpHP_{data_use}.csv")
-    a = mlp_hp.loc[mlp_hp.val_loss.idxmin()][1:3]
+    a = mlp_hp.loc[mlp_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
     bs = b[1]
     
+    if of:
+        res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/2mlp_lr_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+        b = a.to_numpy()
+        lr = b[0]
+
+
+
     hp = {'epochs': 5000,
       'batchsize': int(bs),
             'lr': lr}

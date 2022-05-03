@@ -56,22 +56,22 @@ def evalres(data_use='full', of=False):
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"results/NresAS_{data_use}.csv")
-    a = res_as.loc[res_as.val_loss.idxmin()][1:5]
+    res_as = pd.read_csv(f"/scratch/project2000527/pgnn/results/NresAS_{data_use}.csv")
+    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(np.int))
 
     model_design = {'layersizes': layersizes}
 
-    res_hp = pd.read_csv(f"results/NresHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+    res_hp = pd.read_csv(f"/scratch/project2000527/pgnn/results/NresHP_{data_use}.csv")
+    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
     bs = b[1]
     
     if of:
-        res_hp = pd.read_csv("results/res_lr.csv")
-        a = res_hp.loc[res_hp.val_loss.idxmin()][1:3]
+        res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/res_lr_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
         b = a.to_numpy()
         lr = b[0]
 
@@ -102,7 +102,7 @@ def evalres(data_use='full', of=False):
         t4.append(train_loss[3][i])
         #t5.append(train_loss[4][i])
         #t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'results/res_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'/scratch/project2000527/pgnn/results/res_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -117,7 +117,7 @@ def evalres(data_use='full', of=False):
         #v5.append(val_loss[4][i])
         #v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'results/res_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'/scratch/project2000527/pgnn/results/res_vloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -158,9 +158,9 @@ def evalres(data_use='full', of=False):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'results/res_eval__{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'results/res_eval_preds__{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'results/res_eval_preds__{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project2000527/pgnn/results/res_eval__{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project2000527/pgnn/results/res_eval_preds__{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project2000527/pgnn/results/res_eval_preds__{data_use}_test.csv')
 
 if __name__ == '__main__':
     evalres(args.d)
