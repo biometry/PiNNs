@@ -58,25 +58,28 @@ def ft2res(data_use='full'):
             lrs.append(l)
 
     print(lrs, len(lrs))
-    mse_train = []
-    mse_val = []
+    mse_train_mean = []
+    mse_val_mean = []
+    mse_train_sd = []
+    mse_val_sd = []
     print("trainshape",train_x.shape, train_y.to_frame().shape)
-
-    for i in range(300):
+    
+    for i in range(len(lrs)):
         
-        hp = {'epochs': 2000,
+        hp = {'epochs': 1000,
               'batchsize': int(bs),
               'lr': lrs[i]}
     
         data_dir = "./data/"
         data = "2res"
         loss = training.finetune(hp, model_design, (train_x, train_y.to_frame()), (test_x, test_y.to_frame()), data_dir, data, reg=None, emb=False)
-        mse_train.append(np.mean(loss['train_loss']))
-        mse_val.append(np.mean(loss['val_loss']))
-
+        mse_train_mean.append(np.mean(loss['train_loss']))
+        mse_val_mean.append(np.mean(loss['val_loss']))
+        mse_train_sd.append(np.std(loss['train_loss']))
+        mse_val_sd.append(np.std(loss['val_loss']))
     df = pd.DataFrame(lrs)
-    df['train_loss'] = mse_train
-    df['val_loss'] = mse_val
+    df['train_loss'] = mse_train_mean
+    df['val_loss'] = mse_val_mean
     df["train_loss_sd"] = mse_train_sd
     df["val_loss_sd"] = mse_val_sd
     df["ind_mini"] = ((np.array(mse_val_mean)**2 + np.array(mse_val_sd)**2)/2)
