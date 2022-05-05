@@ -40,7 +40,7 @@ def EN2reg(data_use='full'):
 
     # architecture search
     layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 200, 'batchsize': 8, 'lr':0.001, "eta": 0.2}, x, y, splits, "EX2_arSreg", reg, exp=2, hp=True)
-    ag.to_csv(f"./results/EX2_regAS_{data_use}.csv")
+    ag.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_regAS_{data_use}.csv")
 
     #layersizes = [4, 32, 2, 16]
     # Hyperparameter Search Space
@@ -50,7 +50,7 @@ def EN2reg(data_use='full'):
     hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "EX2_hpreg", reg, exp=2, hp=True)
 
     print( 'hyperparameters: ', hpars)
-    grid.to_csv(f"./results/EX2_regHP_{data_use}.csv")
+    grid.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_regHP_{data_use}.csv")
 
 if __name__ == '__main__':
     EN2reg(args.d)

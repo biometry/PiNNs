@@ -23,7 +23,7 @@ parser.add_argument('-d', metavar='data', type=str, help='define data usage: ful
 args = parser.parse_args()
 
 
-def eval2mlp(data_use='full'):
+def eval2mlp(data_use='full', of=False):
     if data_use == 'sparse':
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, sparse=True)
     else:

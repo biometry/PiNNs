@@ -40,7 +40,7 @@ def EN2mlp(data_use='full', splits=None):
     
     # architecture search
     layersizes, argrid = HP.ArchitectureSearch(arch_grid, {'epochs': 200, 'batchsize': 8, 'lr':0.001}, x, y, splits, "EX2_arSmlp", exp=2, hp=True)
-    argrid.to_csv(f"./results/EX2_mlpAS_{data_use}.csv")
+    argrid.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_mlpAS_{data_use}.csv")
 
     # Hyperparameter Search Space
     hpar_grid = HP.HParSearchSpace(800)
@@ -50,7 +50,7 @@ def EN2mlp(data_use='full', splits=None):
 
     print( 'hyperparameters: ', hpars)
 
-    grid.to_csv(f"./results/EX2_mlpHP_{data_use}.csv")
+    grid.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_mlpHP_{data_use}.csv")
 
 
 if __name__ == '__main__':

@@ -18,6 +18,7 @@ args = parser.parse_args()
 def ft2res2(data_use='full'):
     if data_use=='sparse':
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, sparse=True)
+        yp.index = y.index
     else:
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True)
         yp.index = y.index
@@ -76,13 +77,13 @@ def ft2res2(data_use='full'):
               'batchsize': int(bs),
               'lr': lrs[i]}
     
-    data_dir = "./data/"
-    data = "2res2"
-    loss = training.finetune(hp, model_design, (train_x, train_y.to_frame()), (test_x, test_y.to_frame()), data_dir, data,res=2, reg=None, emb=False, ypreles=(train_yp, test_yp))
-    mse_train_mean.append(np.mean(loss['train_loss']))
-    mse_val_mean.append(np.mean(loss['val_loss']))
-    mse_train_sd.append(np.std(loss['train_loss']))
-    mse_val_sd.append(np.std(loss['val_loss']))
+        data_dir = "./data/"
+        data = "2res2"
+        loss = training.finetune(hp, model_design, (train_x, train_y.to_frame()), (test_x, test_y.to_frame()), data_dir, data,res=2, reg=None, emb=False, ypreles=(train_yp, test_yp))
+        mse_train_mean.append(np.mean(loss['train_loss']))
+        mse_val_mean.append(np.mean(loss['val_loss']))
+        mse_train_sd.append(np.std(loss['train_loss']))
+        mse_val_sd.append(np.std(loss['val_loss']))
 
     df = pd.DataFrame(lrs)
     df['train_loss'] = mse_train_mean

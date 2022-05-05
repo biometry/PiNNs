@@ -145,8 +145,8 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                 if reg is not None or res == 2:
                     yp = train_data[2]
                     #if exp==2 and not emb:
-                        #if res != 2:
-                            #yp = yp.unsqueeze(-1)
+                    #    if res != 2:
+                    #        yp = yp.unsqueeze(-1)
                     if emb:
                         xr = train_data[3]
 
@@ -172,7 +172,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                         loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
                 else:
                     loss = criterion(y_hat, yt)
-                print('loss', loss)
+                #print('loss', loss)
                 # backward
                 loss.backward()
                 optimizer.step()
@@ -198,7 +198,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                     y_vall = val_sample[1]
                     if reg is not None or res == 2:
                         yp_vall = val_sample[2]
-                        print(yp_vall)
+                        #print(yp_vall)
                         #if exp == 2 and not emb:
                           #  if res != 2:
                             #    yp_vall = yp_vall.unsqueeze(-1)

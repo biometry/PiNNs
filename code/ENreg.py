@@ -35,7 +35,7 @@ def ENreg(data_use='full', splits=None):
 
     # architecture search
     layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 200, 'batchsize': 8, 'lr':0.001, "eta": 0.2}, x, y, splits, "arSreg", reg, hp=True)
-    ag.to_csv(f"./results/NregAS_{data_use}.csv")
+    ag.to_csv(f"/scratch/project_2000527/pgnn/results/NregAS_{data_use}.csv")
 
     # Hyperparameter Search Space
     hpar_grid = HP.HParSearchSpace(800, True)
@@ -44,7 +44,7 @@ def ENreg(data_use='full', splits=None):
     hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpreg", reg, hp=True)
 
     print( 'hyperparameters: ', hpars)
-    grid.to_csv(f"./results/NregHP_{data_use}.csv")
+    grid.to_csv(f"/scratch/project_2000527/pgnn/results/NregHP_{data_use}.csv")
 
 
 if __name__ == '__main__':

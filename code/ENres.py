@@ -36,7 +36,7 @@ def ENres(data_use="full"):
     # architecture search
     layersizes, agrid = HP.ArchitectureSearch(arch_grid, {'epochs': 200, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSres", hp=True)
     
-    agrid.to_csv(f"./results/NresAS_{data_use}.csv")
+    agrid.to_csv(f"/scratch/project_2000527/pgnn/results/NresAS_{data_use}.csv")
     
     # Hyperparameter Search Space
     # original search space size: 800
@@ -48,7 +48,7 @@ def ENres(data_use="full"):
     print( 'hyperparameters: ', hpars)
     
     
-    grid.to_csv(f"./results/NresHP_{data_use}.csv")
+    grid.to_csv(f"/scratch/project_2000527/pgnn/results/NresHP_{data_use}.csv")
 
 if __name__ == '__main__':
     ENres(args.d)

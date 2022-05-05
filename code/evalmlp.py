@@ -21,7 +21,7 @@ parser.add_argument('-d', metavar='data', type=str, help='define data usage: ful
 args = parser.parse_args()
 
 
-def evalmlp(data_use='full', of=False):
+def evalmlp(data_use='full', of=True):
     if data_use == 'sparse':
         # Load hyytiala
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
@@ -68,7 +68,7 @@ def evalmlp(data_use='full', of=False):
 
     hp = {'epochs': 5000,
       'batchsize': int(bs),
-      'lr': lr}
+          'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "./data/"
     data = f"mlp_{data_use}"
