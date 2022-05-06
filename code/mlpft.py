@@ -59,7 +59,7 @@ def mlpft(data_use="full"):
     mse_train_sd = []
     mse_val_sd = []
 
-    for i in range(300):
+    for i in range(len(lrs)):
         
         hp = {'epochs': 1000, #orignially: 2000
               'batchsize': int(bs),

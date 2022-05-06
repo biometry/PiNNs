@@ -100,17 +100,29 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
         elif res == 2:
             model = models.RES(X.shape[1], Y.shape[1], model_design['layersizes'])
         elif not domain_adaptation is None:
+
+            if exp==2:
+                e = "exp2"
+            else:
+                e = ""
             
             # Finetuning: reuse weights from pretraining and fully retrain model
             if domain_adaptation == 1:
                 print("DOMAIN ADAPTAION: FINETUNING WEIGHTS")
                 model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
-                model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i+1}.pth")))
+                if exp == 2:
+                    model.load_state_dict(torch.load(os.path.join(data_dir, f"2{data}_model{i+1}.pth")))
+                else:
+                    model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i+1}.pth")))
+
             
             # Feature extraction: reuse weight from pretraining and retrain only last layer
             elif domain_adaptation > 1:
                 model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
-                model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i+1}.pth")))
+                if exp == 2:
+                    model.load_state_dict(torch.load(os.path.join(data_dir, f"2{data}_model{i + 1}.pth")))
+                else:
+                    model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i + 1}.pth")))
                 nlayers = len(model.layers)
                 if domain_adaptation == 2:
                     freeze = nlayers-1
@@ -145,8 +157,8 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                 if reg is not None or res == 2:
                     yp = train_data[2]
                     #if exp==2 and not emb:
-                    #    if res != 2:
-                    #        yp = yp.unsqueeze(-1)
+                        #if res != 2:
+                            #yp = yp.unsqueeze(-1)
                     if emb:
                         xr = train_data[3]
 
@@ -172,7 +184,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                         loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
                 else:
                     loss = criterion(y_hat, yt)
-                #print('loss', loss)
+                print('loss', loss)
                 # backward
                 loss.backward()
                 optimizer.step()
@@ -198,7 +210,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                     y_vall = val_sample[1]
                     if reg is not None or res == 2:
                         yp_vall = val_sample[2]
-                        #print(yp_vall)
+                        print(yp_vall)
                         #if exp == 2 and not emb:
                           #  if res != 2:
                             #    yp_vall = yp_vall.unsqueeze(-1)
@@ -298,13 +310,17 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
         #pd.DataFrame({'train_loss': mse_t, 'val_loss':mse_v}, index=[0]).to_csv(f"{data}_NAS_model{i}.csv")
         if exp != 2:
             if domain_adaptation is not None:
-                print("Saving model to: ", os.path.join(data_dir, f"mlpDA{domain_adaptation}_model{i}.pth"))
-                torch.save(model.state_dict(), os.path.join(data_dir, f"mlpDA{domain_adaptation}_model{i}.pth"))
+                print("Saving model to: ", os.path.join(data_dir, f"mlpDA{domain_adaptation}_{e}_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"mlpDA{domain_adaptation}_{e}_model{i}.pth"))
             else:
                 print("Saving model to: ", os.path.join(data_dir, f"{data}_model{i}.pth"))
                 torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
         elif exp == 2:
-            torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_model{i}.pth"))
+            if domain_adaptation is not None:
+                print("Saving model to: ", os.path.join(data_dir, f"2mlpDA{domain_adaptation}_{e}_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"2mlpDA{domain_adaptation}_{e}_model{i}.pth"))
+            else:
+                torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_model{i}.pth"))
                 
     if exp == 2 and not hp:
         td = {}

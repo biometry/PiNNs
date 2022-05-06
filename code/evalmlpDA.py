@@ -17,8 +17,8 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
-parser.add_argument('-a', metavar='da', type=int, help='define type of domain adaptation')
-parser.add_argument('-s', metavar='splits', type=int, help='number of splits for CV')
+#parser.add_argument('-a', metavar='da', type=int, help='define type of domain adaptation')
+#parser.add_argument('-s', metavar='splits', type=int, help='number of splits for CV')
 args = parser.parse_args()
 
 print(args)
@@ -29,40 +29,41 @@ def evalmlpDA(data_use="full", da=3, of=True):
         da = 2: retrain only last layer.
     '''
 
-    # Load hyytiala
-    x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
+    if data_use == 'sparse':
+        # Load hyytiala
+        x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
+    else:
+        x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
+
     y = y.to_frame()
-    
-    print(x.index.year.unique())
-    train_x = x[~x.index.year.isin([2007, 2008])]
-    train_y = y[~y.index.year.isin([2007, 2008])]
-    
+
+
+    train_x = x[~x.index.year.isin([2004, 2005, 2007,2008])][1:]
+    train_y = y[~y.index.year.isin([2004, 2005, 2007,2008])][1:]
+
     splits = len(train_x.index.year.unique())
-    
-    test_x = x[x.index.year == 2008]
-    test_y = y[y.index.year == 2008]
+    test_x = x[x.index.year == 2008][1:]
+    test_y = y[y.index.year == 2008][1:]
+    print('CHECK DATA', train_x, train_y, test_x, test_y)
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
-    print('XY: ', train_x, train_y)
     
-    # Load results from NAS
     # Architecture
     res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpAS_{data_use}.csv")
     a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
     print('layersizes', layersizes)
-    # Debugging: Try different model structure, smaller last layer size
-    # layersizes[-1]=128
+
     model_design = {'layersizes': layersizes}
-    
+
     # Hyperparameters
     res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpHP_{data_use}.csv")
     a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
-    bs = b[1]
     lr = b[0]
-
+    bs = b[1]
+    print('Batch Size and LR', b)
     # Learningrate
     if of:
         res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/mlp_lr_{data_use}.csv")
@@ -71,11 +72,11 @@ def evalmlpDA(data_use="full", da=3, of=True):
         lr = b[0]
     
     # originally 5000 epochs
-    hp = {'epochs': 5000,
+    hp = {'epochs': 1,
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "./data/"
+    data_dir = "/users/mosernik/physics_guided_nn/data/"
     data = f"mlpDA_pretrained_{data_use}"
     
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, domain_adaptation=da, reg=None, emb=False, hp=False)

@@ -24,8 +24,8 @@ args = parser.parse_args()
 
 def predict(test_x, test_y, m, data_use, yp=None):
     # Architecture
-    res_as = pd.read_csv(f"results/N{m}AS_{data_use}.csv")
-    a = res_as.loc[res_as.val_loss.idxmin()][1:5]
+    res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/N{m}AS_{data_use}.csv")
+    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
 
@@ -96,7 +96,7 @@ def via(data_use, model, yp=None):
     
     if model == 'res2':
         yp_te.index = pd.DatetimeIndex(yp_te['date'])
-        ypte = yp_te.drop(yp_te.columns.difference(['GPPp']), axis=1)[1:]
+        ypte = yp_te.drop(yp_te.columns.difference(['GPPp']), axis=1)
         yp = ypte
     if model == 'res':
         yp_tr.index = pd.DatetimeIndex(yp_tr['date'])
@@ -137,7 +137,7 @@ def via(data_use, model, yp=None):
 
             output[output_cols[i]] = pd.DataFrame.from_dict(ps).apply(lambda row: np.mean(row.to_numpy()), axis=1)
 
-        output.T.to_csv(f'results/{model}_{data_use}_{v}_via.csv')
+        output.T.to_csv(f'/scratch/project_2000527/pgnn/results/{model}_{data_use}_{v}_via.csv')
 
 
 if __name__ == '__main__':

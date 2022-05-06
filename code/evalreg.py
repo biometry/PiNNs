@@ -20,7 +20,7 @@ parser.add_argument('-d', metavar='data', type=str, help='define data usage: ful
 #parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
 args = parser.parse_args()
 
-def evalreg(data_use='full', of=False):
+def evalreg(data_use='full', of=True):
     if data_use=='sparse':
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
         yp = utils.make_sparse(pd.read_csv("./data/Hyytiala.csv"))
@@ -61,14 +61,14 @@ def evalreg(data_use='full', of=False):
 
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"/scratch/project2000527/pgnn/results/NregAS_{data_use}.csv")
+    res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NregAS_{data_use}.csv")
     a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
 
     model_design = {'layersizes': layersizes}
 
-    res_hp = pd.read_csv(f"/scratch/project2000527/pgnn/results/NregHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NregHP_{data_use}.csv")
     a = res_hp.loc[res_hp.ind_mini.idxmin()][1:4]
     b = a.to_numpy()
     lr = b[0]
@@ -76,7 +76,7 @@ def evalreg(data_use='full', of=False):
     eta = b[2]
     
     if of:
-        res_hp = pd.read_csv(f"/scratch/project2000527/pgnn/results/reg_lr_{data_use}.csv")
+        res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/reg_lr_{data_use}.csv")
         a = res_hp.loc[res_hp.ind_mini.idxmin()][1:2]
         b = a.to_numpy()
         lr = b[0]
@@ -111,7 +111,7 @@ def evalreg(data_use='full', of=False):
         t4.append(train_loss[3][i])
         #t5.append(train_loss[4][i])
         #t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'/scratch/project2000527/pgnn/results/reg_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'/scratch/project_2000527/pgnn/results/reg_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -126,7 +126,7 @@ def evalreg(data_use='full', of=False):
         #v5.append(val_loss[4][i])
         #v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'/scratch/project2000527/pgnn/results/reg_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'/scratch/project_2000527/pgnn/results/reg_vloss_{data_use}.csv')
 
     mse = nn.MSELoss()
     mae = nn.L1Loss()
@@ -167,9 +167,9 @@ def evalreg(data_use='full', of=False):
     print(performance)
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project2000527/pgnn/results/reg_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project2000527/pgnn/results/reg_eval_preds_{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project2000527/pgnn/results/reg_eval_preds_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/reg_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project_2000527/pgnn/results/reg_eval_preds_{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project_2000527/pgnn/results/reg_eval_preds_{data_use}_test.csv')
 
 if __name__ == '__main__':
     evalreg(args.d)

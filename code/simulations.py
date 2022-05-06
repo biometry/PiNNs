@@ -11,52 +11,62 @@ import torch
 from pygam import GAM, s
 import pickle
 
-def climate_simulations(train_x):
-    
+def climate_simulations(train_x, exp):
+
     year_new = random.sample(list(train_x['year'].unique()),1)
-    doy_new = train_x.loc[train_x['year']==year_new[0], 'DOY']
-    
-    X_new = pd.DataFrame()
-    X_new['DOY'] = doy_new
-    X_new['year'] = year_new[0]
-    
-    year_new = random.sample(list(train_x['year'].unique()),1)
-    doy_new = train_x.loc[train_x['year']==year_new[0], 'DOY']
+    if exp =='exp2':
+        site_new = random.sample(list(train_x['site_num'].unique()), 1)
+        doy_new = train_x.loc[train_x['site_num'] == site_new[0], 'DOY']
+    else:
+        doy_new = train_x.loc[train_x['year']==year_new[0], 'DOY']
 
     X_new = pd.DataFrame()
     X_new['DOY'] = doy_new
     X_new['year'] = year_new[0]
+    if exp == 'exp2':
+        X_new['site_num'] = site_new[0]
     
     #%% Predict to new data set
-    with open('./results/gamTair', 'rb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamTair', 'rb') as f:
         gamTair = pickle.load(f)
-    with open('./results/gamPrecip', 'rb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamPrecip', 'rb') as f:
         gamPrecip = pickle.load(f)
-    with open('./results/gamVPD', 'rb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamVPD', 'rb') as f:
         gamVPD = pickle.load(f)
-    with open('./results/gamPAR', 'rb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamPAR', 'rb') as f:
         gamPAR = pickle.load(f)    
-    with open('./results/gamfapar', 'rb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamfapar', 'rb') as f:
         gamfapar = pickle.load(f)
 
     Tair_hat = gamTair.predict(X_new)
-    Tair_true = train_x.loc[train_x['year']==year_new[0],'Tair']
-    Tair_res = gamTair.deviance_residuals(X_new, Tair_true)
-    
     Precip_hat = gamPrecip.predict(X_new)
-    Precip_true = train_x.loc[train_x['year']==year_new[0],'Precip']
-    Precip_res = gamPrecip.deviance_residuals(X_new, Precip_true)
-    
     VPD_hat = gamVPD.predict(X_new)
-    VPD_true = train_x.loc[train_x['year']==year_new[0],'VPD']
-    VPD_res = gamVPD.deviance_residuals(X_new, VPD_true)
-    
     PAR_hat = gamPAR.predict(X_new)
-    PAR_true = train_x.loc[train_x['year']==year_new[0],'PAR']
-    PAR_res = gamPAR.deviance_residuals(X_new, PAR_true)
-    
     fapar_hat = gamfapar.predict(X_new)
-    fapar_true = train_x.loc[train_x['year']==year_new[0],'fapar']
+
+    if exp == 'exp2':
+
+        print(train_x['site_num'] == site_new[0])
+
+        Tair_true = train_x.loc[train_x['site_num']==site_new[0],'Tair']
+
+        print(len(Tair_true))
+
+        Precip_true = train_x.loc[train_x['site_num'] == site_new[0], 'Precip']
+        VPD_true = train_x.loc[train_x['site_num'] == site_new[0], 'VPD']
+        PAR_true = train_x.loc[train_x['site_num'] == site_new[0], 'PAR']
+        fapar_true = train_x.loc[train_x['site_num'] == site_new[0], 'fapar']
+    else:
+        Tair_true = train_x.loc[train_x['year']==year_new[0],'Tair']
+        Precip_true = train_x.loc[train_x['year']==year_new[0],'Precip']
+        VPD_true = train_x.loc[train_x['year'] == year_new[0], 'VPD']
+        PAR_true = train_x.loc[train_x['year'] == year_new[0], 'PAR']
+        fapar_true = train_x.loc[train_x['year'] == year_new[0], 'fapar']
+
+    Tair_res = gamTair.deviance_residuals(X_new, Tair_true)
+    Precip_res = gamPrecip.deviance_residuals(X_new, Precip_true)
+    VPD_res = gamVPD.deviance_residuals(X_new, VPD_true)
+    PAR_res = gamPAR.deviance_residuals(X_new, PAR_true)
     fapar_res = gamfapar.deviance_residuals(X_new, fapar_true)
     
     res_mat = np.transpose(np.column_stack([Tair_res, Precip_res, VPD_res, PAR_res, fapar_res]))
@@ -68,10 +78,15 @@ def climate_simulations(train_x):
     VPD_hat = VPD_hat + noise[:,2]
     PAR_hat = PAR_hat + noise[:,3]
     fapar_hat = fapar_hat + noise[:,4]
-    
-    preds = np.column_stack([X_new['year'], X_new['DOY'], Tair_hat, Precip_hat, VPD_hat, PAR_hat, fapar_hat])
 
-    climsims = pd.DataFrame(preds, columns = ['year', 'DOY', 'TAir', 'Precip', 'VPD', 'PAR', 'fAPAR'])
+    if exp == 'exp2':
+        preds = np.column_stack([X_new['year'], X_new['DOY'], Tair_hat, Precip_hat, VPD_hat, PAR_hat, fapar_hat])
+        # add site if required
+        climsims = pd.DataFrame(preds, columns=['year', 'DOY', 'TAir', 'Precip', 'VPD', 'PAR', 'fAPAR'])
+    else:
+        preds = np.column_stack([X_new['year'], X_new['DOY'], Tair_hat, Precip_hat, VPD_hat, PAR_hat, fapar_hat])
+        climsims = pd.DataFrame(preds, columns = ['year', 'DOY', 'TAir', 'Precip', 'VPD', 'PAR', 'fAPAR'])
+
     #climsims['year'] = climsims['year'].astype(int)
     climsims['CO2'] = 380
     climsims.drop(['year'], axis = 1, inplace=True)
@@ -124,34 +139,80 @@ def parameter_samples(n_samples, parameters = ['beta', 'chi', 'X[0]', 'gamma', '
     return(d)
 
 
-def gen_simulations(n, data_dir = './data/'):
-    
-    x, y, xt = utils.loaddata('validation', None, dir="./data/", raw=True, doy=False)
-    y = y.to_frame()
+def gen_simulations(n, data_use = 'full', exp = None, data_dir = './data/'):
 
-    # Hold out a year as test data                                                                                                          
-    train_x = x[~x.index.year.isin([2012])]
-    train_y = y[~y.index.year.isin([2012])]
+    if exp == "exp2":
+        if data_use == 'full':
+            print("Load allsites in full version.")
+            x, y, xt, yp  = utils.loaddata('exp2', None, dir="./data/", raw=True, doy=True)
+        else:
+            print("Load allsites in sparse version.")
+            x, y, xt, yp  = utils.loaddata('exp2', None, dir="./data/", raw=True, doy=True, sparse=True)
+        x = x.drop(['doy_sin', 'doy_cos'], axis=1)
+        #doys = xt['DOY']
+        #sites = xt['site']
+        x['site'] = xt['site'].values
+        x['site_num'] = xt['site'].values
+        x['DOY'] = xt['DOY'].values
+        print(x)
 
-    print(train_x)
+        x = x[x.index.year == 2008]
+        y = y[y.index.year == 2008]
+        train_x = x.drop(pd.DatetimeIndex(['2008-01-01']))
+        train_y = y.drop(pd.DatetimeIndex(['2008-01-01']))
+        
+    else:
+        exp = ''
+        if data_use == 'full':
+            print("Load hyytialaF in full version.")
+            x, y, xt = utils.loaddata('validation', None, dir="./data/", raw=True, doy=False)
+        else:
+            print("Load hyytialaF in sparse version.")
+            x, y, xt = utils.loaddata('validation', None, dir="./data/", raw=True, doy=False, sparse=True)
 
-    train_x['year'] = pd.DatetimeIndex(train_x['date']).year
-    train_x = train_x.drop(['date'], axis=1)
+        y = y.to_frame()
+        # Hold out a year as test data                                                                      
+        train_x = x[~x.index.year.isin([2008])]
+        train_y = y[~y.index.year.isin([2008])]
 
-    gamTair = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['Tair'])
-    with open('./results/gamTair', 'wb') as f:
+    #train_x['year'] = pd.DatetimeIndex(train_x['date']).year
+    train_x['year'] = train_x.index.year
+    #train_x = train_x.drop(['date'], axis=1)
+    if exp == 'exp2':
+        print(train_x)
+        print(train_x['site'].unique())
+        train_x['site_num'] = train_x['site_num'].astype(str)
+        mapping = {'h':1, 's':2, 'b':3, 'l':4 ,'c':5}
+        train_x = train_x.replace({'site_num':mapping})
+        print(train_x['site_num'].unique())
+        print(train_x.dtypes)
+
+    if exp == 'exp2':
+
+        #train_x['site'] = pd.to_numeric(train_x['site'], errors='ignore').astype(int)
+        #print(train_x['site'])
+        gamTair = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']], train_x['Tair'])
+        gamPrecip = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']], train_x['Precip'])
+        gamVPD = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']],train_x['VPD'])
+        gamPAR = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']],train_x['PAR'])
+        gamfapar = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']],train_x['fapar'])
+
+    else:
+        gamTair = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['Tair'])
+        gamPrecip = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']], train_x['Precip'])
+        gamVPD = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['VPD'])
+        gamPAR = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['PAR'])
+        gamfapar = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['fapar'])
+
+    with open('/scratch/project_2000527/pgnn/results/gamTair', 'wb') as f:
         pickle.dump(gamTair, f)
-    gamPrecip = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['Precip'])
-    with open('./results/gamPrecip', 'wb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamPrecip', 'wb') as f:
         pickle.dump(gamPrecip, f)
-    gamVPD = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['VPD'])
-    with open('./results/gamVPD', 'wb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamVPD', 'wb') as f:
         pickle.dump(gamVPD, f)
-    gamPAR = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['PAR'])
-    with open('./results/gamPAR', 'wb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamPAR', 'wb') as f:
         pickle.dump(gamPAR, f)
-    gamfapar = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['fapar'])
-    with open('./results/gamfapar', 'wb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamfapar', 'wb') as f:
         pickle.dump(gamfapar, f)
 
     p = parameter_samples(n_samples = n)
@@ -163,7 +224,7 @@ def gen_simulations(n, data_dir = './data/'):
     d = []
 
     for i in range(n):
-        c = climate_simulations(train_x)
+        c = climate_simulations(train_x, exp)
         #np.savetext('climate_simulations.csv', c.to_numpy(), delimiter=';')                                                                                    
         ct = torch.tensor(c.to_numpy(), dtype=torch.float64)
         
@@ -176,7 +237,7 @@ def gen_simulations(n, data_dir = './data/'):
         d.append(c)
 
     d = pd.concat(d)
-    d.to_csv(''.join((data_dir, 'DA_preles_sims.csv')), index=False)
+    d.to_csv(''.join((data_dir, f'simulations_{data_use}_{exp}.csv')), index=False)
 
 
 
@@ -191,4 +252,10 @@ fig.savefig('results/temp.png')
 
 
 if __name__ == '__main__':
-    gen_simulations(n=1000)
+    #gen_simulations(n = 10)
+    #gen_simulations(n = 10, data_use='sparse')
+    #gen_simulations(n=10, exp='exp2')
+    gen_simulations(n=500, data_use='full',exp ='exp2')
+    
+    
+
