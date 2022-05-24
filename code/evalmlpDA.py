@@ -42,8 +42,8 @@ def evalmlpDA(data_use="full", da=3, of=True):
     train_y = y[~y.index.year.isin([2004, 2005, 2007,2008])][1:]
 
     splits = len(train_x.index.year.unique())
-    test_x = x[x.index.year == 2008][1:]
-    test_y = y[y.index.year == 2008][1:]
+    test_x = x[x.index.year == 2008]
+    test_y = y[y.index.year == 2008]
     print('CHECK DATA', train_x, train_y, test_x, test_y)
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
@@ -72,7 +72,7 @@ def evalmlpDA(data_use="full", da=3, of=True):
         lr = b[0]
     
     # originally 5000 epochs
-    hp = {'epochs': 1,
+    hp = {'epochs': 5000,
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
@@ -135,7 +135,10 @@ def evalmlpDA(data_use="full", da=3, of=True):
         i += 1
         #import model
         model = models.NMLP(x.shape[1], y.shape[1], model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"mlpDA{da}_model{i}.pth"))))
+        if data_use == 'sparse':
+            model.load_state_dict(torch.load(''.join((data_dir, f"mlpDA{da}__model{i}.pth"))))
+        else:
+            model.load_state_dict(torch.load(''.join((data_dir, f"{data}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)

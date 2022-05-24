@@ -255,7 +255,7 @@ if __name__ == '__main__':
     #gen_simulations(n = 10)
     #gen_simulations(n = 10, data_use='sparse')
     #gen_simulations(n=10, exp='exp2')
-    gen_simulations(n=500, data_use='full',exp ='exp2')
+    gen_simulations(n=500, data_use='sparse',exp ='')
     
     
 

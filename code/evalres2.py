@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
-def evalres2(data_use='full', of=False):
+def evalres2(data_use='full', of=True):
     if data_use=='sparse':
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
         yp = utils.make_sparse(pd.read_csv("./data/Hyytiala.csv"))
@@ -52,20 +52,20 @@ def evalres2(data_use='full', of=False):
 
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"/scratch/project2000527/pgnn/results/Nres2AS_{data_use}.csv")
+    res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/Nres2AS_{data_use}.csv")
     a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(np.int))
     
     model_design = {'layersizes': layersizes}
      
-    res_hp = pd.read_csv(f"/scratch/project2000527/pgnn/results/Nres2HP_{data_use}.csv")
+    res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/Nres2HP_{data_use}.csv")
     a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
     bs = b[1]
     if of:
-        res_hp = pd.read_csv(f"/scratch/project2000527/pgnn/results/res2_lr_{data_use}.csv")
+        res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/res2_lr_{data_use}.csv")
         a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
         b = a.to_numpy()
         lr = b[0]
@@ -95,7 +95,7 @@ def evalres2(data_use='full', of=False):
         t4.append(train_loss[3][i])
         #t5.append(train_loss[4][i])
         #t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'/scratch/project2000527/pgnn/results/res2_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'/scratch/project_2000527/pgnn/results/res2_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -110,7 +110,7 @@ def evalres2(data_use='full', of=False):
         # v5.append(val_loss[4][i])
         # v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'/scratch/project2000527/pgnn/results/res2_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'/scratch/project_2000527/pgnn/results/res2_vloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -148,9 +148,9 @@ def evalres2(data_use='full', of=False):
                     'test_mae': test_mae}
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project2000527/pgnn/results/res2_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project2000527/pgnn/results/res2_eval_preds_{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project2000527/pgnn/results/res2_eval_preds_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/res2_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project_2000527/pgnn/results/res2_eval_preds_{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project_2000527/pgnn/results/res2_eval_preds_{data_use}_test.csv')
 
 
 if __name__ == '__main__':

@@ -77,7 +77,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
         sample_id = list(range(train_set_size))
         val_set_size = len(val_set)
         vsample_id = list(range(val_set_size))
-
+        print('vsample_id',vsample_id)
         if emb:
             train_sampler = torch.utils.data.sampler.SequentialSampler(sample_id)
             val_sampler = torch.utils.data.sampler.SequentialSampler(vsample_id)
@@ -310,15 +310,15 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
         #pd.DataFrame({'train_loss': mse_t, 'val_loss':mse_v}, index=[0]).to_csv(f"{data}_NAS_model{i}.csv")
         if exp != 2:
             if domain_adaptation is not None:
-                print("Saving model to: ", os.path.join(data_dir, f"mlpDA{domain_adaptation}_{e}_model{i}.pth"))
-                torch.save(model.state_dict(), os.path.join(data_dir, f"mlpDA{domain_adaptation}_{e}_model{i}.pth"))
+                print("Saving model to: ", os.path.join(data_dir, f"{data}_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
             else:
                 print("Saving model to: ", os.path.join(data_dir, f"{data}_model{i}.pth"))
                 torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
         elif exp == 2:
             if domain_adaptation is not None:
-                print("Saving model to: ", os.path.join(data_dir, f"2mlpDA{domain_adaptation}_{e}_model{i}.pth"))
-                torch.save(model.state_dict(), os.path.join(data_dir, f"2mlpDA{domain_adaptation}_{e}_model{i}.pth"))
+                print("Saving model to: ", os.path.join(data_dir, f"2{data}_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_model{i}.pth"))
             else:
                 torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_model{i}.pth"))
                 
