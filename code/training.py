@@ -310,15 +310,15 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
         #pd.DataFrame({'train_loss': mse_t, 'val_loss':mse_v}, index=[0]).to_csv(f"{data}_NAS_model{i}.csv")
         if exp != 2:
             if domain_adaptation is not None:
-                print("Saving model to: ", os.path.join(data_dir, f"{data}_model{i}.pth"))
-                torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
+                print("Saving model to: ", os.path.join(data_dir, f"mlpDA{da}_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"mlpDA{da}_model{i}.pth"))
             else:
                 print("Saving model to: ", os.path.join(data_dir, f"{data}_model{i}.pth"))
                 torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
         elif exp == 2:
             if domain_adaptation is not None:
-                print("Saving model to: ", os.path.join(data_dir, f"2{data}_model{i}.pth"))
-                torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_model{i}.pth"))
+                print("Saving model to: ", os.path.join(data_dir, f"2mlpDA{da}_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"2mlpDA{da}_model{i}.pth"))
             else:
                 torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_model{i}.pth"))
                 

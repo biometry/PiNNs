@@ -32,7 +32,7 @@ def pretraining(data_use="full", of=False):
         splits = len(train_x.index.year.unique())
 
         # Load data for pretraining
-        x, y, r  = utils.loaddata('simulations', 1, dir="./data/")
+        x, y, r  = utils.loaddata('simulations', 1, dir="./data/", sparse=True)
         y = y.to_frame()
     
     else:
@@ -43,7 +43,7 @@ def pretraining(data_use="full", of=False):
         splits = len(train_x.index.year.unique())
 
         # Load data for pretraining
-        x, y, r  = utils.loaddata('simulations', 1, dir="./data/", sparse=True)
+        x, y, r  = utils.loaddata('simulations', 1, dir="./data/")
         y = y.to_frame()
     ## Split into training and test
 
@@ -68,7 +68,7 @@ def pretraining(data_use="full", of=False):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
     a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -77,7 +77,7 @@ def pretraining(data_use="full", of=False):
     model_design = {'layersizes': layersizes}
     
     # Hyperparameters
-    res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
     a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
@@ -85,7 +85,7 @@ def pretraining(data_use="full", of=False):
     
     # Learningrate
     if of:
-        res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/mlp_lr_{data_use}.csv")
+        res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
         a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
         b = a.to_numpy()
         lr = b[0]
@@ -132,11 +132,11 @@ def pretraining(data_use="full", of=False):
         #        v5.append(val_loss[4][i])
         #        v6.append(val_loss[5][i])
         
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'/scratch/project_2000527/pgnn/results/mlpDA_pretrained_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/mlpDA_pretrained_vloss_{data_use}.csv')
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
     #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
     #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'/scratch/project_2000527/pgnn/results/mlpDA_pretrained_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/mlpDA_pretrained_trainloss_{data_use}.csv')
     
     # Evaluation
     mse = nn.MSELoss()
@@ -175,13 +175,13 @@ def pretraining(data_use="full", of=False):
     
     #print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/mlpDA_pretrained_eval_performance_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'/scratch/project_2000527/pgnn/results/mlpDA_pretrained_eval_preds_train_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'/scratch/project_2000527/pgnn/results/mlpDA_pretrained_eval_preds_test_{data_use}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA_pretrained_eval_performance_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA_pretrained_eval_preds_train_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA_pretrained_eval_preds_test_{data_use}.csv')
 
 if __name__ == '__main__':
-    pretraining(args.d)
-
+    pretraining(data_use="full")
+    pretraining(data_use="sparse")
 
 '''
 with open('mlp_eval_performance.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
