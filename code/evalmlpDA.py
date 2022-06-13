@@ -166,7 +166,10 @@ def evalmlpDA(data_use="full", da=1, of=True):
 if __name__ == '__main__':
    evalmlpDA(data_use="full", da=1)
    evalmlpDA(data_use="sparse", da=1)
-   
+   evalmlpDA(data_use="full", da=2)
+   evalmlpDA(data_use="sparse", da=2)
+   evalmlpDA(data_use="full", da=3)
+   evalmlpDA(data_use="sparse", da=3)
 
 '''
 with open('mlp_eval_performance.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x

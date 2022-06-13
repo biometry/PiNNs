@@ -18,9 +18,9 @@ import argparse
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 #parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
-args = parser.parse_args()
+#args = parser.parse_args()
 
-print(args)
+#print(args)
 
 
 def pretraining2(data_use="full", exp="exp2", of=False):
@@ -59,7 +59,7 @@ def pretraining2(data_use="full", exp="exp2", of=False):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_mlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"./results/EX2_mlpAS_{data_use}.csv")
     a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -68,7 +68,7 @@ def pretraining2(data_use="full", exp="exp2", of=False):
     model_design = {'layersizes': layersizes}
     
     # Hyperparameters
-    res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_mlpHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/EX2_mlpHP_{data_use}.csv")
     a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     bs = b[1]
@@ -76,7 +76,7 @@ def pretraining2(data_use="full", exp="exp2", of=False):
     
     # Learningrate
     if of:
-        res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/2mlp_lr_{data_use}.csv")
+        res_hp = pd.read_csv(f"./results/2mlp_lr_{data_use}.csv")
         a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
         b = a.to_numpy()
         lr = b[0]
@@ -95,12 +95,13 @@ def pretraining2(data_use="full", exp="exp2", of=False):
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, hp=False, exp=2)
 
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_eval_tloss_{data_use}_{exp}.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_eval_vseloss_{data_use}_{exp}.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_eval_vaeloss_{data_use}_{exp}.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'./results/2mlp_eval_tloss_{data_use}_{exp}.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'./results/2mlp_eval_vseloss_{data_use}_{exp}.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'./results/2mlp_eval_vaeloss_{data_use}_{exp}.csv')
 
 if __name__ == '__main__':
-    pretraining2(args.d)
+    pretraining2(data_use="full")
+    pretraining2(data_use="sparse")
     
 
 
