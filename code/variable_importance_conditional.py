@@ -116,31 +116,49 @@ def via(data_use, model, yp=None):
         test_x = x[x.index.year == 2008][1:]
         test_y = y[y.index.year == 2008][1:]
         variables = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar']
-    dates = test_x.index.copy()
-    print(test_x, test_y, yp)
 
     for v in variables:
         if model == 'res':
             var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[''.join((v, '_x'))])/std[''.join((v, '_x'))]
         else:
-            var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[v])/std[v] 
-        output_cols = np.linspace(thresholds[v][0], thresholds[v][1], gridsize)
+            var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[v])/std[v]
         output = pd.DataFrame()
-        output['date'] = dates
 
-        for i in range(gridsize):
-            test_x[''.join((v, '_x'))] = [var_range[i]]*len(dates)
-            test_x[''.join((v, '_y'))] = [var_range[i]]*len(dates)
-            test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
+        dat = test_x.copy()
+        if not yp is None:
+            yp_dat = yp.copy()
 
-            ps = predict(test_x, test_y, model, data_use, yp)
+        # Compute effect of variable at mean of 14 days around record dates for seasonal changes
+        mar = pd.concat([dat['2008-03-13':'2008-03-27'].mean().to_frame().T] * gridsize)
+        jun = pd.concat([dat['2008-06-14':'2008-06-28'].mean().to_frame().T] * gridsize)
+        sep = pd.concat([dat['2008-09-13':'2008-09-28'].mean().to_frame().T] * gridsize)
+        dec = pd.concat([dat['2008-12-14':'2008-12-28'].mean().to_frame().T] * gridsize)
+        days = {'mar':mar, 'jun':jun, 'sep':sep, 'dec':dec}
+        
+        if not yp is None:
+            yp_mar = pd.concat([yp_dat['2008-03-13':'2008-03-27'].mean().to_frame().T] * gridsize)
+            yp_jun = pd.concat([yp_dat['2008-06-14':'2008-06-28'].mean().to_frame().T] * gridsize)
+            yp_sep = pd.concat([yp_dat['2008-09-13':'2008-09-28'].mean().to_frame().T] * gridsize)
+            yp_dec = pd.concat([yp_dat['2008-12-14':'2008-12-28'].mean().to_frame().T] * gridsize)
+            days_yp = {'mar':yp_mar, 'jun':yp_jun, 'sep':yp_sep, 'dec':yp_dec}
 
-            output[output_cols[i]] = pd.DataFrame.from_dict(ps).apply(lambda row: np.mean(row.to_numpy()), axis=1)
+        for mon, df in days.items():
+            df[''.join((v, '_x'))] = var_range
+            df[''.join((v, '_y'))] = var_range
+            #test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
 
-        output.T.to_csv(f'./results/{model}_{data_use}_{v}_via_marginal.csv')
+            if not yp is None:
+                ps = predict(df, test_y, model, data_use, days_yp[mon])
+            else:
+                ps = predict(df, test_y, model, data_use, yp)
+
+            output[mon] = pd.DataFrame.from_dict(ps).apply(lambda row: np.mean(row.to_numpy()), axis=1)
+
+        output.T.to_csv(f'./results/{model}_{data_use}_{v}_via_conditional.csv')
 
 
 if __name__ == '__main__':
     via('full', 'mlp')
+    #via('sparse', 'mlp')
+    via('full', 'res2')
     #via('sparse', 'res2')
-    #via('sparse', 'res')

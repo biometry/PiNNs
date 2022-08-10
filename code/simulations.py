@@ -25,6 +25,7 @@ def climate_simulations(train_x, exp):
     X_new['year'] = year_new[0]
     if exp == 'exp2':
         X_new['site_num'] = site_new[0]
+        print(X_new)
     
     #%% Predict to new data set
     with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamTair', 'rb') as f:
@@ -275,8 +276,8 @@ fig.savefig('results/temp.png')
 if __name__ == '__main__':
     gen_simulations(n=500, fix_pars=True, data_use='full', exp='')
     gen_simulations(n = 500, fix_pars=True, data_use='sparse', exp='')
-    gen_simulations(n=500, fix_pars=True, data_use='full', exp='exp2')
-    gen_simulations(n=500, fix_pars=True, data_use='sparse', exp='exp2')
+    gen_simulations(n=1000, fix_pars=True, data_use='full', exp='exp2')
+    gen_simulations(n=1000, fix_pars=True, data_use='sparse', exp='exp2')
     
     
 
