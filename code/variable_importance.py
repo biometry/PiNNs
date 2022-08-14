@@ -72,15 +72,13 @@ def via(data_use, model, yp=None):
     if data_use == 'sparse':
         x, y, xt, mn, std = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True, via=True)
         if model in ['res', 'res2']:
-            yp_tr = utils.make_sparse(pd.read_csv("./data/train_hyt.csv"))
-            yp_te = utils.make_sparse(pd.read_csv("./data/test_hyt.csv")[6:])
+            yp = utils.make_sparse(pd.read_csv("./data/Hyytiala.csv"))
     else:
         x, y, xt, mn, std = utils.loaddata('validation', 1, dir="./data/", raw=True, via=True)
         if model in ['res', 'res2']:
-            yp_tr = pd.read_csv("./data/train_hyt.csv")
-            yp_te = pd.read_csv("./data/test_hyt.csv")
+            yp = pd.read_csv("./data/Hyytiala.csv")   
 
-
+    
     thresholds = {'PAR': [0, 200], 
                   'Tair': [-20, 40],
                   'VPD': [0, 60],
@@ -95,26 +93,23 @@ def via(data_use, model, yp=None):
     gridsize = 200
     
     if model == 'res2':
-        yp_te.index = pd.DatetimeIndex(yp_te['date'])
-        ypte = yp_te.drop(yp_te.columns.difference(['GPPp']), axis=1)
-        yp = ypte
+        yp.index = pd.DatetimeIndex(yp['date'])
+        yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+        yp = yp[yp.index.year == 2008][1:]
+        
     if model == 'res':
-        yp_tr.index = pd.DatetimeIndex(yp_tr['date'])
-        yp_te.index = pd.DatetimeIndex(yp_te['date'])
-        yptr = yp_tr.drop(yp_tr.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
-        ypte = yp_te.drop(yp_te.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
+        yp.index = pd.DatetimeIndex(yp['date'])
+        yp = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
         n = [1,1]
-        x_tr, n = utils.add_history(yptr, n, 1)
-        x_te, n = utils.add_history(ypte, n, 1)
-        x_tr, mn, std = utils.standardize(x_tr, get_p=True)
-        x_te = utils.standardize(x_te, [mn, std])
+        x_te, n = utils.add_history(yp, n, 1)
+        x_te, mn, std = utils.standardize(x_te, get_p=True)
         test_x = x_te[x_te.index.year == 2008]
-        test_y = y[y.index.year == 2008][1:]
+        test_y = y[y.index.year == 2008]
         variables = ['GPPp', 'ETp', 'SWp']
                 
     elif model in ['mlp', 'res2', 'reg']:
-        test_x = x[x.index.year == 2008][1:]
-        test_y = y[y.index.year == 2008][1:]
+        test_x = x[x.index.year == 2008]
+        test_y = y[y.index.year == 2008]
         variables = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar']
     dates = test_x.index.copy()
     print(test_x, test_y, yp)
