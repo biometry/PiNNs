@@ -6,14 +6,15 @@ library(Rpreles)
 
 #load("EddyCovarianceDataBorealSites.rdata") # data for one site: s1-s4
 #attach(s1)
-hyytiala <- read.csv("~/physics_guided_nn/data/hyytiala.csv")
+hyytiala <- read.csv("~/Projects/physics_guided_nn/data/hyytiala.csv")
 hyytiala$date <- as.Date(hyytiala$date)
 hyytiala$year <- format(hyytiala$date, format="%Y")
+
 hyytiala_train <- hyytiala[!(hyytiala$year %in% c("2008", "2007", "2005", "2004")), ]
 hyytiala_test <- hyytiala[hyytiala$year == "2008", ]
 attach(hyytiala_train)
 
-load("~/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
+load("~/Projects/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
 # par # note that "-999" is supposed to indiate NA!
 pars <- par # unfortunate naming "par" replaced by "pars"
 rm(par)
@@ -48,16 +49,16 @@ pars # note that some parameters are set without uncertainty (e.g. soildepth)
 pars[pars$name=="nu", 4] <- 10 # was 5
 
 #### EXAMPLE RUN ####
-onerun <- PRELES(PAR=PAR, TAir=Tair, VPD=VPD, Precip=Precip, CO2=CO2, fAPAR=fapar, p=pars[,"def"])
+#onerun <- PRELES(PAR=PAR, TAir=Tair, VPD=VPD, Precip=Precip, CO2=CO2, fAPAR=fapar, p=pars[,"def"])
 # make a plot of the output:
-par(mfrow=c(3,1), mar=c(2,4,1,1), oma=c(4,0,0,0))
-plot(1:(2*365), onerun$GPP, type="l", las=1, ylab="GPP")
-abline(v=366)
-plot(1:(2*365), onerun$ET, type="l", las=1, ylab="evapotranspiration")
-abline(v=366)
-plot(1:(2*365), onerun$SW, type="l", las=1, ylab="soil water")
-abline(v=366)
-mtext(side=1, line=4, "day since start")
+#par(mfrow=c(3,1), mar=c(2,4,1,1), oma=c(4,0,0,0))
+#plot(1:(2*365), onerun$GPP, type="l", las=1, ylab="GPP")
+#abline(v=366)
+#plot(1:(2*365), onerun$ET, type="l", las=1, ylab="evapotranspiration")
+#abline(v=366)
+#plot(1:(2*365), onerun$SW, type="l", las=1, ylab="soil water")
+#abline(v=366)
+#mtext(side=1, line=4, "day since start")
 
 #### Bayesian Fitting ####
 
@@ -87,11 +88,11 @@ setup <- createBayesianSetup(likelihood=ell, prior=priors, parallel=T)
 settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
 # run:
 fit1 <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
-save(fit1, file = "~/physics_guided_nn/data/Psinglesite_fit.Rdata")
+save(fit1, file = "~/Projects/physics_guided_nn/data/Psinglesite_fit.Rdata")
 
 #### Check whether estimates reach prior boundary ####
 summary(fit1)
-pdf(file="~/physics_guided_nn/results/Psinglesitefit_BayesPriors.pdf", width=15, height=12)
+pdf(file="~/Projects/physics_guided_nn/results/Psinglesitefit_BayesPriors.pdf", width=15, height=12)
 par(mfrow=c(4, 4), mar=c(3,3,3,1))
 for (i in 1:ncol(fit1[[1]]$X)){ # loop over parameters fitted
   #fit1[[1]]$chain[1]
@@ -119,7 +120,17 @@ detach(hyytiala_test)
 
 ## Calibrate Preles in CV setting ##
 ####################################
+makesparse <- function(train){
+  ind <- seq(0,nrow(train), by=7)
+  tsmall <- train[ind,]
+  return(tsmall)
+}
 
+data_use <- 'sparse'
+
+if (data_use == 'sparse'){
+  hyytiala_train <- makesparse(hyytiala_train)
+}
 
 CVfit <- matrix(NA, nrow=nrow(pars), ncol = length(unique(hyytiala_train$year)))
 
@@ -139,14 +150,16 @@ for (year in unique(hyytiala_train$year)){
   settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
   # run:
   fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
-  save(fit, file = paste0("~/physics_guided_nn/data/Psinglesite_fit_", year, ".Rdata"))
+  save(fit, file = paste0("~/Projects/physics_guided_nn/data/Psinglesite_fit_", year,"_", data_use, ".Rdata"))
   
   pars_fit <- pars
   pars_fit$def[pars2tune] <- MAP(fit)$parametersMAP
   CVfit[,i] <- pars_fit$def
 }
 
-save(CVfit, file = "~/physics_guided_nn/data/Psinglesite_CVfit.Rdata")
+save(CVfit, file = paste0("~/Projects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".Rdata"))
+write.csv(CVfit, file=paste0("~/Projects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".csv"))
+
  
 gpp_train <- matrix(NA, nrow=nrow(hyytiala_train), ncol=length(unique(hyytiala_train$year)))
 gpp_test <- matrix(NA, nrow=nrow(hyytiala_test), ncol=length(unique(hyytiala_train$year)))
@@ -155,11 +168,11 @@ et_test <- matrix(NA, nrow=nrow(hyytiala_test), ncol=length(unique(hyytiala_trai
 sw_train <- matrix(NA, nrow=nrow(hyytiala_train), ncol=length(unique(hyytiala_train$year)))
 sw_test <- matrix(NA, nrow=nrow(hyytiala_test), ncol=length(unique(hyytiala_train$year)))
 
-load(file = "~/physics_guided_nn/data/Psinglesite_CVfit.Rdata")
+load(file = paste0("~/Projects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".Rdata"))
 i <- 1
 for (year in unique(hyytiala_train$year)){
   
-  load(file = paste0("~/physics_guided_nn/data/Psinglesite_fit_", year, ".Rdata"))
+  load(file = paste0("~/Projects/physics_guided_nn/data/Psinglesite_fit_", year,"_", data_use, ".Rdata"))
 
   gpp_train[,i] <- PRELES(PAR=hyytiala_train$PAR, TAir=hyytiala_train$Tair, VPD=hyytiala_train$VPD, Precip=hyytiala_train$Precip, CO2=hyytiala_train$CO2, fAPAR=hyytiala_train$fapar, p=CVfit[,i])$GPP
   gpp_test[,i] <- PRELES(PAR=hyytiala_test$PAR, TAir=hyytiala_test$Tair, VPD=hyytiala_test$VPD, Precip=hyytiala_test$Precip, CO2=hyytiala_test$CO2, fAPAR=hyytiala_test$fapar, p=CVfit[,i])$GPP
@@ -182,14 +195,13 @@ hyytiala_test$ETp <- apply(et_test, 1, mean)
 hyytiala_train$SWp <- apply(sw_train, 1, mean)
 hyytiala_test$SWp <- apply(sw_test, 1, mean)
 
-hyytialaF <- rbind(hyytiala_train, hyytiala_test)
-
-write.csv(hyytialaF, file="~/physics_guided_nn/data/hyytialaF.csv", row.names = FALSE)
-
-## Generate files for prediction results ##
-
-save(gpp_train, file = "~/physics_guided_nn/data/GPPp_singlesite_train.Rdata")
-save(gpp_test, file = "~/physics_guided_nn/data/GPPp_singlesite_test.Rdata")
+if (data_use == 'full'){
+  hyytialaF <- rbind(hyytiala_train, hyytiala_test)
+  write.csv(hyytialaF, file="~/Projects/physics_guided_nn/data/hyytialaF.csv", row.names = FALSE)
+  ## Generate files for prediction results ##
+  save(gpp_train, file = "~/Projects/physics_guided_nn/data/GPPp_singlesite_train.Rdata")
+  save(gpp_test, file = "~/Projects/physics_guided_nn/data/GPPp_singlesite_test.Rdata")
+}
 
 
 GPP_train <- apply(gpp_train, 1, mean)
@@ -210,20 +222,20 @@ perfpormance_preles_full <- matrix(NA, nrow=4, ncol=2)
 perfpormance_preles_full[,1] <- apply(gpp_test, 2, rmse)
 perfpormance_preles_full[,2] <- apply(gpp_test, 2, mae)
 
-write.csv(perfpormance_preles_full, file="~/physics_guided_nn/results/performance_preles_full.csv")
-write.csv(gpp_test, file="~/physics_guided_nn/results/preles_eval_preds_test_full.csv")
+write.csv(perfpormance_preles_full, file=paste0("~/Projects/physics_guided_nn/results/preles_eval_", data_use, "_performance.csv"))
+write.csv(gpp_test, file=paste0("~/Projects/physics_guided_nn/results/preles_eval_preds_test_", data_use, ".csv"))
 
 ##=========================##
 ## Create data set for NAS ##
 ##=========================##
 
-hyytiala <- read.csv("~/physics_guided_nn/data/hyytiala.csv")
+hyytiala <- read.csv("~/Projects/physics_guided_nn/data/hyytiala.csv")
 hyytiala$date <- as.Date(hyytiala$date)
 hyytiala$year <- format(hyytiala$date, format="%Y")
 hyytiala_nas <- hyytiala[(hyytiala$year %in% c( "2005", "2004")), ]
 attach(hyytiala_nas)
 
-load("~/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
+load("~/Projects/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
 # par # note that "-999" is supposed to indiate NA!
 pars <- par # unfortunate naming "par" replaced by "pars"
 rm(par)
@@ -260,7 +272,7 @@ setup <- createBayesianSetup(likelihood=ell, prior=priors, parallel=T)
 settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
 # run:
 fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
-save(fit, file = "~/physics_guided_nn/data/Psinglesite_NAS_fit.Rdata")
+save(fit, file = "~/Projects/physics_guided_nn/data/Psinglesite_NAS_fit.Rdata")
 summary(fit)
 
 pars_fit <- pars
@@ -282,7 +294,7 @@ hyytiala_nas$SWp <- PRELES(PAR=hyytiala_nas$PAR, TAir=hyytiala_nas$Tair, VPD=hyy
 mae <- sum(abs(hyytiala_nas$GPP - hyytiala_nas$GPPp))/length(hyytiala_nas$GPPp)
 plot(hyytiala_nas$GPPp)
 
-write.csv(hyytiala_nas, file="~/physics_guided_nn/data/hyytialaNAS.csv", row.names = FALSE)
+write.csv(hyytiala_nas, file="~/Projects/physics_guided_nn/data/hyytialaNAS.csv", row.names = FALSE)
 
 ##=======================##
 ## Multisite Calibration ##
@@ -291,7 +303,7 @@ write.csv(hyytiala_nas, file="~/physics_guided_nn/data/hyytialaNAS.csv", row.nam
 
 #load("EddyCovarianceDataBorealSites.rdata") # data for one site: s1-s4
 #attach(s1)
-allsites <- read.csv("~/physics_guided_nn/data/data_exp2.csv")
+allsites <- read.csv("~/Projects/physics_guided_nn/data/allsites.csv")
 allsites$date <- as.Date(allsites$date)
 allsites$year <- format(allsites$date, format="%Y")
 print(unique(allsites$year))
@@ -303,8 +315,14 @@ attach(allsites_train)
 
 summary(allsites_train)
 
+data_use = 'full'
 
-load("~/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
+if (data_use == 'sparse'){
+  allsites_train <- makesparse(allsites_train)
+}
+
+
+load("~/Projects/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
 # par # note that "-999" is supposed to indiate NA!
 pars <- par # unfortunate naming "par" replaced by "pars"
 rm(par)
@@ -338,7 +356,7 @@ for (s in unique(allsites_train$site)){
   settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
   # run:
   fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
-  save(fit, file = paste0("~/physics_guided_nn/data/Pmultisite_fit_", s, ".Rdata"))
+  save(fit, file = paste0("~/Projects/physics_guided_nn/data/Pmultisite_fit_", s, "_", data_use, ".Rdata"))
   
   pars_fit <- pars
   pars_fit$def[pars2tune] <- MAP(fit)$parametersMAP
@@ -347,7 +365,8 @@ for (s in unique(allsites_train$site)){
   i = i+1
 }
 
-save(CVfit, file = "~/physics_guided_nn/data/Pmultisite_CVfit.Rdata")
+save(CVfit, file = paste0("~/Projects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, ".Rdata"))
+write.csv(CVfit, file=paste0("~/Projects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, ".csv"))
 
 gpp_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
 gpp_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
@@ -356,11 +375,11 @@ et_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_trai
 sw_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
 sw_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
 
-load(file = "~/physics_guided_nn/data/Pmultisite_CVfit.Rdata")
+load(file = paste0("~/Projects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, ".Rdata"))
 i <- 1
 for (s in unique(allsites_train$site)){
   
-  load(file = paste0("~/physics_guided_nn/data/Pmultisite_fit_", s, ".Rdata"))
+  load(file = paste0("~/Projects/physics_guided_nn/data/Pmultisite_fit_", s, "_", data_use, ".Rdata"))
   
   gpp_train[,i] <- PRELES(PAR=allsites_train$PAR, TAir=allsites_train$Tair, VPD=allsites_train$VPD, Precip=allsites_train$Precip, CO2=allsites_train$CO2, fAPAR=allsites_train$fapar, p=CVfit[,i])$GPP
   gpp_test[,i] <- PRELES(PAR=allsites_test$PAR, TAir=allsites_test$Tair, VPD=allsites_test$VPD, Precip=allsites_test$Precip, CO2=allsites_test$CO2, fAPAR=allsites_test$fapar, p=CVfit[,i])$GPP
@@ -385,10 +404,11 @@ allsites_test$SWp <- apply(sw_test, 1, mean)
 
 allsitesF <- rbind(allsites_train, allsites_test)
 
-write.csv(allsitesF, file="~/physics_guided_nn/data/allsitesF.csv", row.names = FALSE)
+if (data_use== 'full'){
+  write.csv(allsitesF, file="~/Projects/physics_guided_nn/data/allsitesF.csv", row.names = FALSE)
+}
 
-
-pdf(file="~/physics_guided_nn/results/Pmultisitefit_BayesPriors.pdf", width=15, height=12)
+pdf(file="~/Projects/physics_guided_nn/results/Pmultisitefit_BayesPriors.pdf", width=15, height=12)
 par(mfrow=c(4, 4), mar=c(3,3,3,1))
 for (i in 1:ncol(fit[[1]]$X)){ # loop over parameters fitted
   #fit1[[1]]$chain[1]
@@ -403,8 +423,8 @@ dev.off()
 
 ## Generate files for prediction results ##
 
-save(gpp_train, file = "~/physics_guided_nn/data/GPPp_multisite_train.Rdata")
-save(gpp_test, file = "~/physics_guided_nn/data/GPPp_multisite_test.Rdata")
+save(gpp_train, file = paste0("~/Projects/physics_guided_nn/data/GPPp_multisite_train_", data_use, ".Rdata"))
+save(gpp_test, file = paste0("~/Projects/physics_guided_nn/data/GPPp_multisite_test_", data_use, ".Rdata"))
 
 
 GPP_train <- apply(gpp_train, 1, mean)
@@ -435,5 +455,5 @@ perfpormance_preles_full[,2] <- apply(gpp_test, 2, rmse)
 perfpormance_preles_full[,3] <- apply(gpp_train, 2, mae, test=F)
 perfpormance_preles_full[,4] <- apply(gpp_test, 2, mae)
 
-write.csv(perfpormance_preles_full, file="~/physics_guided_nn/results/performance_preles_multisite_full.csv")
-write.csv(gpp_test, file="~/physics_guided_nn/results/preles_eval_preds_test_multisite_full.csv")
+write.csv(perfpormance_preles_full, file=paste0("~/Projects/physics_guided_nn/results/preles_eval_performance_", data_use, "_multisite.csv"))
+write.csv(gpp_test, file=paste0("~/Projects/physics_guided_nn/results/preles_eval_preds_test_multisite_full_", data_use, "2.csv"))

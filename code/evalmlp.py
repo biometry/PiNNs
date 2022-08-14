@@ -42,7 +42,7 @@ def evalmlp(data_use='full', of=True):
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
     
     # Architecture
-    res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpAS_{data_use}.csv")
+    res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
     a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
     b = a.to_numpy()
     layersizes = list(b[np.isfinite(b)].astype(int))
@@ -51,7 +51,7 @@ def evalmlp(data_use='full', of=True):
     model_design = {'layersizes': layersizes}
 
     # Hyperparameters
-    res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpHP_{data_use}.csv")
+    res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
     a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
     b = a.to_numpy()
     lr = b[0]
@@ -59,7 +59,7 @@ def evalmlp(data_use='full', of=True):
     print('Batch Size and LR', b)
     # Learningrate
     if of:
-        res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/mlp_lr_{data_use}.csv")
+        res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
         a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
         b = a.to_numpy()
         lr = b[0]
@@ -104,11 +104,11 @@ def evalmlp(data_use='full', of=True):
         #v5.append(val_loss[4][i])
         #v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'/scratch/project_2000527/pgnn/results/mlp_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'./results/mlp_vloss_{data_use}.csv')
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
     #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
     #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'/scratch/project_2000527/pgnn/results/mlp_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'./results/mlp_trainloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -150,13 +150,14 @@ def evalmlp(data_use='full', of=True):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/mlp_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'/scratch/project_2000527/pgnn/results/mlp_{data_use}_eval_preds_train.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'/scratch/project_2000527/pgnn/results/mlp_{data_use}_eval_preds_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlp_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlp_{data_use}_eval_preds_train.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlp_{data_use}_eval_preds_test.csv')
 
 
 if __name__ == '__main__':
-    evalmlp(args.d)
+    evalmlp('full')
+    evalmlp('sparse')
 
 
 

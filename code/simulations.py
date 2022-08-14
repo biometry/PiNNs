@@ -25,17 +25,18 @@ def climate_simulations(train_x, exp):
     X_new['year'] = year_new[0]
     if exp == 'exp2':
         X_new['site_num'] = site_new[0]
+        print(X_new)
     
     #%% Predict to new data set
-    with open('/scratch/project_2000527/pgnn/results/gamTair', 'rb') as f:
+    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamTair', 'rb') as f:
         gamTair = pickle.load(f)
-    with open('/scratch/project_2000527/pgnn/results/gamPrecip', 'rb') as f:
+    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPrecip', 'rb') as f:
         gamPrecip = pickle.load(f)
-    with open('/scratch/project_2000527/pgnn/results/gamVPD', 'rb') as f:
+    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamVPD', 'rb') as f:
         gamVPD = pickle.load(f)
-    with open('/scratch/project_2000527/pgnn/results/gamPAR', 'rb') as f:
+    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPAR', 'rb') as f:
         gamPAR = pickle.load(f)    
-    with open('/scratch/project_2000527/pgnn/results/gamfapar', 'rb') as f:
+    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamfapar', 'rb') as f:
         gamfapar = pickle.load(f)
 
     Tair_hat = gamTair.predict(X_new)
@@ -96,7 +97,7 @@ def climate_simulations(train_x, exp):
     return(climsims)    
 
 
-def parameter_samples(n_samples, parameters = ['beta', 'chi', 'X[0]', 'gamma', 'alpha'], datadir = '~/physics_guided_nn/data/'):
+def parameter_samples(n_samples, fix_pars = False, parameters = ['beta', 'chi', 'X[0]', 'gamma', 'alpha'], datadir = '~/physics_guided_nn/data/'):
 
     '''
     This function generates samples from the default parameter space of Preles in a LHS design.
@@ -109,8 +110,12 @@ def parameter_samples(n_samples, parameters = ['beta', 'chi', 'X[0]', 'gamma', '
     '''
 
     out = pd.read_csv(''.join((datadir, 'parameterRanges.csv')))
-    xmin = list(out[out['name'].isin(parameters)]['min'])
-    xmax = list(out[out['name'].isin(parameters)]['max'])
+    if fix_pars:
+        xmin = list((out[out['name'].isin(parameters)]['def']-out[out['name'].isin(parameters)]['def']*0.05))
+        xmax = list((out[out['name'].isin(parameters)]['def']+out[out['name'].isin(parameters)]['def']*0.05))
+    else:
+        xmin = list(out[out['name'].isin(parameters)]['min'])
+        xmax = list(out[out['name'].isin(parameters)]['max'])
     xs = [list(x) for x in zip(xmin, xmax)]
     xlimits = np.array(xs)
 
@@ -139,7 +144,7 @@ def parameter_samples(n_samples, parameters = ['beta', 'chi', 'X[0]', 'gamma', '
     return(d)
 
 
-def gen_simulations(n, data_use = 'full', exp = None, data_dir = './data/'):
+def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir = './data/'):
 
     if exp == "exp2":
         if data_use == 'full':
@@ -178,14 +183,11 @@ def gen_simulations(n, data_use = 'full', exp = None, data_dir = './data/'):
     #train_x['year'] = pd.DatetimeIndex(train_x['date']).year
     train_x['year'] = train_x.index.year
     #train_x = train_x.drop(['date'], axis=1)
+
     if exp == 'exp2':
-        print(train_x)
-        print(train_x['site'].unique())
         train_x['site_num'] = train_x['site_num'].astype(str)
         mapping = {'h':1, 's':2, 'b':3, 'l':4 ,'c':5}
         train_x = train_x.replace({'site_num':mapping})
-        print(train_x['site_num'].unique())
-        print(train_x.dtypes)
 
     if exp == 'exp2':
 
@@ -204,36 +206,56 @@ def gen_simulations(n, data_use = 'full', exp = None, data_dir = './data/'):
         gamPAR = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['PAR'])
         gamfapar = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['fapar'])
 
-    with open('/scratch/project_2000527/pgnn/results/gamTair', 'wb') as f:
+    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamTair', 'wb') as f:
         pickle.dump(gamTair, f)
-    with open('/scratch/project_2000527/pgnn/results/gamPrecip', 'wb') as f:
+    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPrecip', 'wb') as f:
         pickle.dump(gamPrecip, f)
-    with open('/scratch/project_2000527/pgnn/results/gamVPD', 'wb') as f:
+    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamVPD', 'wb') as f:
         pickle.dump(gamVPD, f)
-    with open('/scratch/project_2000527/pgnn/results/gamPAR', 'wb') as f:
+    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPAR', 'wb') as f:
         pickle.dump(gamPAR, f)
-    with open('/scratch/project_2000527/pgnn/results/gamfapar', 'wb') as f:
+    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamfapar', 'wb') as f:
         pickle.dump(gamfapar, f)
 
-    p = parameter_samples(n_samples = n)
+    #if not fix_pars:
+    p = parameter_samples(n_samples = n, fix_pars = fix_pars)
     pdd = pd.DataFrame(p)
     pdd.to_csv('./data/DA_parameter_samples.csv', index=False)
     #np.savetext('parameter_simulations.csv', p, delimiter=';')
     pt = torch.tensor(p, dtype=torch.float64)
+
+    #else:
+    #    if exp == 'exp2':
+    #        print('exp2')
+    #        p = pd.read_csv(f"./data/P_CVfit_{data_use}2.csv")
+    #        p = np.mean(p.to_numpy()[:30,1:5], axis=1)
+    #
+    #    else:
+    #        p = pd.read_csv(f"./data/P_CVfit_{data_use}.csv")
+    #        p = np.mean(p.to_numpy()[:30, 1:5], axis=1)
+    #    pt = torch.tensor(p, dtype=torch.float64)
     
     d = []
-
+    #if fix_pars:
+    #    for i in range(n):
+    #        c = climate_simulations(train_x, exp)
+    #        ct = torch.tensor(c.to_numpy(), dtype=torch.float64)
+    #        print(pt)
+    #        out = models.physical_forward(parameters=pt, input_data=ct)
+    #        print(out)
+    #        out = out.detach().numpy()
+    #        c['GPP'] = out
+    #        #print(c)
+    #        d.append(c)
+    #else:
     for i in range(n):
         c = climate_simulations(train_x, exp)
-        #np.savetext('climate_simulations.csv', c.to_numpy(), delimiter=';')                                                                                    
+        #np.savetext('climate_simulations.csv', c.to_numpy(), delimiter=';')
         ct = torch.tensor(c.to_numpy(), dtype=torch.float64)
-        
         out = models.physical_forward(parameters = pt[i,:], input_data=ct)
         out = out.detach().numpy()
-        #np.savetext('gpp_simulations.csv')
-        
         c['GPP'] = out
-        print(c)
+        #print(c)
         d.append(c)
 
     d = pd.concat(d)
@@ -252,10 +274,10 @@ fig.savefig('results/temp.png')
 
 
 if __name__ == '__main__':
-    #gen_simulations(n = 10)
-    #gen_simulations(n = 10, data_use='sparse')
-    #gen_simulations(n=10, exp='exp2')
-    gen_simulations(n=500, data_use='sparse',exp ='')
+    gen_simulations(n=500, fix_pars=True, data_use='full', exp='')
+    gen_simulations(n = 500, fix_pars=True, data_use='sparse', exp='')
+    #gen_simulations(n=1000, fix_pars=True, data_use='full', exp='exp2')
+    #gen_simulations(n=1000, fix_pars=True, data_use='sparse', exp='exp2')
     
     
 
