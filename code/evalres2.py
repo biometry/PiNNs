@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
-def evalres2(data_use='full', of=True):
+def evalres2(data_use='full', of=False, v=2):
     if data_use=='sparse':
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
         yp = utils.make_sparse(pd.read_csv("./data/Hyytiala.csv"))
@@ -51,19 +51,29 @@ def evalres2(data_use='full', of=True):
     test_x.index, test_y.index, yp_te.index = np.arange(0, len(test_x)), np.arange(0, len(test_y)), np.arange(0, len(yp_te))
 
     # Load results from NAS
-    # Architecture
-    res_as = pd.read_csv(f"./results/Nres2AS_{data_use}.csv")
-    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
-    b = a.to_numpy()
-    layersizes = list(b[np.isfinite(b)].astype(np.int))
-    
-    model_design = {'layersizes': layersizes}
-     
-    res_hp = pd.read_csv(f"./results/Nres2HP_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
-    b = a.to_numpy()
-    lr = b[0]
-    bs = b[1]
+    if v != 2:
+        # Architecture
+        res_as = pd.read_csv(f"./results/Nres2AS_{data_use}.csv")
+        a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
+        b = a.to_numpy()
+        layersizes = list(b[np.isfinite(b)].astype(np.int))
+        
+        model_design = {'layersizes': layersizes}
+        
+        res_hp = pd.read_csv(f"./results/Nres2HP_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+        b = a.to_numpy()
+        lr = b[0]
+        bs = b[1]
+    if v == 2:
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/Nres2HP_{data_use}_new.csv")
+        a = d.loc[d.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        parms = np.array(np.matrix(a.parameters)).ravel()
+        lr = parms[0]
+        bs = int(parms[1])
+        model_design = {'layersizes': layersizes}
+        print('layersizes', layersizes)
     if of:
         res_hp = pd.read_csv(f"./results/res2_lr_{data_use}.csv")
         a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]

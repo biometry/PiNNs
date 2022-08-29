@@ -21,7 +21,7 @@ parser.add_argument('-d', metavar='data', type=str, help='define data usage: ful
 args = parser.parse_args()
 
 
-def evalmlp(data_use='full', of=True):
+def evalmlp(data_use='full', of=False, v=2):
     if data_use == 'sparse':
         # Load hyytiala
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
@@ -42,21 +42,31 @@ def evalmlp(data_use='full', of=True):
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
     
     # Architecture
-    res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
-    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
-    b = a.to_numpy()
-    layersizes = list(b[np.isfinite(b)].astype(int))
-    print('layersizes', layersizes)
+    if v!=2:
+        res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
+        a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
+        b = a.to_numpy()
+        layersizes = list(b[np.isfinite(b)].astype(int))
+        print('layersizes', layersizes)
 
-    model_design = {'layersizes': layersizes}
+        model_design = {'layersizes': layersizes}
 
-    # Hyperparameters
-    res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
-    b = a.to_numpy()
-    lr = b[0]
-    bs = b[1]
-    print('Batch Size and LR', b)
+        # Hyperparameters
+        res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+        b = a.to_numpy()
+        lr = b[0]
+        bs = b[1]
+        print('Batch Size and LR', b)
+    if v == 2:
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/NmlpHP_{data_use}_new.csv")
+        a = d.loc[d.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        parms = np.array(np.matrix(a.parameters)).ravel()
+        lr = parms[0]
+        bs = int(parms[1])
+        model_design = {'layersizes': layersizes}
+        print('layersizes', layersizes)
     # Learningrate
     if of:
         res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")

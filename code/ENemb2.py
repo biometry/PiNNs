@@ -28,16 +28,18 @@ def ENemb(data_use='full', opt='lbfgs', splits=None):
     if splits is None:
         splits = len(x.index.year.unique())
     
-    x.index, y.index, yp.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(yp))
+    x.index, y.index, yp.index, xt.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(yp)), np.arange(0, len(xt))
     
-    arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 2, 4, emb=True)
+    arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 200, 4, emb=True)
     if opt == 'lbfgs':
         qn = True
     else:
         qn = False
     # architecture search
-    layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 1000, 'batchsize': 365, 'lr':0.001, 'eta': 0.2}, x, y, splits, "arSemb2", reg=yp, emb=True, raw = xt, embtp=2, hp=True, sw=(swmn, swstd), qn = qn)
-    ag.to_csv("./Nemb2AS.csv")
+    
+    print("DATA", x,y,xt,yp)
+    layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 365, 'lr':0.001, 'eta': 0.2}, x, y, splits, "arSemb2", reg=yp, emb=True, raw = xt, embtp=2, hp=True, sw=(swmn, swstd), qn = qn)
+    ag.to_csv(f"./Nemb2_{data_use}_AS.csv")
 
     
     # Hyperparameter Search Space

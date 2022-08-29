@@ -48,7 +48,7 @@ def ENreg(data_use='full', v=2, splits=None):
         grid.to_csv(f"/scratch/project_2000527/pgnn/results/NregHP_{data_use}.csv")
 
     elif v==2:
-        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 100, 100, 4, reg=True)
+        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4, reg=True)
         res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "NASreg", reg=reg, hp=True)
         res.to_csv(f"/scratch/project_2000527/pgnn/results/NregHP_{data_use}_new.csv")
 

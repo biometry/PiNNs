@@ -30,7 +30,7 @@ def ArchitectureSearchSpace(input_size, output_size, grid_size, max_layers, emb=
     return grid
 
 
-def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None):
+def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None, qn =False):
 
 
     mse_train = []
@@ -43,7 +43,7 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
         print(grid)
 
         #if exp == 2:
-        running_losses = training.train_cv(parameters, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, exp=exp, hp=hp, embtp=embtp, sw=sw) # train model
+        running_losses = training.train_cv(parameters, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, exp=exp, hp=hp, embtp=embtp, sw=sw, qn =qn) # train model
         #else:
         #    running_losses = training.train(parameters, model_design, X, Y, "./data/", splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, embtp=embtp)
 
@@ -67,6 +67,7 @@ def ArchitectureSearch(grid, parameters, X, Y, splits, data, reg=None, emb=False
     df["train_loss_sd"] = mse_train_sd
     df["val_loss_sd"] = mse_val_sd
     df["ind_mini"] = ((np.array(mse_val)**2 + np.array(mse_val_sd)**2)/2)
+    print(df)
     print("Random architecture search best result:")
     #print(df.loc[[df["val_loss"].idxmin() & df["val_loss_sd"].idxmin()]])
     print(df.loc[df["ind_mini"].idxmin()])
@@ -101,7 +102,7 @@ def HParSearchSpace(gridsize, reg=False, emb=False):
 
 
 
-def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None):
+def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None, qn=False):
 
 
     model_design = {"layersizes": layersizes}
@@ -126,7 +127,7 @@ def HParSearch(layersizes, grid, X, Y, splits, data, reg=None, emb = False, raw=
                        
 
         #if exp == 2:
-        running_losses = training.train_cv(hparams, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, exp=exp, hp=hp, embtp=embtp, sw=sw)
+        running_losses = training.train_cv(hparams, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, exp=exp, hp=hp, embtp=embtp, sw=sw, qn=qn)
         #else:
         #    running_losses = training.train(hparams, model_design, X, Y, "./data/" , splits, data, reg=reg, emb=emb, raw=raw, res=res, ypreles=ypreles, embtp=embtp)
 

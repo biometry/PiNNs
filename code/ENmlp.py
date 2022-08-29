@@ -51,8 +51,8 @@ def ENmlp(data_use="full", splits=None, v=2):
         grid.to_csv(f"/scratch/project_2000527/pgnn/results/NmlpHP_{data_use}.csv")
         
     elif v==2:
-        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 100, 100, 4)
-        res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "hpmlp", hp=True)
+        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
+        res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "NASmlp", hp=True)
 
         res.to_csv(f"/scratch/project_2000527/pgnn/results/NmlpHP_{data_use}_new.csv")
 if __name__ == '__main__':

@@ -20,7 +20,7 @@ parser.add_argument('-d', metavar='data', type=str, help='define data usage: ful
 #parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
 args = parser.parse_args()
 
-def evalreg(data_use='full', of=True):
+def evalreg(data_use='full', of=False, v=2):
     if data_use=='sparse':
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
         yp = utils.make_sparse(pd.read_csv("./data/Hyytiala.csv"))
@@ -60,20 +60,33 @@ def evalreg(data_use='full', of=True):
     test_x.index, test_y.index, reg_te.index = np.arange(0, len(test_x)), np.arange(0, len(test_y)), np.arange(0, len(reg_te))
 
     # Load results from NAS
-    # Architecture
-    res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NregAS_{data_use}.csv")
-    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
-    b = a.to_numpy()
-    layersizes = list(b[np.isfinite(b)].astype(int))
+    if v!=2:
+        # Architecture
+        res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NregAS_{data_use}.csv")
+        a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
+        b = a.to_numpy()
+        layersizes = list(b[np.isfinite(b)].astype(int))
 
-    model_design = {'layersizes': layersizes}
+        model_design = {'layersizes': layersizes}
 
-    res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NregHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:4]
-    b = a.to_numpy()
-    lr = b[0]
-    bs = b[1]
-    eta = b[2]
+        res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NregHP_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:4]
+        b = a.to_numpy()
+        lr = b[0]
+        bs = b[1]
+        eta = b[2]
+    if v == 2:
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/NregHP_{data_use}_new.csv")
+        a = d.loc[d.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        parms = np.array(np.matrix(a.parameters)).ravel()
+        lr = parms[0]
+        bs = int(parms[1])
+        eta = parms[2]
+        model_design = {'layersizes': layersizes}
+        print('layersizes', layersizes)
+        
+        
     
     if of:
         res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/reg_lr_{data_use}.csv")
