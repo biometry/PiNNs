@@ -54,6 +54,7 @@ def evalreg(data_use='full', of=False, v=2):
     test_y = y[y.index.year == 2008]
 
     print('XYREG', train_x, train_y, reg_tr)
+    
     splits = len(train_x.index.year.unique())
     #print(splits)
     train_x.index, train_y.index, reg_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(reg_tr)) 
@@ -78,6 +79,7 @@ def evalreg(data_use='full', of=False, v=2):
     if v == 2:
         d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/NregHP_{data_use}_new.csv")
         a = d.loc[d.ind_mini.idxmin()]
+        print(a)
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         parms = np.array(np.matrix(a.parameters)).ravel()
         lr = parms[0]
@@ -124,7 +126,7 @@ def evalreg(data_use='full', of=False, v=2):
         t4.append(train_loss[3][i])
         #t5.append(train_loss[4][i])
         #t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'/scratch/project_2000527/pgnn/results/reg_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'/scratch/project_2000527/pgnn/results/reg_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -139,7 +141,7 @@ def evalreg(data_use='full', of=False, v=2):
         #v5.append(val_loss[4][i])
         #v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'/scratch/project_2000527/pgnn/results/reg_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'/scratch/project_2000527/pgnn/results/reg_vloss_{data_use}.csv')
 
     mse = nn.MSELoss()
     mae = nn.L1Loss()

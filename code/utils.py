@@ -186,8 +186,6 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
                 data, y, date = make_sparse(data[xcols], y, sparse=False, date=False)
     
     if history:
-        #print(data, xcols)
-        print(data)
         x, y = add_history(data[xcols], y, history, batch_size)
     else:
         x, y = data[xcols], y

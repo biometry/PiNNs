@@ -46,7 +46,7 @@ def evalres2(data_use='full', of=False, v=2):
     test_y = y[y.index.year == 2008]
     print('TEST X und YP test', test_x, test_y, yp_te)
     splits = len(train_x.index.year.unique())
-    #print(splits)
+    print(splits)
     train_x.index, train_y.index, yp_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(yp_tr)) 
     test_x.index, test_y.index, yp_te.index = np.arange(0, len(test_x)), np.arange(0, len(test_y)), np.arange(0, len(yp_te))
 
@@ -105,7 +105,7 @@ def evalres2(data_use='full', of=False, v=2):
         t4.append(train_loss[3][i])
         #t5.append(train_loss[4][i])
         #t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/res2_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'./results/res2_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -120,7 +120,7 @@ def evalres2(data_use='full', of=False, v=2):
         # v5.append(val_loss[4][i])
         # v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/res2_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'./results/res2_vloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()

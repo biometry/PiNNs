@@ -84,11 +84,11 @@ rets = []
 processes = []
 
 a = {}
-for i in range(20):
-    a[i+1] = [hp, model_design, (train_x, train_y), (test_x, test_y), data_dir, data, (yp_tr, yp_te), True, (rtr, rte), None, None, None, (swmn, swstd), 2, True, i+1]
+for i in range(2):
+    a[i+1] = [hp, model_design, (train_x, train_y), (test_x, test_y), data_dir, ''.join((data, str(i))), (yp_tr, yp_te), True, (rtr, rte), None, None, None, (swmn, swstd), 2, True, i+1]
 
-plist = [a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10],
-         a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20]]
+plist = [a[1], a[2]]#, a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10],
+         #a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19], a[20]]
 
 
 

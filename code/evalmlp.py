@@ -100,12 +100,12 @@ def evalmlp(data_use='full', of=False, v=2):
         t4.append(train_loss[3][i])
         #t5.append(train_loss[4][i])
         #t6.append(train_loss[5][i])
-        v1 = []
-        v2 = []
-        v3 = []
-        v4 = []
-        #v5 = []
-        #v6 = []
+    v1 = []
+    v2 = []
+    v3 = []
+    v4 = []
+    #v5 = []
+    #v6 = []
     for i in range(5000):
         v1.append(val_loss[0][i])
         v2.append(val_loss[1][i])
