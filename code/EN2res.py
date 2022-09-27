@@ -6,13 +6,13 @@ import torch
 import pandas as pd
 import numpy as np
 import argparse
-
+import HPe
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 #parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
 args = parser.parse_args()
 
-def EN2res(data_use='full'):
+def EN2res(data_use='full', v=2):
     print('data')
     if data_use == 'sparse':
         x, y, xt = utils.loaddata('exp2p', 1, dir="./data/", raw=True, sparse=True)
@@ -29,24 +29,23 @@ def EN2res(data_use='full'):
     #print(len(x), len(y))
     splits = 5
     x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
-    
-    arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 800, 4)
-    
-    # architecture search
-    layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 200, 'batchsize': 8, 'lr':0.001}, x, y, splits, "EX2_arSres", exp=2, hp=True)
-    ag.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_resAS_{data_use}.csv")
-    
-    #layersizes = [4, 32, 2, 16]
-    # Hyperparameter Search Space
-    hpar_grid = HP.HParSearchSpace(800)
-    
-    # Hyperparameter search
-    hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "EX2_hpres", exp=2, hp=True)
-        
-    print( 'hyperparameters: ', hpars)
+    if v!=2:
+        arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 800, 4)
+        # architecture search
+        layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 200, 'batchsize': 8, 'lr':0.001}, x, y, splits, "EX2_arSres", exp=2, hp=True)
+        ag.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_resAS_{data_use}.csv")
+        #layersizes = [4, 32, 2, 16]
+        # Hyperparameter Search Space
+        hpar_grid = HP.HParSearchSpace(800)
+        # Hyperparameter search
+        hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "EX2_hpres", exp=2, hp=True)
+        print( 'hyperparameters: ', hpars)
+        grid.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_resHP_{data_use}.csv")
+    if v==2:
+        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
+        res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "2hpres", exp=2, hp=True)
 
-        
-    grid.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_resHP_{data_use}.csv")
+        res.to_csv(f"/scratch/project_2000527/pgnn/results/EX2resHP_{data_use}_new.csv")
 
 if __name__ == '__main__':
     EN2res(args.d)

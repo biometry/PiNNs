@@ -23,7 +23,7 @@ args = parser.parse_args()
 print(args)
 
 
-def pretraining(data_use="full", of=False):
+def pretraining(data_use="full", of=False, v=2):
     if data_use == 'sparse':
         ## Load data for defining splits
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
@@ -68,21 +68,28 @@ def pretraining(data_use="full", of=False):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
-    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
-    b = a.to_numpy()
-    layersizes = list(b[np.isfinite(b)].astype(int))
-    print('layersizes', layersizes)
-    
-    model_design = {'layersizes': layersizes}
-    
-    # Hyperparameters
-    res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
-    b = a.to_numpy()
-    bs = b[1]
-    lr = b[0]
-    
+    if v!=2:
+        res_as = pd.read_csv(f"./results/NmlpAS_{data_use}.csv")
+        a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
+        b = a.to_numpy()
+        layersizes = list(b[np.isfinite(b)].astype(int))
+        print('layersizes', layersizes)
+        model_design = {'layersizes': layersizes}
+        # Hyperparameters
+        res_hp = pd.read_csv(f"./results/NmlpHP_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+        b = a.to_numpy()
+        bs = b[1]
+        lr = b[0]
+    elif v==2:
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/NmlpHP_{data_use}_new.csv")
+        a = d.loc[d.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        parms = np.array(np.matrix(a.parameters)).ravel()
+        lr = parms[0]
+        bs = int(parms[1])
+        model_design = {'layersizes': layersizes}
+        print('layersizes', layersizes)
     # Learningrate
     if of:
         res_hp = pd.read_csv(f"./results/mlp_lr_{data_use}.csv")
@@ -91,7 +98,7 @@ def pretraining(data_use="full", of=False):
         lr = b[0]
     
     # Original: Use 5000 Epochs
-    eps = 1000
+    eps = 5000
     hp = {'epochs': eps,
           'batchsize': int(bs),
           'lr': lr}
@@ -181,7 +188,7 @@ def pretraining(data_use="full", of=False):
 
 if __name__ == '__main__':
     pretraining(data_use="full")
-    pretraining(data_use="sparse")
+
 
 '''
 with open('mlp_eval_performance.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x

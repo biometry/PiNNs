@@ -19,55 +19,67 @@ parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
-def evalres(data_use='full', of=True):
+def evalres(data_use='full', of=False, v=2):
 
     if data_use == 'sparse':
         # Load hyytiala
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
         print('XT', xt)
-        yp = utils.make_sparse(pd.read_csv("./data/Hyytiala.csv"))        
+        yp = pd.read_csv("./data/hyytialaF_sparse.csv")        
     else:
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
-        yp = pd.read_csv("./data/Hyytiala.csv")
+        yp = pd.read_csv("./data/hyytialaF_full.csv")
         
     
     yp.index = pd.DatetimeIndex(yp['date'])
     
     yptr = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
     ypte = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
-
+    y = yp.drop(yp.columns.difference(['GPP']), axis=1)
+    
+    
     n = [1,1]
     x_tr, n = utils.add_history(yptr, n, 1)
     x_te, n = utils.add_history(ypte, n, 1)
     x_tr, m, std = utils.standardize(x_tr, get_p=True)
     x_te = utils.standardize(x_te, [m, std])
 
-    y = y.to_frame()
-    train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])][1:]
+    #y = y.to_frame()
+    train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])]
     train_y = y[~y.index.year.isin([2004,2005,2007,2008])][1:]
     splits = len(train_x.index.year.unique())
 
-    test_x = x_te[x_te.index.year == 2008]
-    test_y = y[y.index.year == 2008]
-    print('TRAIN_X', train_x, test_x, test_y)
+    test_x = x_te[x_te.index.year == 2008][1:]
+    test_y = y[y.index.year == 2008][1:]
+    print('TRAIN_X', train_x, train_y, test_x, test_y)
     splits = len(train_x.index.year.unique())
 
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
     # Load results from NAS
-    # Architecture
-    res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NresAS_{data_use}.csv")
-    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
-    b = a.to_numpy()
-    layersizes = list(b[np.isfinite(b)].astype(np.int))
+    if v !=2:
+        # Architecture
+        res_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NresAS_{data_use}.csv")
+        a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
+        b = a.to_numpy()
+        layersizes = list(b[np.isfinite(b)].astype(np.int))
 
-    model_design = {'layersizes': layersizes}
+        model_design = {'layersizes': layersizes}
 
-    res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NresHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
-    b = a.to_numpy()
-    lr = b[0]
-    bs = b[1]
+        res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NresHP_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+        b = a.to_numpy()
+        lr = b[0]
+        bs = b[1]
+    if v == 2:
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/NresHP_{data_use}_new.csv")
+        a = d.loc[d.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        parms = np.array(np.matrix(a.parameters)).ravel()
+        lr = parms[0]
+        bs = int(parms[1])
+        model_design = {'layersizes': layersizes}
+        print('layersizes', layersizes)
     
     if of:
         res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/res_lr_{data_use}.csv")
@@ -102,7 +114,7 @@ def evalres(data_use='full', of=True):
         t4.append(train_loss[3][i])
         #t5.append(train_loss[4][i])
         #t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'/scratch/project_2000527/pgnn/results/res_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'/scratch/project_2000527/pgnn/results/res_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -117,7 +129,7 @@ def evalres(data_use='full', of=True):
         #v5.append(val_loss[4][i])
         #v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'/scratch/project_2000527/pgnn/results/res_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'/scratch/project_2000527/pgnn/results/res_vloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()

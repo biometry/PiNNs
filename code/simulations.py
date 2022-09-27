@@ -28,15 +28,15 @@ def climate_simulations(train_x, exp):
         print(X_new)
     
     #%% Predict to new data set
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamTair', 'rb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamTair', 'rb') as f:
         gamTair = pickle.load(f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPrecip', 'rb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamPrecip', 'rb') as f:
         gamPrecip = pickle.load(f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamVPD', 'rb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamVPD', 'rb') as f:
         gamVPD = pickle.load(f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPAR', 'rb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamPAR', 'rb') as f:
         gamPAR = pickle.load(f)    
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamfapar', 'rb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamfapar', 'rb') as f:
         gamfapar = pickle.load(f)
 
     Tair_hat = gamTair.predict(X_new)
@@ -206,15 +206,15 @@ def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir 
         gamPAR = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['PAR'])
         gamfapar = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['fapar'])
 
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamTair', 'wb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamTair', 'wb') as f:
         pickle.dump(gamTair, f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPrecip', 'wb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamPrecip', 'wb') as f:
         pickle.dump(gamPrecip, f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamVPD', 'wb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamVPD', 'wb') as f:
         pickle.dump(gamVPD, f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamPAR', 'wb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamPAR', 'wb') as f:
         pickle.dump(gamPAR, f)
-    with open('/home/fr/fr_fr/fr_mw1205/physics_guided_nn/results/gamfapar', 'wb') as f:
+    with open('/scratch/project_2000527/pgnn/results/gamfapar', 'wb') as f:
         pickle.dump(gamfapar, f)
 
     #if not fix_pars:
@@ -274,8 +274,8 @@ fig.savefig('results/temp.png')
 
 
 if __name__ == '__main__':
-    gen_simulations(n=500, fix_pars=True, data_use='full', exp='')
-    gen_simulations(n = 500, fix_pars=True, data_use='sparse', exp='')
+    gen_simulations(n=5000, fix_pars=True, data_use='sparse', exp='')
+    #gen_simulations(n = 500, fix_pars=True, data_use='sparse', exp='')
     #gen_simulations(n=1000, fix_pars=True, data_use='full', exp='exp2')
     #gen_simulations(n=1000, fix_pars=True, data_use='sparse', exp='exp2')
     

@@ -17,7 +17,7 @@ from torch.autograd import Variable
 from slbfgs import sLBFGS
 
 
-def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptation=None, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None):
+def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptation=None, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None, qn =False):
     print("Hyperparams", hparams)
     nepoch = hparams['epochs']
     batchsize = hparams['batchsize']
@@ -139,18 +139,22 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
 
         criterion = nn.MSELoss()
         optimizer = optim.Adam(model.parameters(), lr = hparams['lr'])
-        #optimizer = optim.LBFGS(model.parameters())#, lr = hparams['lr'])
+        if qn:
+            optimizer = sLBFGS(model.parameters(), history_size=20, max_iter=15, line_search_fn=True, batch_mode=True)
         #scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.2, patience=40, verbose=True)
         train_loss = []
         val_loss = []
         print("Number of parameters:", sum(p.numel() for p in model.parameters() if p.requires_grad))
         for ep in range(nepoch):
-            model.train()
-            batch_diff = []
-            batch_loss = []
+            if not qn:
+                model.train()
+                batch_diff = []
+                batch_loss = []
             for step, train_data in enumerate(train_loader):
                 xt = train_data[0]
                 yt = train_data[1]
+                if qn:
+                    xt = Variable(xt, requires_grad=True)
                 #print("XX", xt)
                 #print("YY", yt)
                 #print(xt)
@@ -161,39 +165,56 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                             #yp = yp.unsqueeze(-1)
                     if emb:
                         xr = train_data[3]
+                if not qn:
+                    optimizer.zero_grad()
 
-                optimizer.zero_grad()
-
-                # forward
-                if emb:
-                    y_hat, p = model(xt, xr, embtp, sw)
-                elif res == 1:
-                    y_hat = model(xt)
-                elif res == 2:
-                    y_hat = model(xt, yp)
-                else:
-                    y_hat = model(xt)
-                if reg is not None and not emb:
-                    loss = criterion(y_hat, yt) + eta*criterion(y_hat, yp)
-                elif emb:
-                    if embtp is None:
-                        loss = criterion(y_hat, yt) + eta*criterion(p, yp)
-                    elif exp!=2:
-                        loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
+                    # forward
+                    if emb:
+                        y_hat, p = model(xt, xr, embtp, sw)
+                    elif res == 1:
+                        y_hat = model(xt)
+                    elif res == 2:
+                        y_hat = model(xt, yp)
                     else:
-                        loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
-                else:
-                    loss = criterion(y_hat, yt)
-                print('loss', loss)
-                # backward
-                loss.backward()
-                optimizer.step()
+                        y_hat = model(xt)
+                    if reg is not None and not emb:
+                        loss = criterion(y_hat, yt) + eta*criterion(y_hat, yp)
+                    elif emb:
+                        if embtp is None:
+                            loss = criterion(y_hat, yt) + eta*criterion(p, yp)
+                        elif exp!=2:
+                            loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
+                        else:
+                            loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
+                    else:
+                        loss = criterion(y_hat, yt)
+                    
+                    # backward
+                    loss.backward()
+                    optimizer.step()
 
-                batch_loss.append(loss.item())
+                    batch_loss.append(loss.item())
+                else:
+                    def closure():
+                        if torch.is_grad_enabled():
+                            optimizer.zero_grad()
+                        y_hat, p = model(xt, xr, embtp, sw)
+                        loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
+                        if loss.requires_grad:
+                            loss.backward()
+                        return loss
+                    optimizer.step(closure)
+                    y_hat, p = model(xt, xr, embtp, sw)
+                    loss = closure()
+                    running_loss = loss.item()
+
 
             model.eval()
             # results per epoch
-            train_loss = sum(batch_loss)/len(batch_loss)
+            if qn:
+                train_loss = running_loss
+            else:
+                train_loss = sum(batch_loss)/len(batch_loss)
             #scheduler.step(train_loss)
             if exp == 2 and not hp:
                 mse_t[i, ep] = train_loss
@@ -210,7 +231,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                     y_vall = val_sample[1]
                     if reg is not None or res == 2:
                         yp_vall = val_sample[2]
-                        print(yp_vall)
+                        
                         #if exp == 2 and not emb:
                           #  if res != 2:
                             #    yp_vall = yp_vall.unsqueeze(-1)
@@ -220,7 +241,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                         elif res == 1:
                             y_hat_val = model(x_vall)
                         elif res == 2:
-                            print("yval")
+                            
                             y_hat_val = model(x_vall, yp_vall)
                         else:
                             y_hat_val = model(x_vall)
@@ -240,22 +261,23 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                     else:
                         loss = criterion(y_hat_val, y_vall)
                         
-                    print("eval_loss", loss)
+                    
+                    if not qn:
+                        e_bl.append(loss.item())
             
-                    e_bl.append(loss.item())
-            print("VAL")
-            if exp != 2 or hp:        
-                val_loss = (sum(e_bl) / len(e_bl))
-            if not hp and exp !=2:
-                mse_t[i, ep] = train_loss
-                mse_v[i, ep] = val_loss
+            if qn:
+                val_loss = loss
+            else:
+                if exp != 2 or hp:        
+                    val_loss = (sum(e_bl) / len(e_bl))
+                if not hp and exp !=2:
+                    mse_t[i, ep] = train_loss
+                    mse_v[i, ep] = val_loss
             if hp:
-                print('val_loss', val_loss)
-                print('train_loss', train_loss)
                 mse_t[ep] = train_loss
                 mse_v[ep] = val_loss
             if exp == 2 and not hp:
-                print("EXP2 - Validation")
+                
                 model.eval()
                 if emb:
                     y_hat_val, pv = model(x_val, xr_val, embtp, sw)
@@ -264,7 +286,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                     y_hat_val = model(x_val)
                     y_hat_t = model(x_train)
                 elif res == 2:
-                    print("yval")
+                    
                     y_hat_val = model(x_val, yp_val)
                     y_hat_t = model(x_train, yp_train)
                 else:
@@ -272,13 +294,13 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                     y_hat_t = model(x_train)
                 mse_v[i, ep] = criterion(y_hat_val, y_val)
                 #valloss[i, ep] = mse_v
-                print('val_loss', mse_v)
+                
             print('EPOCH', ep)
             #print('MSE V', mse_v, 'MSE T', mse_t)
                 
                 
         if hp:
-            print("HP")
+            
             return {'train_loss': mse_t, 'val_loss':mse_v}
         elif exp == 2 and not hp:
             print("EXP2 and not HP")
@@ -321,7 +343,8 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                 torch.save(model.state_dict(), os.path.join(data_dir, f"2mlpDA{domain_adaptation}_model{i}.pth"))
             else:
                 torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_model{i}.pth"))
-                
+    print(mse_v)
+    print(mse_t)
     if exp == 2 and not hp:
         td = {}
         se = {}
