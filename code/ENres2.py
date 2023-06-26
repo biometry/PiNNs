@@ -23,7 +23,7 @@ def ENres2(data_use='full', v=2):
     splits = len(x.index.year.unique())
 
     y = y.to_frame()
-
+    print("x----",x,"y",y, ypreles)
     x.index, y.index, ypreles.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(ypreles))
     if v==1:
         print("x----",x,"y",y, ypreles)

@@ -18,9 +18,9 @@ args = parser.parse_args()
 def ENres(data_use="full", v=2):
     
     if data_use == 'sparse':
-        x, y, xt = utils.loaddata('NASp', 1, dir="./data/", raw=True, sparse=True)
+        x, y, xt = utils.loaddata('NASp', 0, dir="./data/", raw=True, sparse=True)
     else:
-        x, y, xt = utils.loaddata('NASp', 1, dir="./data/", raw=True)
+        x, y, xt = utils.loaddata('NASp', 0, dir="./data/", raw=True)
     y = y.to_frame()
  
             
@@ -52,8 +52,8 @@ def ENres(data_use="full", v=2):
 
     elif v==2:
         arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
-        res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "NASres", hp=True)
-        res.to_csv(f"/scratch/project_2000527/pgnn/results/NresHP_{data_use}_new.csv")
+        res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "EMBres", hp=True)
+        res.to_csv(f"/scratch/project_2000527/pgnn/results/EMBresHP_{data_use}_new.csv")
 if __name__ == '__main__':
     ENres(args.d)
 

@@ -75,7 +75,7 @@ def add_history(X, Y, history, batch_size=None):
     return x, y
 
 
-def read_in(type, data_dir=None, data_use=None, exp=None):
+def read_in(type, data_dir=None, data_use=None, exp=None, sparse=False):
     '''
     Available types:
         OF: data split used for overfitting experiment (ADJUST)
@@ -91,16 +91,30 @@ def read_in(type, data_dir=None, data_use=None, exp=None):
     # subset station
     if type == 'OF' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'soro.csv')))
-    if type == 'NAS' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'hyytialaNAS.csv')))
+    if type == 'NAS' and data_dir != 'load' and data_use != "sparse":
+        out = pd.read_csv(''.join((data_dir, 'hyytialaF_full.csv')))
+        print(out)
+        print(out.date)
         out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
+    elif type == 'NAS' and data_dir != 'load' and data_use == "sparse":
+        out = pd.read_csv(''.join((data_dir, 'hyytialaF_sparse.csv')))
+        out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
+
     elif type == 'NASp' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'hyytialaNAS.csv')))
-    elif type == 'validation' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'Hyytiala.csv')))
+
+    elif type == 'validation' and data_dir != 'load' and data_use == 'full':
+        out = pd.read_csv(''.join((data_dir, 'hyytialaF_full.csv'))) #old = Hyytiala.csv
         out = out[~pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
-    elif type.startswith('exp2') and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, 'allsites.csv')))
+    elif type == 'validation' and data_dir != 'load' and data_use == 'sparse':
+        out = pd.read_csv(''.join((data_dir, 'hyytialaF_sparse.csv'))) #old = Hyytiala.csv
+        out = out[~pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
+
+    elif type.startswith('exp2') and data_dir != 'load' and data_use != "sparse":
+        out = pd.read_csv(''.join((data_dir, 'allsitesF_full.csv')))
+    elif type.startswith('exp2') and data_dir != 'load' and data_use == "sparse":
+        out = pd.read_csv(''.join((data_dir, 'allsitesF_sparse.csv')))
+
     elif type == 'simulations' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, f'simulations_{data_use}_{exp}.csv')))
     return out
@@ -134,11 +148,11 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     if exp != 'exp2':
         exp = ''
     data = read_in(data_split, dir, data_use, exp)
-    #print(data)
+    
     rawdata = []
     if raw:
         rawdata = data.copy()
-    print(data)    
+    
     if doy:
         data['doy_sin'], data['doy_cos'] = encode_doy(data['DOY'])
     
@@ -171,7 +185,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         data = data.drop(['CO2', 'GPP', 'date'], axis=1)
         data['date'] = date
 
-    if sparse:
+    if sparse and data_split != 'validation' and data_split != 'exp2p' and data_split != 'exp2':
         if yp is not None:
             if data_split != 'simulations':
                 data, y, yp, date = make_sparse(data[xcols], y, yp, date)
@@ -196,7 +210,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     
     if yp is not None:
         yp = yp[history:]
-        if data_split != 'exp2':
+        if data_split != 'exp2' and data_split != 'exp2p':
             yp.index = pd.DatetimeIndex(yp.date[history:])
         
         if via:

@@ -17,13 +17,13 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
-#parser.add_argument('-a', metavar='da', type=int, help='define type of domain adaptation')
+parser.add_argument('-a', metavar='da', type=int, help='define type of domain adaptation')
 #parser.add_argument('-s', metavar='splits', type=int, help='number of splits for CV')
 args = parser.parse_args()
 
 print(args)
 
-def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
+def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False, v=2):
     '''
     da specifies Domain Adaptation:                                                                                                                                        da = 1: using pretrained weight and fully retrain network                                                                                                 
         da = 2: retrain only last layer.
@@ -35,12 +35,16 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True)
 
     # select NAS data
-    print(x.index)
     train_x = x[x.index.year==2005]
     train_y = y[y.index.year==2005]
-    train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
-    train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
-
+    if data_use == "full":
+        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
+    else:
+        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
+    print(x.index)
+    
     test_x = x[x.index.year==2008]
     test_y = y[y.index.year==2008]
     #test_x = test_x.drop(pd.DatetimeIndex(['2008-01-01']))
@@ -59,22 +63,33 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"./results/EX2_mlpAS_{data_use}.csv")
-    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
-    b = a.to_numpy()
-    layersizes = list(b[np.isfinite(b)].astype(int))
-    print('layersizes', layersizes)
-    # Debugging: Try different model structure, smaller last layer size
-    # layersizes[-1]=128
-    model_design = {'layersizes': layersizes}
+    if v!=2:
+        res_as = pd.read_csv(f"./results/EX2_mlpAS_{data_use}.csv")
+        a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
+        b = a.to_numpy()
+        layersizes = list(b[np.isfinite(b)].astype(int))
+        print('layersizes', layersizes)
+        # Debugging: Try different model structure, smaller last layer size
+        # layersizes[-1]=128
+        model_design = {'layersizes': layersizes}
     
-    # Hyperparameters
-    res_hp = pd.read_csv(f"./results/EX2_mlpHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
-    b = a.to_numpy()
-    bs = b[1]
-    lr = b[0]
-
+        # Hyperparameters
+        res_hp = pd.read_csv(f"./results/EX2_mlpHP_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+        b = a.to_numpy()
+        bs = b[1]
+        lr = b[0]
+    else:
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2mlpHP_{data_use}_new.csv")
+        a = d.loc[d.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        parms = np.array(np.matrix(a.parameters)).ravel()
+        lr = parms[0]
+        bs = int(parms[1])
+        model_design = {'layersizes': layersizes}
+        print('layersizes', layersizes)
+        model_design = {'layersizes': layersizes}
+                                                    
     # Learningrate
     if of:
         res_hp = pd.read_csv(f"./results/2mlp_lr_{data_use}.csv")
@@ -115,7 +130,7 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
         i += 1
         #import model
         model = models.NMLP(test_x.shape[1], 1, model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"2{data}_model{i}.pth"))))
+        model.load_state_dict(torch.load(''.join((data_dir, f"2mlpDA{da}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)
@@ -146,12 +161,8 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False):
 
 
 if __name__ == '__main__':
-   eval2mlpDA(data_use='full', da=1)
-   eval2mlpDA(data_use='sparse', da=1)
-   eval2mlpDA(data_use='full', da=2)
-   eval2mlpDA(data_use='sparse', da=2)
-   eval2mlpDA(data_use='full', da=3)
-   eval2mlpDA(data_use='sparse', da=3)
+   eval2mlpDA(data_use=args.d, da=args.a)
+   
 
    
 

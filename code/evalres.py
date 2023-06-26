@@ -45,7 +45,7 @@ def evalres(data_use='full', of=False, v=2):
     x_te = utils.standardize(x_te, [m, std])
 
     #y = y.to_frame()
-    train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])]
+    train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])][1:]
     train_y = y[~y.index.year.isin([2004,2005,2007,2008])][1:]
     splits = len(train_x.index.year.unique())
 
@@ -72,7 +72,7 @@ def evalres(data_use='full', of=False, v=2):
         lr = b[0]
         bs = b[1]
     if v == 2:
-        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/NresHP_{data_use}_new.csv")
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NresHP_{data_use}_new.csv")
         a = d.loc[d.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         parms = np.array(np.matrix(a.parameters)).ravel()

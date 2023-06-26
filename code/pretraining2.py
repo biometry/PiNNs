@@ -18,12 +18,12 @@ import argparse
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 #parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
-#args = parser.parse_args()
+args = parser.parse_args()
 
-#print(args)
+print(args)
 
 
-def pretraining2(data_use="full", exp="exp2", of=False):
+def pretraining2(data_use="full", exp="exp2", of=False, v=2):
     
     ## Define splits
     splits = 5
@@ -36,7 +36,6 @@ def pretraining2(data_use="full", exp="exp2", of=False):
     y = y.to_frame()
     
     ## Split into training and test
-
     train_x, test_x, train_y, test_y = train_test_split(x, y)
     print(train_x.shape)
     print(test_x.shape)
@@ -59,20 +58,31 @@ def pretraining2(data_use="full", exp="exp2", of=False):
     
     # Load results from NAS
     # Architecture
-    res_as = pd.read_csv(f"./results/EX2_mlpAS_{data_use}.csv")
-    a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
-    b = a.to_numpy()
-    layersizes = list(b[np.isfinite(b)].astype(int))
-    print('layersizes', layersizes)
+    if v!=2:
+        res_as = pd.read_csv(f"./results/EX2_mlpAS_{data_use}.csv")
+        a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
+        b = a.to_numpy()
+        layersizes = list(b[np.isfinite(b)].astype(int))
+        print('layersizes', layersizes)
+        
+        model_design = {'layersizes': layersizes}
     
-    model_design = {'layersizes': layersizes}
-    
-    # Hyperparameters
-    res_hp = pd.read_csv(f"./results/EX2_mlpHP_{data_use}.csv")
-    a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
-    b = a.to_numpy()
-    bs = b[1]
-    lr = b[0]
+        # Hyperparameters
+        res_hp = pd.read_csv(f"./results/EX2_mlpHP_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
+        b = a.to_numpy()
+        bs = b[1]
+        lr = b[0]
+    else:
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2mlpHP_{data_use}_new.csv")
+        a = d.loc[d.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        parms = np.array(np.matrix(a.parameters)).ravel()
+        lr = parms[0]
+        bs = int(parms[1])
+        model_design = {'layersizes': layersizes}
+        print('layersizes', layersizes)
+        model_design = {'layersizes': layersizes}
     
     # Learningrate
     if of:
@@ -82,7 +92,7 @@ def pretraining2(data_use="full", exp="exp2", of=False):
         lr = b[0]
     
     # Original: Use 5000 Epochs
-    eps = 1000
+    eps = 5000
     hp = {'epochs': eps,
           'batchsize': int(bs),
           'lr': lr}
@@ -93,15 +103,58 @@ def pretraining2(data_use="full", exp="exp2", of=False):
     #print('TX', train_x, train_y)
     print(train_x, train_y)
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, hp=False, exp=2)
-
+    
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'./results/2mlp_eval_tloss_{data_use}_{exp}.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'./results/2mlp_eval_vseloss_{data_use}_{exp}.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'./results/2mlp_eval_vaeloss_{data_use}_{exp}.csv')
+
+
+    # Evaluation
+    mse = nn.MSELoss()
+    mae = nn.L1Loss()
+    x_train, y_train = torch.tensor(train_x.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32)
+    x_test, y_test = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
+    
+    train_rmse = []
+    train_mae = []
+    test_rmse = []
+    test_mae = []
+    
+    preds_train = {}
+    preds_test = {}
+
+    for i in range(splits):
+        i += 1
+        #import model
+        model = models.NMLP(x.shape[1], y.shape[1], model_design['layersizes'])
+        model.load_state_dict(torch.load(''.join((data_dir, f"2mlpDA_pretrained_{data_use}_{exp}_model{i}.pth"))))
+        model.eval()
+        with torch.no_grad():
+            p_train = model(x_train)
+            p_test = model(x_test)
+            preds_train.update({f'train_mlp{i}': p_train.flatten().numpy()})
+            preds_test.update({f'test_mlp{i}': p_test.flatten().numpy()})
+            train_rmse.append(mse(p_train, y_train).tolist())
+            train_mae.append(mae(p_train, y_train).tolist())
+            test_rmse.append(mse(p_test, y_test).tolist())
+            test_mae.append(mae(p_test, y_test).tolist())
+
+    performance = {'train_RMSE': train_rmse,
+                   'train_MAE': train_mae,
+                   'test_RMSE': test_rmse,
+                   'test_mae': test_mae}
+        
+    #print(preds_train)
+    
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA2_pretrained_eval_performance_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA2_pretrained_eval_preds_train_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA2_pretrained_eval_preds_test_{data_use}.csv')
+    
+    pd.DataFrame.from_dict(td).to_csv(f'./results/mlpDA2_eval_tloss_{data_use}_{exp}.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'./results/mlpDA2_eval_vseloss_{data_use}_{exp}.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'./results/mlpDA2_eval_vaeloss_{data_use}_{exp}.csv')
 
 if __name__ == '__main__':
-    pretraining2(data_use="full")
-    pretraining2(data_use="sparse")
+    pretraining2(data_use=args.d)
+    
     
 
 

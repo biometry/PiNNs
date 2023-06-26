@@ -28,8 +28,8 @@ def ENmlp(data_use="full", splits=None, v=2):
     if splits is None:
         splits = len(x.index.year.unique())
     
-    print(splits)
-    print(x, y)
+    
+    print("X and Y", x, y)
     
     x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
     

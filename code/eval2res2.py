@@ -23,7 +23,7 @@ parser.add_argument('-d', metavar='data', type=str, help='define data usage: ful
 args = parser.parse_args()
 
 
-def eval2res2(data_use='full', of=False):
+def eval2res2(data_use='full', of=False, v=2):
     if data_use == 'sparse':
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, sparse=True)
     else:
@@ -34,13 +34,20 @@ def eval2res2(data_use='full', of=False):
 
     train_x = x[x.index.year==2005]
     train_y = y[y.index.year==2005]
-    train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
-    train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
+    if data_use=="full":
+        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
+    else:
+        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
     test_x = x[x.index.year==2008]
     test_y = y[y.index.year==2008]
     yp.index = x.index
     yp_tr = yp[yp.index.year == 2005]
-    yp_tr = yp_tr.drop(pd.DatetimeIndex(['2005-01-01']))
+    if data_use=="full":
+        yp_tr = yp_tr.drop(pd.DatetimeIndex(['2005-01-01']))
+    else:
+        yp_tr = yp_tr.drop(pd.DatetimeIndex(['2005-01-05']))
     yp_tr = yp_tr.drop(yp.columns.difference(['GPPp']), axis=1)
     yp_te = yp[yp.index.year == 2008]
     yp_te = yp_te.drop(yp.columns.difference(['GPPp']), axis=1)
@@ -52,20 +59,33 @@ def eval2res2(data_use='full', of=False):
     test_y = test_y.to_frame()
     train_x.index, train_y.index, yp_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(yp_tr))
 
-    mlp_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_res2AS_{data_use}.csv")
-    a = mlp_as.loc[mlp_as.ind_mini.idxmin()][1:5]
-    b = a.to_numpy()
-    layersizes = list(b[np.isfinite(b)].astype(int))
-    print('layersizes', layersizes)
-    
-    model_design = {'layersizes': layersizes}
+    if v!=2:
+        mlp_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_res2AS_{data_use}.csv")
+        a = mlp_as.loc[mlp_as.ind_mini.idxmin()][1:5]
+        b = a.to_numpy()
+        layersizes = list(b[np.isfinite(b)].astype(int))
+        print('layersizes', layersizes)
+        
+        model_design = {'layersizes': layersizes}
     
 
-    mlp_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_res2HP_{data_use}.csv")
-    a = mlp_hp.loc[mlp_hp.ind_mini.idxmin()][1:3]
-    b = a.to_numpy()
-    lr = b[0]
-    bs = b[1]
+        mlp_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_res2HP_{data_use}.csv")
+        a = mlp_hp.loc[mlp_hp.ind_mini.idxmin()][1:3]
+        b = a.to_numpy()
+        lr = b[0]
+        bs = b[1]
+    else:
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2Nres2HP_{data_use}_new.csv")
+        a = d.loc[d.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        parms = np.array(np.matrix(a.parameters)).ravel()
+        lr = parms[0]
+        bs = int(parms[1])
+        model_design = {'layersizes': layersizes}
+        print('layersizes', layersizes)
+
+
+        
     if of:
         mlp_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/2res2_lr_{data_use}.csv")
         a = mlp_hp.loc[mlp_hp.ind_mini.idxmin()][1:3]

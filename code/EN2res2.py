@@ -44,7 +44,7 @@ def EN2res2(data_use='full', v=2):
         print( 'hyperparameters: ', hpars)
         grid.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_res2HP_{data_use}.csv")
     if v==2:
-        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
+        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 130, 130, 4)
         res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "2hpres2",exp=2, ypreles=yp, hp=True)
 
         res.to_csv(f"/scratch/project_2000527/pgnn/results/EX2Nres2HP_{data_use}_new.csv")

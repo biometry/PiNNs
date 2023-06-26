@@ -16,12 +16,12 @@ import training
 import argparse
 
 parser = argparse.ArgumentParser(description='Define data usage and splits')
-#parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
-#parser.add_argument('-a', metavar='da', type=int, help='define type of domain adaptation')
+parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
+parser.add_argument('-a', metavar='da', type=int, help='define type of domain adaptation')
 #parser.add_argument('-s', metavar='splits', type=int, help='number of splits for CV')
-#args = parser.parse_args()
+args = parser.parse_args()
 
-#print(args)
+print(args)
 
 def evalmlpDA(data_use="full", da=1, of=False, v=2):
     '''
@@ -63,7 +63,7 @@ def evalmlpDA(data_use="full", da=1, of=False, v=2):
         bs = b[1]
         print('Batch Size and LR', b)
     elif v==2:
-        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/NmlpHP_{data_use}_new.csv")
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpHP_{data_use}_new.csv")
         a = d.loc[d.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         parms = np.array(np.matrix(a.parameters)).ravel()
@@ -171,12 +171,8 @@ def evalmlpDA(data_use="full", da=1, of=False, v=2):
 
 
 if __name__ == '__main__':
-   evalmlpDA(data_use="full", da=1)
-   evalmlpDA(data_use="sparse", da=1)
-   evalmlpDA(data_use="full", da=2)
-   evalmlpDA(data_use="sparse", da=2)
-   evalmlpDA(data_use="full", da=3)
-   evalmlpDA(data_use="sparse", da=3)
+   evalmlpDA(data_use=args.d, da=args.a)
+   
 
 '''
 with open('mlp_eval_performance.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x

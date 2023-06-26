@@ -15,9 +15,9 @@ args = parser.parse_args()
 def EN2res(data_use='full', v=2):
     print('data')
     if data_use == 'sparse':
-        x, y, xt = utils.loaddata('exp2p', 1, dir="./data/", raw=True, sparse=True)
+        x, y, xt = utils.loaddata('exp2p', 0, dir="./data/", raw=True, sparse=True)
     else:
-        x, y, xt = utils.loaddata('exp2p', 1, dir="./data/", raw=True)
+        x, y, xt = utils.loaddata('exp2p', 0, dir="./data/", raw=True)
 
         x = x.drop(pd.DatetimeIndex(['2004-01-01']))
         y = y.drop(pd.DatetimeIndex(['2004-01-01']))
@@ -42,10 +42,10 @@ def EN2res(data_use='full', v=2):
         print( 'hyperparameters: ', hpars)
         grid.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_resHP_{data_use}.csv")
     if v==2:
-        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
-        res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "2hpres", exp=2, hp=True)
+        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 130, 130, 4)
+        res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "2hpEMBres", exp=2, hp=True)
 
-        res.to_csv(f"/scratch/project_2000527/pgnn/results/EX2resHP_{data_use}_new.csv")
+        res.to_csv(f"/scratch/project_2000527/pgnn/results/EX2EMBresHP_{data_use}_new.csv")
 
 if __name__ == '__main__':
     EN2res(args.d)

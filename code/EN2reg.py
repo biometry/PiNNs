@@ -48,7 +48,7 @@ def EN2reg(data_use='full', v=2):
         print( 'hyperparameters: ', hpars)
         grid.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_regHP_{data_use}.csv")
     elif v==2:
-        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4, reg=True)
+        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 130, 130, 4, reg=True)
         res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "NASreg", reg=reg, exp=2, hp=True)
         res.to_csv(f"/scratch/project_2000527/pgnn/results/EX2NregHP_{data_use}_new.csv")
 if __name__ == '__main__':

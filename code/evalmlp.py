@@ -26,18 +26,19 @@ def evalmlp(data_use='full', of=False, v=2):
         # Load hyytiala
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
     else:
-        x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
+        x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=False)
 
     y = y.to_frame()
 
 
-    train_x = x[~x.index.year.isin([2004, 2005, 2007,2008])][1:]
-    train_y = y[~y.index.year.isin([2004, 2005, 2007,2008])][1:]
+    train_x = x[~x.index.year.isin([2004, 2005, 2007,2008])]
+    train_y = y[~y.index.year.isin([2004, 2005, 2007,2008])]
 
     splits = len(train_x.index.year.unique())
     test_x = x[x.index.year == 2008][1:]
     test_y = y[y.index.year == 2008][1:]
     print('CHECK DATA', train_x, train_y, test_x, test_y)
+    print(train_x.index.year.unique())
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)) 
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
     
@@ -59,7 +60,7 @@ def evalmlp(data_use='full', of=False, v=2):
         bs = b[1]
         print('Batch Size and LR', b)
     if v == 2:
-        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/NmlpHP_{data_use}_new.csv")
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpHP_{data_use}_new.csv")
         a = d.loc[d.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         parms = np.array(np.matrix(a.parameters)).ravel()
@@ -166,8 +167,8 @@ def evalmlp(data_use='full', of=False, v=2):
 
 
 if __name__ == '__main__':
-    evalmlp('full')
-    evalmlp('sparse')
+    evalmlp(args.d)
+    
 
 
 

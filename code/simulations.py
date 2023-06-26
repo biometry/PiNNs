@@ -10,6 +10,15 @@ import models
 import torch
 from pygam import GAM, s
 import pickle
+import argparse
+
+parser = argparse.ArgumentParser(description='Define data usage and experiment')
+parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
+parser.add_argument('-e', metavar='experiment', type=str, help='Experiment: exp1 vs exp2')
+args = parser.parse_args()
+
+
+
 
 def climate_simulations(train_x, exp):
 
@@ -274,7 +283,11 @@ fig.savefig('results/temp.png')
 
 
 if __name__ == '__main__':
-    gen_simulations(n=5000, fix_pars=True, data_use='sparse', exp='')
+    if args.e == 'exp1':
+        exp=''
+    else:
+        exp='exp2'
+    gen_simulations(n=10000, fix_pars=True, data_use=args.d, exp=exp)
     #gen_simulations(n = 500, fix_pars=True, data_use='sparse', exp='')
     #gen_simulations(n=1000, fix_pars=True, data_use='full', exp='exp2')
     #gen_simulations(n=1000, fix_pars=True, data_use='sparse', exp='exp2')

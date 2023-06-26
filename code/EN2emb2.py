@@ -2,40 +2,52 @@
 # coding: utf-8
 import utils
 import HP
+import utils
 import torch
 import pandas as pd
 import numpy as np
-
-x, y, xt, yp = utils.loaddata('exp2', 0, dir="./data/", raw=True)
-
-swmn = np.mean(yp.SWp)
-swstd = np.std(yp.SWp)
-xt = xt.drop(['date', 'ET', 'GPP', 'X', 'Unnamed: 0', 'GPPp', 'ETp', 'SWp'], axis = 1)
-yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
-
-yp = yp[yp.index.year == 2004]
-x = x[x.index.year == 2004]
-y = y[y.index.year == 2004]
-y = y.to_frame()
-print(x, y, yp)
-splits = 8
-x.index, y.index, yp.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(yp))
-
-#arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 140, 4, emb=True)
-
-# architecture search
-#layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 8, 'lr':0.001, 'eta':0.2}, x, y, splits, "EX2_arSemb2", exp=2, hp=True, emb=True, reg=yp, raw = xt, embtp=2, sw=(swmn, swstd))
-#ag.to_csv("./EX2_emb2AS.csv")
-
-layersizes = [[8, 8, 32], [4, 8, 8]]
-# Hyperparameter Search Space
-hpar_grid = HP.HParSearchSpace(150, True, emb=True)
-
-# Hyperparameter search
-hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "EX2_hpemb2", exp=2, hp=True, emb=True, reg = yp, raw = xt, embtp=2, sw=(swmn, swstd))
-
-print( 'hyperparameters: ', hpars)
+import argparse
+import HPe
+parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
+parser.add_argument('-o', metavar='optim', type=str, help='lbfgs?')
+args = parser.parse_args()
 
 
-grid.to_csv("./EX2_emb2HP_mn300.csv")
+def ENemb(data_use='full', opt='lbfgs', splits=None):
+    if data_use == 'sparse':
+        x, y, xt, yp = utils.loaddata('exp2', 0, dir="./data/", raw=True, sparse=True)
+    else:
+        x, y, xt, yp = utils.loaddata('exp2', 0, dir="./data/", raw=True)
+    y = y.to_frame()
+    swmn = np.mean(yp.SWp)
+    swstd = np.std(yp.SWp)
+    xt = xt.drop(['Unnamed: 0', 'Unnamed: 0.1', 'X.1','X','date', 'ET', 'GPP', 'SWp', 'GPPp', 'ETp', 'year', 'site'], axis=1)
+    yp.index = y.index
+    yp = yp[yp.index.year == 2004]
+    x = x[x.index.year == 2004]
+    y = y[y.index.year == 2004]
+    yp = yp.GPPp.to_frame()
+    print('xyypt',xt, y, yp)
+    splits = 8
+    
+    x.index, y.index, yp.index, xt.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(yp)), np.arange(0, len(xt))
+    
+    arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 300, 4, emb=True)
+    if opt == 'lbfgs':
+        qn = True
+    else:
+        qn = False
+    # architecture search
+    
+    print("DATA", type(x),type(y),type(xt),type(yp))
+    layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 365, 'lr':0.001, 'eta': 0.2}, x, y, splits, "arSemb2", reg=yp, emb=True, raw = xt, embtp=2, hp=True, sw=(swmn, swstd), qn = qn, exp=2)
+    ag.to_csv(f"./EX2Nemb2_{data_use}_AS.csv")
+
+if __name__=='__main__':
+    ENemb(args.d, args.o)
+
+
+
+
 

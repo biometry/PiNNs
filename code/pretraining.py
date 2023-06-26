@@ -82,7 +82,7 @@ def pretraining(data_use="full", of=False, v=2):
         bs = b[1]
         lr = b[0]
     elif v==2:
-        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/NmlpHP_{data_use}_new.csv")
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NmlpHP_{data_use}_new.csv")
         a = d.loc[d.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         parms = np.array(np.matrix(a.parameters)).ravel()
@@ -98,7 +98,7 @@ def pretraining(data_use="full", of=False, v=2):
         lr = b[0]
     
     # Original: Use 5000 Epochs
-    eps = 5000
+    eps = 1000
     hp = {'epochs': eps,
           'batchsize': int(bs),
           'lr': lr}
@@ -187,7 +187,7 @@ def pretraining(data_use="full", of=False, v=2):
     pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA_pretrained_eval_preds_test_{data_use}.csv')
 
 if __name__ == '__main__':
-    pretraining(data_use="full")
+    pretraining(data_use=args.d)
 
 
 '''

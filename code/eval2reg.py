@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
-def eval2reg(data_use='full', of=False):
+def eval2reg(data_use='full', of=False, v=2):
     if data_use=='sparse':
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, sparse=True)
     else:
@@ -29,17 +29,24 @@ def eval2reg(data_use='full', of=False):
         
     train_x = x[x.index.year == 2005]
     train_y = y[y.index.year == 2005]
-    train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
-    train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
+    if data_use=="full":
+        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
+    else:
+        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
     test_x = x[x.index.year==2008]
     test_y = y[y.index.year==2008]
-    test_x = test_x.drop(pd.DatetimeIndex(['2008-01-01']))
-    test_y = test_y.drop(pd.DatetimeIndex(['2008-01-01']))
+    #test_x = test_x.drop(pd.DatetimeIndex(['2008-01-01']))
+    #test_y = test_y.drop(pd.DatetimeIndex(['2008-01-01']))
     
     print('TrainTest',train_x, train_y, test_x, test_y)
     yp.index = pd.DatetimeIndex(x.index)
     yp = yp[yp.index.year == 2005]
-    yp = yp.drop(pd.DatetimeIndex(['2005-01-01']))
+    if data_use=="full":
+        yp = yp.drop(pd.DatetimeIndex(['2005-01-01']))
+    else:
+        yp = yp.drop(pd.DatetimeIndex(['2005-01-05']))
     reg = yp.drop(yp.columns.difference(['GPPp']), axis=1)
     splits = 5
     print("XYREG", train_x, train_y, reg)
@@ -48,22 +55,32 @@ def eval2reg(data_use='full', of=False):
     test_y = test_y.to_frame()
     train_x.index, train_y.index, reg.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(reg))
     print(len(train_x), len(train_y), len(reg))
+    if v!=2:
+        mlp_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_regAS_{data_use}.csv")
+        a = mlp_as.loc[mlp_as.ind_mini.idxmin()][1:5]
+        b = a.to_numpy()
+        layersizes = list(b[np.isfinite(b)].astype(int))
+        print('layersizes', layersizes)
     
-    mlp_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_regAS_{data_use}.csv")
-    a = mlp_as.loc[mlp_as.ind_mini.idxmin()][1:5]
-    b = a.to_numpy()
-    layersizes = list(b[np.isfinite(b)].astype(int))
-    print('layersizes', layersizes)
-    
-    model_design = {'layersizes': layersizes}
-
-
-    mlp_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_regHP_{data_use}.csv")
-    a = mlp_hp.loc[mlp_hp.ind_mini.idxmin()][1:4]
-    b = a.to_numpy()
-    lr = b[0]
-    bs = b[1]
-    eta = b[2]
+        model_design = {'layersizes': layersizes}
+        mlp_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_regHP_{data_use}.csv")
+        a = mlp_hp.loc[mlp_hp.ind_mini.idxmin()][1:4]
+        b = a.to_numpy()
+        lr = b[0]
+        bs = b[1]
+        eta = b[2]
+    else:
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2NregHP_{data_use}_new.csv")
+        a = d.loc[d.ind_mini.idxmin()]
+        print(a)
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        parms = np.array(np.matrix(a.parameters)).ravel()
+        lr = parms[0]
+        bs = int(parms[1])
+        eta = parms[2]
+        model_design = {'layersizes': layersizes}
+        print('layersizes', layersizes)
+        
     if of:
         mlp_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/2reg_lr_{data_use}.csv")
         a = mlp_hp.loc[mlp_hp.ind_mini.idxmin()][1:3]

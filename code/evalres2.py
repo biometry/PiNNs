@@ -23,11 +23,11 @@ args = parser.parse_args()
 def evalres2(data_use='full', of=False, v=2):
     if data_use=='sparse':
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
-        yp = utils.make_sparse(pd.read_csv("./data/Hyytiala.csv"))
+        yp = pd.read_csv("./data/hyytialaF_sparse.csv")
         
     else:
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
-        yp = pd.read_csv("./data/Hyytiala.csv")
+        yp = pd.read_csv("./data/hyytialaF_full.csv")
         
 
 
@@ -38,13 +38,13 @@ def evalres2(data_use='full', of=False, v=2):
     yp_tr = yptr[~yptr.index.year.isin([2004,2005,2007,2008])][1:]
     yp_te = ypte[ypte.index.year==2008][1:]
     y = y.to_frame()
-    train_x = x[~x.index.year.isin([2004,2005,2007,2008])][1:]
-    train_y = y[~y.index.year.isin([2004,2005,2007,2008])][1:]
+    train_x = x[~x.index.year.isin([2004,2005,2007,2008])]
+    train_y = y[~y.index.year.isin([2004,2005,2007,2008])]
     splits = len(train_x.index.year.unique())
 
-    test_x = x[x.index.year == 2008]
-    test_y = y[y.index.year == 2008]
-    print('TEST X und YP test', test_x, test_y, yp_te)
+    test_x = x[x.index.year == 2008][1:]
+    test_y = y[y.index.year == 2008][1:]
+    print('TEST X und YP test', train_x, train_y, yp_tr, test_x, test_y, yp_te)
     splits = len(train_x.index.year.unique())
     print(splits)
     train_x.index, train_y.index, yp_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(yp_tr)) 
@@ -66,7 +66,7 @@ def evalres2(data_use='full', of=False, v=2):
         lr = b[0]
         bs = b[1]
     if v == 2:
-        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/Nres2HP_{data_use}_new.csv")
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/Nres2HP_{data_use}_new.csv")
         a = d.loc[d.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         parms = np.array(np.matrix(a.parameters)).ravel()

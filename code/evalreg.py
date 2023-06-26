@@ -23,11 +23,11 @@ args = parser.parse_args()
 def evalreg(data_use='full', of=False, v=2):
     if data_use=='sparse':
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
-        yp = utils.make_sparse(pd.read_csv("./data/Hyytiala.csv"))
+        yp = pd.read_csv("./data/hyytialaF_sparse.csv")
         
     else:
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
-        yp = pd.read_csv("./data/Hyytiala.csv")
+        yp = pd.read_csv("./data/hyytialaF_full.csv")
 
 
     yp.index = pd.DatetimeIndex(yp['date'])
@@ -45,15 +45,15 @@ def evalreg(data_use='full', of=False, v=2):
     reg_tr = yptr[~yptr.index.year.isin([2004, 2005, 2007,2008])][1:]
     reg_te = ypte[ypte.index.year == 2008][1:]
 
-    train_x = x[~x.index.year.isin([2004, 2005, 2007,2008])][1:]
-    train_y = y[~y.index.year.isin([2004, 2005, 2007,2008])][1:]
+    train_x = x[~x.index.year.isin([2004, 2005, 2007,2008])]
+    train_y = y[~y.index.year.isin([2004, 2005, 2007,2008])]
 
     splits = len(train_x.index.year.unique())
 
-    test_x = x[x.index.year == 2008]
-    test_y = y[y.index.year == 2008]
+    test_x = x[x.index.year == 2008][1:]
+    test_y = y[y.index.year == 2008][1:]
 
-    print('XYREG', train_x, train_y, reg_tr)
+    print('XYREG', train_x, train_y, reg_tr, test_x, test_y, reg_te)
     
     splits = len(train_x.index.year.unique())
     #print(splits)
@@ -77,7 +77,7 @@ def evalreg(data_use='full', of=False, v=2):
         bs = b[1]
         eta = b[2]
     if v == 2:
-        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NAS_new/NregHP_{data_use}_new.csv")
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NregHP_{data_use}_new.csv")
         a = d.loc[d.ind_mini.idxmin()]
         print(a)
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)

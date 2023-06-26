@@ -17,7 +17,7 @@ import multiprocessing as mp
 import itertools
 
 x, y, xt = utils.loaddata('OF', 0, dir="./data/", raw=True)
-#print('n', x,y,xt)
+print('n', x,y,xt)
 yp = pd.read_csv("./data/train_soro.csv")
 yp.index = pd.DatetimeIndex(yp['date'])
 
@@ -49,13 +49,13 @@ y = y.to_frame()
 train_x = x[x.index.year==2002]
 train_y = y[y.index.year==2002]
 
-#print(train_x, train_y)
+print(train_x, train_y)
 #print(yp_tr)
 
 
 test_x = x[x.index.year == 2003]
 test_y = y[y.index.year == 2003]
-#print(test_x)
+print(test_x, test_y)
 
 
 #print(len(x), len(y))
@@ -68,17 +68,23 @@ test_x.index, test_y.index, yp_te.index, rte.index = np.arange(0, len(test_x)), 
 
 model_design = {'layersizes': [[128], [128]]}
 
-hp = {'epochs': 100,
-      'batchsize': int(128),
-      'lr': 0.01,
-      'eta': 0.5
+hp = {'epochs': 1000,
+      'batchsize': int(30),
+      'lr': 0.1,
+      'eta': 0
       }
 
-#print(hp)
-#print("TRAIN_TEST", train_x.shape,  test_x.shape, "END")
 
-data_dir = "./data/"
-data = "embof"
+results =training.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), "./data/", "embof", (yp_tr, yp_te), True, (rtr, rte), None, None, None, (swmn, swstd), 2, True, 1)
+print(results)
+
+
+"""
+#print(hp)
+#print(TRAIN_TEST, train_x.shape,  test_x.shape, END)
+
+data_dir = ./data/
+data = embof
 
 rets = []
 processes = []
@@ -99,4 +105,5 @@ with mp.Pool() as pool:
 
 
 
-#pd.DataFrame({"train_loss": train_loss, "val_loss": val_loss}).to_csv('OFemb_vloss.csv')
+#pd.DataFrame({train_loss: train_loss, val_loss: val_loss}).to_csv('OFemb_vloss.csv')
+"""

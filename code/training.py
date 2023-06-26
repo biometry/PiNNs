@@ -51,7 +51,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
     #y_preds = []
 
     for t_idx, v_idx in kf.split(X):
-        print("FOLD", i)
+        #print("FOLD", i)
         if emb:
             xr_train, xr_val = torch.tensor(raw.loc[t_idx].to_numpy(), dtype=torch.float32), torch.tensor(raw.loc[v_idx].to_numpy(), dtype=torch.float32)
         x_train, x_val = torch.tensor(X[X.index.isin(t_idx)].to_numpy(), dtype=torch.float32), torch.tensor(X[X.index.isin(v_idx)].to_numpy(), dtype=torch.float32)
@@ -77,7 +77,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
         sample_id = list(range(train_set_size))
         val_set_size = len(val_set)
         vsample_id = list(range(val_set_size))
-        print('vsample_id',vsample_id)
+        #print('vsample_id',vsample_id)
         if emb:
             train_sampler = torch.utils.data.sampler.SequentialSampler(sample_id)
             val_sampler = torch.utils.data.sampler.SequentialSampler(vsample_id)
@@ -108,7 +108,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             
             # Finetuning: reuse weights from pretraining and fully retrain model
             if domain_adaptation == 1:
-                print("DOMAIN ADAPTAION: FINETUNING WEIGHTS")
+                #print("DOMAIN ADAPTAION: FINETUNING WEIGHTS")
                 model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
                 if exp == 2:
                     model.load_state_dict(torch.load(os.path.join(data_dir, f"2{data}_model{i+1}.pth")))
@@ -135,7 +135,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                             p.requires_grad = False
         else:
             model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
-        print("INIMODEL", model)
+        #print("INIMODEL", model)
 
         criterion = nn.MSELoss()
         optimizer = optim.Adam(model.parameters(), lr = hparams['lr'])
@@ -295,7 +295,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                 mse_v[i, ep] = criterion(y_hat_val, y_val)
                 #valloss[i, ep] = mse_v
                 
-            print('EPOCH', ep)
+            #print('EPOCH', ep)
             #print('MSE V', mse_v, 'MSE T', mse_t)
                 
                 
@@ -423,7 +423,15 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
     val_loader = torch.utils.data.DataLoader(val_set, batch_size=batchsize, sampler=val_sampler, shuffle=False)
     
     if emb:
-        model = models.EMB(train[0].shape[1], train[1].shape[1], model_design['layersizes'], 27, 3)
+        model = models.sEMB(train[0].shape[1], train[1].shape[1], model_design['layersizes'], 1, 3)
+        cid=0
+        for child in model.children():
+            cid+=1
+            print("LAYER ", cid)
+            print(child.parameters())
+            if cid == 1:
+                for param in child.parameters():
+                    param.requires_grad = False
     elif res == 2:
         model = models.RES(train[0].shape[1], train[1].shape[1], model_design['layersizes'])
     elif res == 1:
@@ -432,16 +440,18 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
         model = models.NMLP(train[0].shape[1], train[1].shape[1], model_design['layersizes'])
     #print("INIMODEL", model)
     criterion = nn.MSELoss()
+    qn=False
     if not qn:
         optimizer = optim.Adam(model.parameters(), lr = hparams['lr'])
     else:
         #optimizer = optim.LBFGS(model.parameters(), history_size=30, max_iter=8)
-        optimizer = sLBFGS(model.parameters(), history_size=10, max_iter=5, line_search_fn=True, batch_mode=True)
+        optimizer = sLBFGS(model.parameters(), history_size=20, max_iter=10, line_search_fn=True, batch_mode=True)
+        #optimizer = optim.Adam(model.parameters(), lr = hparams['lr'])
     train_loss = []
     val_loss = []
     mse_t = np.empty(nepoch)
     mse_v = np.empty(nepoch)
-    
+
     for ep in range(nepoch):
         if not qn:
             model.train()
@@ -464,7 +474,6 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
             if not qn:
                 optimizer.zero_grad()
                 if emb:
-                    #print(xt.shape, xr.shape)
                     y_hat, p = model(xt, xr, embtp, sw)
                 elif res == 1:
                     y_hat = model(xt)
@@ -480,6 +489,7 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
                         loss = criterion(y_hat, yt) + eta*criterion(p, yp)
                     else:
                         loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
+                        print(eta*criterion(p[..., 0:1], yp))
                 else:
                     loss = criterion(y_hat, yt)
                 print('train loss', loss)

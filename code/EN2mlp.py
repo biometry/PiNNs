@@ -21,17 +21,16 @@ def EN2mlp(data_use='full', splits=None, v=2):
         x = x.drop(pd.DatetimeIndex(['2004-01-01']))
         y = y.drop(pd.DatetimeIndex(['2004-01-01']))
     # select NAS data
-    print(x.index)
+    print(x.index.year)
     x = x[x.index.year == 2004]
     y = y[y.index.year == 2004]
 
-    print(x,y)
+    
+    print("----XY-----", x, y)
     
     
     
     splits = 5
-    print(splits)
-    print(x, y)
     y = y.to_frame()
     x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
 
@@ -47,7 +46,7 @@ def EN2mlp(data_use='full', splits=None, v=2):
         print( 'hyperparameters: ', hpars)
         grid.to_csv(f"/scratch/project_2000527/pgnn/results/EX2_mlpHP_{data_use}.csv")
     elif v==2:
-        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
+        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 130, 130, 4)
         res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "2hpmlp", exp=2, hp=True)
 
         res.to_csv(f"/scratch/project_2000527/pgnn/results/EX2mlpHP_{data_use}_new.csv")
