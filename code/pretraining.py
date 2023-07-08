@@ -17,13 +17,13 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
-#parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
+parser.add_argument('-n', metavar='number', type=int, help='define number of replicates')
 args = parser.parse_args()
 
 print(args)
 
 
-def pretraining(data_use="full", of=False, v=2):
+def pretraining(data_use="full", of=False, v=2, N=5000):
     if data_use == 'sparse':
         ## Load data for defining splits
         x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
@@ -32,7 +32,7 @@ def pretraining(data_use="full", of=False, v=2):
         splits = len(train_x.index.year.unique())
 
         # Load data for pretraining
-        x, y, r  = utils.loaddata('simulations', 1, dir="./data/", sparse=True)
+        x, y, r  = utils.loaddata('simulations', 1, dir="./data/", sparse=True, n=N)
         y = y.to_frame()
     
     else:
@@ -43,7 +43,8 @@ def pretraining(data_use="full", of=False, v=2):
         splits = len(train_x.index.year.unique())
 
         # Load data for pretraining
-        x, y, r  = utils.loaddata('simulations', 1, dir="./data/")
+        print(N)
+        x, y, r  = utils.loaddata('simulations', 1, dir="./data/", n=N)
         y = y.to_frame()
     ## Split into training and test
 
@@ -98,13 +99,13 @@ def pretraining(data_use="full", of=False, v=2):
         lr = b[0]
     
     # Original: Use 5000 Epochs
-    eps = 1000
+    eps = 5000
     hp = {'epochs': eps,
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "./data/"
-    data = f"mlpDA_pretrained_{data_use}"
+    data = f"mlpDA_pretrained_{data_use}_{N}"
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
     
@@ -139,11 +140,11 @@ def pretraining(data_use="full", of=False, v=2):
         #        v5.append(val_loss[4][i])
         #        v6.append(val_loss[5][i])
         
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/mlpDA_pretrained_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/mlpDA_pretrained_vloss_{data_use}_{N}.csv')
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
     #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
     #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/mlpDA_pretrained_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/mlpDA_pretrained_trainloss_{data_use}_{N}.csv')
     
     # Evaluation
     mse = nn.MSELoss()
@@ -163,7 +164,7 @@ def pretraining(data_use="full", of=False, v=2):
         i += 1
         #import model
         model = models.NMLP(x.shape[1], y.shape[1], model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"mlpDA_pretrained_{data_use}_model{i}.pth"))))
+        model.load_state_dict(torch.load(''.join((data_dir, f"mlpDA_pretrained_{data_use}_{N}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)
@@ -182,12 +183,12 @@ def pretraining(data_use="full", of=False, v=2):
     
     #print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA_pretrained_eval_performance_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA_pretrained_eval_preds_train_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA_pretrained_eval_preds_test_{data_use}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA_pretrained_eval_performance_{data_use}_{N}.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA_pretrained_eval_preds_train_{data_use}_{N}.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA_pretrained_eval_preds_test_{data_use}_{N}.csv')
 
 if __name__ == '__main__':
-    pretraining(data_use=args.d)
+    pretraining(data_use=args.d, N=args.n)
 
 
 '''
