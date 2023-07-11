@@ -6,7 +6,7 @@ library(Rpreles)
 
 predict <- function(x_test, data_use){
   
-  CVfit = read.csv(paste0("~/Projects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".csv"))[,2:6]
+  CVfit = read.csv(paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".csv"))#[,2:6]
   
   preds = matrix(nrow = nrow(x_test), ncol=ncol(CVfit))
   
@@ -74,4 +74,4 @@ via <- function(data_use, gridsize = 200){
 
 
 out_full = via("full", gridsize = 200)
-#out_sparse = via("sparse")
+out_sparse = via("sparse", gridsize = 200)

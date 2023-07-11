@@ -16,9 +16,9 @@ def standardize(var, scaling=None, get_p=False):
 
     if not scaling:
         if (isinstance(var, pd.DataFrame)):
-            out = (var - np.mean(var)) / np.std(var)
-            m = np.mean(var)
-            std = np.std(var)
+            out = (var - var.mean()) / var.std()
+            m = var.mean()
+            std = var.std()
         elif (torch.is_tensor(var)):
             out = (var - torch.mean(var)) / torch.std(var)
             m = torch.mean(var)

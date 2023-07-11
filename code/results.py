@@ -7,7 +7,7 @@ Created on Tue May  3 08:47:12 2022
 
 import os
 
-os.chdir("/Users/Marieke_Wesselkamp/Documents/Projects/physics_guided_nn/code")
+os.chdir("/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn")
 
 import pandas as pd
 import numpy as np
