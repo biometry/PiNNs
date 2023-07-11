@@ -96,7 +96,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             if embtp is None:
                 model = models.EMB(X.shape[1], Y.shape[1], model_design['layersizes'], 27, 1)
             else:
-                model = models.EMB(X.shape[1], Y.shape[1], model_design['layersizes'], 27, 3)
+                model = models.sEMB(X.shape[1], Y.shape[1], model_design['layersizes'], 1, 3) #models.EMB
         elif res == 2:
             model = models.RES(X.shape[1], Y.shape[1], model_design['layersizes'])
         elif not domain_adaptation is None:
@@ -332,15 +332,15 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
         #pd.DataFrame({'train_loss': mse_t, 'val_loss':mse_v}, index=[0]).to_csv(f"{data}_NAS_model{i}.csv")
         if exp != 2:
             if domain_adaptation is not None:
-                print("Saving model to: ", os.path.join(data_dir, f"mlpDA{domain_adaptation}_model{i}.pth"))
-                torch.save(model.state_dict(), os.path.join(data_dir, f"mlpDA{domain_adaptation}_model{i}.pth"))
+                print("Saving model to: ", os.path.join(data_dir, f"{data}_{domain_adaptation}_trained_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_{domain_adaptation}_trained_model{i}.pth"))
             else:
                 print("Saving model to: ", os.path.join(data_dir, f"{data}_model{i}.pth"))
                 torch.save(model.state_dict(), os.path.join(data_dir, f"{data}_model{i}.pth"))
         elif exp == 2:
             if domain_adaptation is not None:
-                print("Saving model to: ", os.path.join(data_dir, f"2mlpDA{domain_adaptation}_model{i}.pth"))
-                torch.save(model.state_dict(), os.path.join(data_dir, f"2mlpDA{domain_adaptation}_model{i}.pth"))
+                print("Saving model to: ", os.path.join(data_dir, f"2{data}_{domain_adaptation}_trained_model{i}.pth"))
+                torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_{domain_adaptation}_trained_model{i}.pth"))
             else:
                 torch.save(model.state_dict(), os.path.join(data_dir, f"2{data}_model{i}.pth"))
     print(mse_v)

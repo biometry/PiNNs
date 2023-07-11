@@ -130,7 +130,7 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False, v=2):
         i += 1
         #import model
         model = models.NMLP(test_x.shape[1], 1, model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"2mlpDA{da}_model{i}.pth"))))
+        model.load_state_dict(torch.load(''.join((data_dir, f"2{data}_{da}_trained_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)

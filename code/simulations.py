@@ -15,6 +15,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Define data usage and experiment')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 parser.add_argument('-e', metavar='experiment', type=str, help='Experiment: exp1 vs exp2')
+parser.add_argument('-n', metavar='number', type=int, help='number of samples')
 args = parser.parse_args()
 
 
@@ -229,7 +230,7 @@ def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir 
     #if not fix_pars:
     p = parameter_samples(n_samples = n, fix_pars = fix_pars)
     pdd = pd.DataFrame(p)
-    pdd.to_csv('./data/DA_parameter_samples.csv', index=False)
+    pdd.to_csv(f'./data/DA_parameter_samples_{n}.csv', index=False)
     #np.savetext('parameter_simulations.csv', p, delimiter=';')
     pt = torch.tensor(p, dtype=torch.float64)
 
@@ -268,7 +269,7 @@ def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir 
         d.append(c)
 
     d = pd.concat(d)
-    d.to_csv(''.join((data_dir, f'simulations_{data_use}_{exp}.csv')), index=False)
+    d.to_csv(''.join((data_dir, f'simulations_{data_use}_{exp}_{n}.csv')), index=False)
 
 
 
@@ -287,7 +288,7 @@ if __name__ == '__main__':
         exp=''
     else:
         exp='exp2'
-    gen_simulations(n=10000, fix_pars=True, data_use=args.d, exp=exp)
+    gen_simulations(n=args.n, fix_pars=True, data_use=args.d, exp=exp)
     #gen_simulations(n = 500, fix_pars=True, data_use='sparse', exp='')
     #gen_simulations(n=1000, fix_pars=True, data_use='full', exp='exp2')
     #gen_simulations(n=1000, fix_pars=True, data_use='sparse', exp='exp2')

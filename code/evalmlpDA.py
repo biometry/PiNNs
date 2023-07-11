@@ -143,9 +143,9 @@ def evalmlpDA(data_use="full", da=1, of=False, v=2):
         #import model
         model = models.NMLP(x.shape[1], y.shape[1], model_design['layersizes'])
         if data_use == 'sparse':
-            model.load_state_dict(torch.load(''.join((data_dir, f"mlpDA{da}_model{i}.pth"))))
+            model.load_state_dict(torch.load(''.join((data_dir, f"{data}_{da}_trained_model{i}.pth"))))
         else:
-            model.load_state_dict(torch.load(''.join((data_dir, f"mlpDA{da}_model{i}.pth"))))
+            model.load_state_dict(torch.load(''.join((data_dir, f"{data}_{da}_trained_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)
