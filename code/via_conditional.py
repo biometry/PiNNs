@@ -73,8 +73,6 @@ def predict(test_x, test_y, m, data_use, yp=None, current_dir=''):
     return preds_test
 
 
-
-
 def via(data_use, model, prediction_scenario, yp=None, current_dir = '/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn'):
 
     if data_use == 'sparse':

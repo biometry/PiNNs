@@ -163,10 +163,14 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     
     if ypcols:
         yp = data[ypcols]
-        if via:
-            data, mn, std = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1), get_p=True)
+        if data_split == 'exp2':
+            data = data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp', 'site'], axis=1)
         else:
-            data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1))
+            data = data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1)
+        if via:
+            data, mn, std = standardize(data, get_p=True)
+        else:
+            data = standardize(data)
     elif doy:
         if data_split != 'simulations':
             yp = None

@@ -86,6 +86,7 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
     pars_fit <- pars
     pars_fit$def[pars2tune] <- MAP(fit)$parametersMAP
     CVfit[,i] <- pars_fit$def
+    i = i+1
   }
   
   save(CVfit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".Rdata"))
@@ -155,10 +156,24 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
   perfpormance_preles_full[,1] <- apply(gpp_test, 2, rmse)
   perfpormance_preles_full[,2] <- apply(gpp_test, 2, mae)
   
-  write.csv(perfpormance_preles_full, file=paste0("~/PycharmProjects/physics_guided_nn/results/preles_eval_", data_use, "_performance.csv"))
-  write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results/preles_eval_preds_test_", data_use, ".csv"))
+  write.csv(perfpormance_preles_full, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/preles_eval_", data_use, "_performance.csv"))
+  write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/preles_eval_preds_test_", data_use, ".csv"))
   
 }
+
+#load("~/Projects/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
+#pars2tune <- c(5:11, 14:18, 31) 
+#CVfit <- matrix(NA, nrow=nrow(par),ncol = 4)
+#i = 1
+#for (year in c(2009, 2010, 2011, 2012)){
+#  load(file = paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_fit_", year,"_", data_use, ".Rdata"))
+#  CVfit[,i] <- par$def
+#  CVfit[pars2tune,i] <- MAP(fit)$parametersMAP
+#  i = i+1
+#}
+
+#save(CVfit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".Rdata"))
+#write.csv(CVfit, file=paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".csv"))
 
 singlesite_calibration(data_use = 'full')
 singlesite_calibration(data_use = 'sparse')
