@@ -183,7 +183,7 @@ singlesite_calibration(data_use = 'sparse')
 ##=======================##
 
 
-mulitsite_calibration <- function(data_use, save_data = FALSE){
+multisite_calibration <- function(data_use, save_data = FALSE){
   
   #load("EddyCovarianceDataBorealSites.rdata") # data for one site: s1-s4
   #attach(s1)
@@ -250,12 +250,14 @@ mulitsite_calibration <- function(data_use, save_data = FALSE){
   save(CVfit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, ".Rdata"))
   write.csv(CVfit, file=paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, ".csv"))
   
+  testlength <- nrow(allsites[allsites_test$site==unique(allsites_test$site)[1],])
+  
   gpp_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
-  gpp_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
+  gpp_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
   et_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
-  et_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
+  et_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
   sw_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
-  sw_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
+  sw_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
   
   load(file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, ".Rdata"))
   i <- 1
@@ -263,14 +265,16 @@ mulitsite_calibration <- function(data_use, save_data = FALSE){
     
     load(file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_fit_", s, "_", data_use, ".Rdata"))
     
+    test_df <- allsites[allsites_test$site==s,]
+    
     gpp_train[,i] <- PRELES(PAR=allsites_train$PAR, TAir=allsites_train$Tair, VPD=allsites_train$VPD, Precip=allsites_train$Precip, CO2=allsites_train$CO2, fAPAR=allsites_train$fapar, p=CVfit[,i])$GPP
-    gpp_test[,i] <- PRELES(PAR=allsites_test$PAR, TAir=allsites_test$Tair, VPD=allsites_test$VPD, Precip=allsites_test$Precip, CO2=allsites_test$CO2, fAPAR=allsites_test$fapar, p=CVfit[,i])$GPP
+    gpp_test[,i] <- PRELES(PAR=test_df$PAR, TAir=test_df$Tair, VPD=test_df$VPD, Precip=test_df$Precip, CO2=test_df$CO2, fAPAR=test_df$fapar, p=CVfit[,i])$GPP
     
     et_train[,i] <- PRELES(PAR=allsites_train$PAR, TAir=allsites_train$Tair, VPD=allsites_train$VPD, Precip=allsites_train$Precip, CO2=allsites_train$CO2, fAPAR=allsites_train$fapar, p=CVfit[,i])$ET
-    et_test[,i] <- PRELES(PAR=allsites_test$PAR, TAir=allsites_test$Tair, VPD=allsites_test$VPD, Precip=allsites_test$Precip, CO2=allsites_test$CO2, fAPAR=allsites_test$fapar, p=CVfit[,i])$ET
+    et_test[,i] <- PRELES(PAR=test_df$PAR, TAir=test_df$Tair, VPD=test_df$VPD, Precip=test_df$Precip, CO2=test_df$CO2, fAPAR=test_df$fapar, p=CVfit[,i])$ET
     
     sw_train[,i] <- PRELES(PAR=allsites_train$PAR, TAir=allsites_train$Tair, VPD=allsites_train$VPD, Precip=allsites_train$Precip, CO2=allsites_train$CO2, fAPAR=allsites_train$fapar, p=CVfit[,i])$SW
-    sw_test[,i] <- PRELES(PAR=allsites_test$PAR, TAir=allsites_test$Tair, VPD=allsites_test$VPD, Precip=allsites_test$Precip, CO2=allsites_test$CO2, fAPAR=allsites_test$fapar, p=CVfit[,i])$SW
+    sw_test[,i] <- PRELES(PAR=test_df$PAR, TAir=test_df$Tair, VPD=test_df$VPD, Precip=test_df$Precip, CO2=test_df$CO2, fAPAR=test_df$fapar, p=CVfit[,i])$SW
     
     i <- i+1
   }
@@ -284,6 +288,13 @@ mulitsite_calibration <- function(data_use, save_data = FALSE){
   allsites_train$SWp <- apply(sw_train, 1, mean)
   allsites_test$SWp <- apply(sw_test, 1, mean)
   
+  i <-1
+  for (site in unique(allsites_test$site)){
+     allsites[allsites_test$site==site,]$GPPp <- gpp_test[,i]
+     allsites[allsites_test$site==site,]$ETp <- et_test[,i]
+     allsites[allsites_test$site==site,]$SWp <- sw_test[,i]
+     i <- i+1
+  }
   
   if (save_data){
     allsitesF <- rbind(allsites_train, allsites_test)
@@ -313,21 +324,19 @@ mulitsite_calibration <- function(data_use, save_data = FALSE){
   
   
   GPP_train <- apply(gpp_train, 1, mean)
-  GPP_test <- apply(gpp_test, 1, mean)
   GPP_train_std <- apply(gpp_train, 1, sd)
-  GPP_test_std <- apply(gpp_test, 1, sd)
   
-  mae <- function(yhat, test=T){
+  mae <- function(yhat, test=T, site = NA){
     if (test){
-      mae <- sum(abs(allsites_test$GPP - yhat))/length(yhat)
+      mae <- sum(abs(allsites_test[allsites_test$site == site,]$GPP - yhat))/length(yhat)
     }else{
       mae <- sum(abs(allsites_train$GPP - yhat))/length(yhat)
     }
     return(mae)
   }
-  rmse <- function(yhat, test=T){
+  rmse <- function(yhat, test=T, site=NA){
     if (test){
-      rmse <- sqrt(sum((allsites_test$GPP - yhat)^2)/length(yhat))
+      rmse <- sqrt(sum((allsites_test[allsites_test$site == site,]$GPP - yhat)^2)/length(yhat))
     }else{
       rmse <- sqrt(sum((allsites_train$GPP - yhat)^2)/length(yhat))
     }
@@ -336,9 +345,17 @@ mulitsite_calibration <- function(data_use, save_data = FALSE){
   
   perfpormance_preles_full <- matrix(NA, nrow=length(unique(allsites_train$site)), ncol=4)
   perfpormance_preles_full[,1] <- apply(gpp_train, 2, rmse, test=F)
-  perfpormance_preles_full[,2] <- apply(gpp_test, 2, rmse)
+  i <-1
+  for (site in unique(allsites_test$site)){
+    perfpormance_preles_full[i,2] <- apply(gpp_test[,i], 2, rmse, test=T, site=site)
+    i <- i+1
+  }
   perfpormance_preles_full[,3] <- apply(gpp_train, 2, mae, test=F)
-  perfpormance_preles_full[,4] <- apply(gpp_test, 2, mae)
+  i <-1
+  for (site in unique(allsites_test$site)){
+    perfpormance_preles_full[i,2] <- apply(gpp_test[,i], 2, rmse, test=T, site=site)
+    i <- i+1
+  }
   
   write.csv(perfpormance_preles_full, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/2preles_eval_", data_use, "_performance.csv"))
   write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/2preles_eval_preds_test_", data_use, "2.csv"))

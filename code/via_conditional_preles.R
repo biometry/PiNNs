@@ -3,8 +3,11 @@
 #==========================#
 
 library(Rpreles)
+data_use = 'full'
+prediction_scenario = 'spatial'
+gridsize=200
 
-predict <- function(x_test, data_use, prediction_scenario){
+predict_via <- function(x_test, data_use, prediction_scenario){
   
   if (prediction_scenario =='temporal'){
     CVfit = read.csv(paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".csv"))#[,2:6]
@@ -63,7 +66,8 @@ via <- function(data_use, prediction_scenario, gridsize = 200){
   variables = c('PAR', 'Tair', 'VPD', 'Precip', 'fapar')
   
   thresholds = data.frame('PAR' = c(0, 200), 'Tair'= c(-20, 40), 'VPD' = c(0, 60), 'Precip'= c(0, 100), 'fapar'= c(0, 1))
-
+  v = 'PAR'
+  
   for (v in variables){
     
     var_range = seq(thresholds[v][1,], thresholds[v][2,], length.out=gridsize)
@@ -71,10 +75,10 @@ via <- function(data_use, prediction_scenario, gridsize = 200){
     x_test = hyytiala_test
     x_test$X = gsub("[^a-zA-Z]", "", x_test$X)
     
-    mar = with(x_test, x_test[(date >= "2008-03-13" & date <= "2008-03-27"),])[,c(3:11)]
-    jun = with(x_test, x_test[(date >= "2008-06-14" & date <= "2008-06-28"),])[,c(3:11)]
-    sep = with(x_test, x_test[(date >= "2008-09-13" & date <= "2008-09-27"),])[,c(3:11)]
-    dec = with(x_test, x_test[(date >= "2008-12-14" & date <= "2008-12-28"),])[,c(3:11)]
+    mar = with(x_test, x_test[(date >= "2008-03-13" & date <= "2008-03-27"),])[,c(3:13)]
+    jun = with(x_test, x_test[(date >= "2008-06-14" & date <= "2008-06-28"),])[,c(3:13)]
+    sep = with(x_test, x_test[(date >= "2008-09-13" & date <= "2008-09-27"),])[,c(3:13)]
+    dec = with(x_test, x_test[(date >= "2008-12-14" & date <= "2008-12-28"),])[,c(3:13)]
   
     days = list(mar, jun, sep, dec)
     
@@ -84,21 +88,21 @@ via <- function(data_use, prediction_scenario, gridsize = 200){
       output = matrix(nrow = length(var_range), ncol = nrow(day))
       for (j in 1:length(var_range)){
         day[v] = var_range[j]
-        preds = predict(day, data_use, prediction_scenario)
+        preds = predict_via(day, data_use, prediction_scenario)
         output[j,] = preds
       }
       write.csv(output, paste0("~/PycharmProjects/physics_guided_nn/results_final/via/", prediction_scenario, "/preles_", data_use, "_", v, "_via_cond_", day_names[n], ".csv"))
       n = n+1
     }
-    #output = cbind(var_range, output)
-
   }
-  return(output)
 }
 
+via("full", "temporal", gridsize = 200)
+via("sparse", "temporal", gridsize = 200)
 
-out_full = via("full", "temporal", gridsize = 200)
-out_sparse = via("sparse", "temporal", gridsize = 200)
+via("full", "spatial", gridsize = 200)
+via("sparse", "spatial", gridsize = 200)
 
-out_full = via("full", "spatial", gridsize = 200)
-out_sparse = via("sparse", "spatial", gridsize = 200)
+#out = PRELES(PAR = day$PAR, TAir = day$Tair, VPD = day$VPD, Precip = day$Precip, CO2 = day$CO2, fAPAR = day$fapar, p=CVfit[,4])$GPP
+#plot(out, type='l')
+#matplot(output, type='l')

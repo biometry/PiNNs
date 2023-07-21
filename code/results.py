@@ -274,3 +274,94 @@ def plot_via(d = "full", prediction_scenario = 'spatial', current_dir =''):
     fig.show()
 
 plot_via(d = "full", prediction_scenario = 'spatial', current_dir =current_dir)
+plot_via(d = "sparse", prediction_scenario = 'spatial', current_dir =current_dir)
+
+def plot_via_biascorrection(current_dir =''):
+
+    months = ["dec", "mar", "jun", "sep"]
+    days = ["Spring", "Summer", "Autum", "Winter"]
+    colors = ["lightblue","darkgreen",  "lightgreen", "darkblue"]
+    var = ["$GPP$ [g C m$^{-2}$ day$^{-1}$]", "$GPP$ [g C m$^{-2}$ day$^{-1}$]", "$GPP$ [g C m$^{-2}$ day$^{-1}$]", "$GPP$ [g C m$^{-2}$ day$^{-1}$]",
+           "$ET$ [mm]", "$ET$ [mm]", "$ET$ [mm]", "$ET$ [mm]",
+           "$SW$ [mm]", "$SW$ [mm]", "$SW$ [mm]", "$SW$ [mm]"]
+
+    ylabels = ["Conditional GPP Predictions", "", "",
+               "Conditional GPP Predictions", "", "",
+               "Conditional GPP Predictions", "", "",
+               "Conditional GPP Predictions", "", ""]
+
+    cols = ["Temporal full", "Temporal sparse", "Spatial full", "Spatial sparse"]
+
+    gridsize=200
+    GPPp_range = np.linspace(0, 30, gridsize)
+    ETp_range = np.linspace(0, 800, gridsize)
+    SWp_range = np.linspace(0, 400, gridsize)
+
+    variables = {'GPPp': GPPp_range, 'ETp':ETp_range, 'SWp': SWp_range}
+
+    fig = plt.figure(figsize=(80,12))
+    widths = [i for i in np.repeat(3, 4)]
+    heights = [i for i in np.repeat(3, 3)]
+
+    gs = fig.add_gridspec(3, 4, width_ratios = widths, height_ratios=heights, wspace=0.5, hspace=0.8)
+    (ax1, ax2, ax3, ax4) , \
+    (ax5, ax6, ax7, ax8) , \
+    (ax9, ax10, ax11, ax12)  = gs.subplots() #sharey='row'
+    #(ax13 , ax14, ax15, ax16) , \
+    #(ax17 , ax18, ax19, ax20)
+
+    def plot_variable(v,ax, mod, d, prediction_scenario):
+        for i in range(4):
+            vi3 = np.array(pd.read_csv(os.path.join(current_dir,f"results_final/via/{prediction_scenario}/{mod}_{d}_{v}_via_cond_{months[i]}.csv"), index_col=False).iloc[:,1:])
+            vi3_m = vi3.mean(axis=1)
+            vi3_q = np.quantile(vi3, (0.05, 0.95), axis=1)
+            ax.fill_between(variables[v], vi3_q[0],vi3_q[1],color=colors[i], alpha=0.2)
+            ax.plot(variables[v], vi3_m, color=colors[i], label=days[i])
+
+    j=0
+    axs = (ax1, ax5, ax9)
+    for key, value in variables.items():
+        plot_variable(key, axs[j],'res', 'full', 'temporal')
+        j += 1
+
+    j=0
+    axs = (ax2, ax6, ax10)
+    for key, value in variables.items():
+        plot_variable(key, axs[j],'res', 'sparse', 'temporal')
+        j += 1
+
+    j=0
+    axs = (ax3, ax7, ax11)
+    for key, value in variables.items():
+        plot_variable(key, axs[j],'res', 'full', 'spatial')
+        j += 1
+
+    j=0
+    axs = (ax4, ax8, ax12)
+    for key, value in variables.items():
+        plot_variable(key, axs[j],'res', 'sparse', 'spatial')
+        j += 1
+
+
+    i = 0
+    for ax in fig.get_axes():
+        ax.tick_params(axis='x', labelsize=18)
+        ax.tick_params(axis='y', labelsize=18)
+        ax.set_xlabel(f"{var[i]}", size=18)
+        #ax.set_ylabel(f"{ylabels[i]}", size=20)
+        i += 1
+        #ax.label_outer()
+
+    axs = fig.get_axes()
+    for i in range(len(cols)):
+        axs[i].set_title(cols[i], size=24)
+
+    fig.text(0.02, 0.5, 'Conditional GPP Predictions [g C m$^{-2}$ day$^{-1}$]', va='center', rotation='vertical', size=20)
+
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc = (0.01, 0.0),ncol=4, fontsize=20) # loc=(0., 0.05)
+
+    fig.savefig(os.path.join(current_dir, f'plots/via_res.pdf'),  dpi=300, format='pdf')
+    fig.show()
+
+plot_via_biascorrection(current_dir=current_dir)
