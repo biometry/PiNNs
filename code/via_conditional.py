@@ -77,26 +77,26 @@ def via(data_use, model, prediction_scenario, yp=None, current_dir = '/Users/Mar
 
     if data_use == 'sparse':
         x, y, xt, mn, std = utils.loaddata('validation', 1, dir=os.path.join(current_dir,"data/"), raw=True, sparse=True, via=True)
-        if model in ['res', 'res2', 'reg']:
+        if model in ['mlp', 'res', 'res2', 'reg', 'mlpDA']:
             yp = pd.read_csv(os.path.join(current_dir,"data/hyytialaF_sparse.csv"))
             yp.index = pd.DatetimeIndex(yp['date'])
 
     else:
         x, y, xt, mn, std = utils.loaddata('validation', 1, dir=os.path.join(current_dir,"data/"), raw=True, via=True)
-        if model in ['res', 'res2', 'reg']:
+        if model in ['mlp', 'res', 'res2', 'reg', 'mlpDA']:
             yp = pd.read_csv(os.path.join(current_dir,"data/hyytialaF_full.csv"))
             yp.index = pd.DatetimeIndex(yp['date'])
 
-    thresholds = {'PAR': [0, 200],
-                  'Tair': [-20, 40],
-                  'VPD': [0, 60],
-                  'Precip': [0, 100],
-                  #'co2': [],
-                  'fapar': [0, 1],
-                  'GPPp': [0, 30],
-                  'ETp': [0, 800],
-                  'SWp': [0, 400]
-    }
+    thresholds = {'PAR': [yp['PAR'].min(), yp['PAR'].max()],
+                  'Tair': [yp['Tair'].min(), yp['Tair'].max()],
+                  'VPD': [yp['VPD'].min(), yp['VPD'].max()],
+                  'Precip': [yp['Precip'].min(), yp['Precip'].max()],
+                  # 'co2': [],
+                  'fapar': [yp['fapar'].min(), yp['fapar'].max()],
+                  'GPPp': [yp['GPPp'].min(), yp['GPPp'].max()],
+                  'ETp': [yp['ETp'].min(), yp['ETp'].max()],
+                  'SWp': [yp['SWp'].min(), yp['SWp'].max()]
+                  }
 
     gridsize = 200
     

@@ -82,19 +82,17 @@ def via(data_use, model, prediction_scenario, yp=None, current_dir = '/Users/Mar
             yp = pd.read_csv(os.path.join(current_dir,"data/allsitesF_full.csv"))
             yp.index = pd.DatetimeIndex(yp['date'])
 
-    thresholds = {'PAR': [0, 200],
-                  'Tair': [-20, 40],
-                  'VPD': [0, 60],
-                  'Precip': [0, 100],
-                  #'co2': [],
-                  'fapar': [0, 1],
-                  'GPPp': [0, 30],
-                  'ETp': [0, 800],
-                  'SWp': [0, 400]
-    }
+    thresholds = {'PAR': [yp['PAR'].min(), yp['PAR'].max()],
+                  'Tair': [yp['Tair'].min(), yp['Tair'].max()],
+                  'VPD': [yp['VPD'].min(), yp['VPD'].max()],
+                  'Precip': [yp['Precip'].min(), yp['Precip'].max()],
+                  # 'co2': [],
+                  'fapar': [yp['fapar'].min(), yp['fapar'].max()],
+                  'GPPp': [yp['GPPp'].min(), yp['GPPp'].max()],
+                  'ETp': [yp['ETp'].min(), yp['ETp'].max()],
+                  'SWp': [yp['SWp'].min(), yp['SWp'].max()]
+                  }
 
-    gridsize = 200
-    
     if model == 'res2':
         yptr = yp.drop(yp.columns.difference(['GPPp']), axis=1)
         ypte = yp.drop(yp.columns.difference(['GPPp']), axis=1)
@@ -122,6 +120,9 @@ def via(data_use, model, prediction_scenario, yp=None, current_dir = '/Users/Mar
         test_x = x[x.index.year == 2008][1:]
         test_y = y[y.index.year == 2008][1:]
         variables = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar']
+
+
+    gridsize = 200
 
     for v in variables:
         # Create variable values over complete ranges and standardize by full dataset

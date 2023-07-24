@@ -3,9 +3,9 @@
 #==========================#
 
 library(Rpreles)
-data_use = 'full'
-prediction_scenario = 'spatial'
-gridsize=200
+#data_use = 'full'
+#prediction_scenario = 'spatial'
+#gridsize=200
 
 predict_via <- function(x_test, data_use, prediction_scenario){
   
@@ -65,15 +65,15 @@ via <- function(data_use, prediction_scenario, gridsize = 200){
   
   variables = c('PAR', 'Tair', 'VPD', 'Precip', 'fapar')
   
-  thresholds = data.frame('PAR' = c(0, 200), 'Tair'= c(-20, 40), 'VPD' = c(0, 60), 'Precip'= c(0, 100), 'fapar'= c(0, 1))
-  v = 'PAR'
+  thresholds = data.frame('PAR' = c(min(hyytiala_test$PAR), max(hyytiala_test$PAR)), 'Tair'= c(min(hyytiala_test$Tair), max(hyytiala_test$Tair)), 'VPD' = c(min(hyytiala_test$VPD), max(hyytiala_test$VPD)), 'Precip'= c(min(hyytiala_test$Precip), max(hyytiala_test$Precip)), 'fapar'= c(min(hyytiala_test$fapar), max(hyytiala_test$fapar)))
   
   for (v in variables){
     
     var_range = seq(thresholds[v][1,], thresholds[v][2,], length.out=gridsize)
     day_names = c("mar", "jun", "sep", "dec")
     x_test = hyytiala_test
-    x_test$X = gsub("[^a-zA-Z]", "", x_test$X)
+    
+    if (prediction_scenario == 'spatial'){x_test$X = gsub("[^a-zA-Z]", "", x_test$X)}
     
     mar = with(x_test, x_test[(date >= "2008-03-13" & date <= "2008-03-27"),])[,c(3:13)]
     jun = with(x_test, x_test[(date >= "2008-06-14" & date <= "2008-06-28"),])[,c(3:13)]

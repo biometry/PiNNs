@@ -1,10 +1,16 @@
 # !/usr/bin/env python
 # coding: utf-8
+import sys, os
+import os.path
+sys.path.append("/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn/code")
+os.chdir("/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn/code")
+
 import numpy as np
 import pandas as pd
 import random
 import torch
 import dataset
+
 
 def standardize(var, scaling=None, get_p=False):
     '''
@@ -246,3 +252,120 @@ def make_sparse(x, y=False, sparse=False, date=False, it=7):
         return x_small, y_small, yp_small, date_small
     else:
         return x_small, y_small, date_small
+
+
+def get_seasonal_data(data_use, model, prediction_scenario,
+                  current_dir='/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn'):
+    if prediction_scenario == 'temporal':
+
+        if data_use == 'sparse':
+            x, y, xt, mn, std = loaddata('validation', 1, dir=os.path.join(current_dir, "data/"), raw=True,
+                                               sparse=True, via=True)
+            if model in ['mlp', 'res', 'res2', 'reg', 'mlpDA']:
+                yp = pd.read_csv(os.path.join(current_dir, "data/hyytialaF_sparse.csv"))
+                yp.index = pd.DatetimeIndex(yp['date'])
+
+        else:
+            x, y, xt, mn, std = loaddata('validation', 1, dir=os.path.join(current_dir, "data/"), raw=True,
+                                               via=True)
+            if model in ['mlp', 'res', 'res2', 'reg', 'mlpDA']:
+                yp = pd.read_csv(os.path.join(current_dir, "data/hyytialaF_full.csv"))
+                yp.index = pd.DatetimeIndex(yp['date'])
+
+    elif prediction_scenario == 'spatial':
+
+        if data_use == 'sparse':
+            x, y, xt, yp, mn, std = loaddata('exp2', 1, dir=os.path.join(current_dir, "data/"), raw=True,
+                                                   sparse=True, via=True)
+            if model in ['mlp', 'res', 'res2', 'reg', 'mlpDA']:
+                yp = pd.read_csv(os.path.join(current_dir, "data/allsitesF_sparse.csv"))
+                yp.index = pd.DatetimeIndex(yp['date'])
+
+        else:
+            x, y, xt, yp, mn, std = loaddata('exp2', 1, dir=os.path.join(current_dir, "data/"), raw=True,
+                                                   via=True)
+            if model in ['mlp', 'res', 'res2', 'reg', 'mlpDA']:
+                yp = pd.read_csv(os.path.join(current_dir, "data/allsitesF_full.csv"))
+                yp.index = pd.DatetimeIndex(yp['date'])
+
+    thresholds = {'PAR': [yp['PAR'].min(), yp['PAR'].max()],
+                  'Tair': [yp['Tair'].min(), yp['Tair'].max()],
+                  'VPD': [yp['VPD'].min(), yp['VPD'].max()],
+                  'Precip': [yp['Precip'].min(), yp['Precip'].max()],
+                  # 'co2': [],
+                  'fapar': [yp['fapar'].min(), yp['fapar'].max()],
+                  'GPPp': [yp['GPPp'].min(), yp['GPPp'].max()],
+                  'ETp': [yp['ETp'].min(), yp['ETp'].max()],
+                  'SWp': [yp['SWp'].min(), yp['SWp'].max()]
+                  }
+
+    if model in ['mlp', 'res2', 'reg', 'mlpDA']:
+        variables = ['Tair', 'VPD', 'Precip', 'PAR', 'fapar']
+    elif model == 'res':
+        yptr = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
+        ypte = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
+        y = yp.drop(yp.columns.difference(['GPP']), axis=1)
+        n = [1, 1]
+        x_tr, n = add_history(yptr, n, 1)
+        x_te, n = add_history(ypte, n, 1)
+        x_tr, mn, std = standardize(x_tr, get_p=True)
+        x_te = standardize(x_te, [mn, std])
+        test_x = x_te[x_te.index.year == 2008]
+        test_y = y[y.index.year == 2008][1:]
+        variables = ['GPPp', 'ETp', 'SWp']
+
+    var_ranges = {}
+    gridsize=200
+    for v in variables:
+        # Create variable values over complete ranges and standardize by full dataset
+        if model == 'res':
+            var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[''.join((v, '_x'))])/std[''.join((v, '_x'))]
+        else:
+            var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[v])/std[v]
+        var_ranges[v] = var_range
+
+    if model == 'res2':
+        yptr = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+        ypte = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+        yp_tr = yptr[~yptr.index.year.isin([2004, 2005, 2007, 2008])][1:]
+        yp_te = ypte[ypte.index.year == 2008][1:]
+        yp = ypte
+    if model == 'res':
+        yptr = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
+        ypte = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
+        y = yp.drop(yp.columns.difference(['GPP']), axis=1)
+        n = [1, 1]
+        x_tr, n = add_history(yptr, n, 1)
+        x_te, n = add_history(ypte, n, 1)
+        x_tr, mn, std = standardize(x_tr, get_p=True)
+        x_te = standardize(x_te, [mn, std])
+        test_x = x_te[x_te.index.year == 2008]
+        test_y = y[y.index.year == 2008][1:]
+        variables = ['GPPp', 'ETp', 'SWp']
+    # if model == 'reg':
+    #    yptr = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+    #    ypte = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+
+    elif model in ['mlp', 'res2', 'reg', 'mlpDA']:
+
+        test_x = x[x.index.year == 2008][1:]
+        test_y = y[y.index.year == 2008][1:]
+
+    dat = test_x.copy()
+    if not yp is None:
+        yp_dat = yp.copy()
+
+    # Compute effect of variable at mean of 14 days around record dates for seasonal changes
+    mar = dat['2008-03-13':'2008-03-27']
+    jun = dat['2008-06-14':'2008-06-28']
+    sep = dat['2008-09-13':'2008-09-28']
+    dec = dat['2008-12-14':'2008-12-28']
+    days = {'mar': mar, 'jun': jun, 'sep': sep, 'dec': dec}
+
+    yp_mar = yp_dat['2008-03-13':'2008-03-27']
+    yp_jun = yp_dat['2008-06-14':'2008-06-28']
+    yp_sep = yp_dat['2008-09-13':'2008-09-28']
+    yp_dec = yp_dat['2008-12-14':'2008-12-28']
+    days_yp = {'mar': yp_mar, 'jun': yp_jun, 'sep': yp_sep, 'dec': yp_dec}
+
+    return days, days_yp, var_ranges, mn, std
