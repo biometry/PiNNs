@@ -183,7 +183,7 @@ singlesite_calibration(data_use = 'sparse')
 ##=======================##
 
 
-multisite_calibration <- function(data_use, save_data = FALSE){
+multisite_calibration <- function(data_use, scenario = 'exp2', save_data = FALSE){
   
   #load("EddyCovarianceDataBorealSites.rdata") # data for one site: s1-s4
   #attach(s1)
@@ -191,13 +191,22 @@ multisite_calibration <- function(data_use, save_data = FALSE){
   allsites$date <- as.Date(allsites$date)
   allsites$year <- format(allsites$date, format="%Y")
   print(unique(allsites$year))
-  allsites$site <- substr(allsites$X, 1, 1)
+  allsites$site <- gsub("[^a-zA-Z]", "", allsites$X)
   
-  allsites_train <- allsites[(allsites$year %in% c("2005", "2004")), ]
-  allsites_test <- allsites[allsites$year == "2008", ]
-  attach(allsites_train)
-  
-  summary(allsites_train)
+  if (scenario == 'exp2'){
+    
+    allsites_train <- allsites[(allsites$site %in% c("sr","bz", "ly", "co")), ]
+    allsites_test <- allsites[allsites$site == "h", ]
+    
+  }else if (scenario =='exp3'){
+    
+    allsites_train <- allsites[(allsites$site %in% c("sr","bz", "ly", "co")), ]
+    allsites_train <- allsites_train[(allsites_train$year %in% c("2005", "2004")), ]
+    allsites_test <- allsites[allsites$year == "2008", ]
+    attach(allsites_train)
+    
+  }
+
   
   
   if (data_use == 'sparse'){
@@ -238,7 +247,7 @@ multisite_calibration <- function(data_use, save_data = FALSE){
     settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
     # run:
     fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
-    save(fit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_fit_", s, "_", data_use, ".Rdata"))
+    save(fit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_fit_", s, "_", scenario, "_", data_use, ".Rdata"))
     
     pars_fit <- pars
     pars_fit$def[pars2tune] <- MAP(fit)$parametersMAP
@@ -247,33 +256,42 @@ multisite_calibration <- function(data_use, save_data = FALSE){
     i = i+1
   }
   
-  save(CVfit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, ".Rdata"))
-  write.csv(CVfit, file=paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, ".csv"))
-  
-  testlength <- nrow(allsites[allsites_test$site==unique(allsites_test$site)[1],])
-  
+  save(CVfit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".Rdata"))
+  write.csv(CVfit, file=paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".csv"))
+
+    
   gpp_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
-  gpp_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
+  gpp_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
   et_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
-  et_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
+  et_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
   sw_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
-  sw_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
+  sw_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
+
+  #testlength <- nrow(allsites[allsites_test$site==unique(allsites_test$site)[1],])
+  #gpp_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
+  #gpp_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
+  #et_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
+  #et_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
+  #sw_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
+  #sw_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
   
-  load(file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, ".Rdata"))
+
+  load(file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".Rdata"))
+  
   i <- 1
   for (s in unique(allsites_train$site)){
     
-    load(file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_fit_", s, "_", data_use, ".Rdata"))
+    #load(file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_fit_", s, "_", data_use, ".Rdata"))
     
-    test_df <- allsites[allsites_test$site==s,]
+    test_df <- allsites_test
     
-    gpp_train[,i] <- PRELES(PAR=allsites_train$PAR, TAir=allsites_train$Tair, VPD=allsites_train$VPD, Precip=allsites_train$Precip, CO2=allsites_train$CO2, fAPAR=allsites_train$fapar, p=CVfit[,i])$GPP
+    gpp_train[,i] <- PRELES(PAR=allsites_train$PAR, TAir=allsites_train$Tair, VPD=allsites_train$VPD, Precip=allsites_train$Precip, CO2=allsites_train$CO2, fAPAR=allsites_train$fapar, DOY=allsites_train$DOY, p=CVfit[,i])$GPP
     gpp_test[,i] <- PRELES(PAR=test_df$PAR, TAir=test_df$Tair, VPD=test_df$VPD, Precip=test_df$Precip, CO2=test_df$CO2, fAPAR=test_df$fapar, p=CVfit[,i])$GPP
     
-    et_train[,i] <- PRELES(PAR=allsites_train$PAR, TAir=allsites_train$Tair, VPD=allsites_train$VPD, Precip=allsites_train$Precip, CO2=allsites_train$CO2, fAPAR=allsites_train$fapar, p=CVfit[,i])$ET
+    et_train[,i] <- PRELES(PAR=allsites_train$PAR, TAir=allsites_train$Tair, VPD=allsites_train$VPD, Precip=allsites_train$Precip, CO2=allsites_train$CO2, fAPAR=allsites_train$fapar, DOY=allsites_train$DOY,p=CVfit[,i])$ET
     et_test[,i] <- PRELES(PAR=test_df$PAR, TAir=test_df$Tair, VPD=test_df$VPD, Precip=test_df$Precip, CO2=test_df$CO2, fAPAR=test_df$fapar, p=CVfit[,i])$ET
     
-    sw_train[,i] <- PRELES(PAR=allsites_train$PAR, TAir=allsites_train$Tair, VPD=allsites_train$VPD, Precip=allsites_train$Precip, CO2=allsites_train$CO2, fAPAR=allsites_train$fapar, p=CVfit[,i])$SW
+    sw_train[,i] <- PRELES(PAR=allsites_train$PAR, TAir=allsites_train$Tair, VPD=allsites_train$VPD, Precip=allsites_train$Precip, CO2=allsites_train$CO2, fAPAR=allsites_train$fapar, DOY=allsites_train$DOY, p=CVfit[,i])$SW
     sw_test[,i] <- PRELES(PAR=test_df$PAR, TAir=test_df$Tair, VPD=test_df$VPD, Precip=test_df$Precip, CO2=test_df$CO2, fAPAR=test_df$fapar, p=CVfit[,i])$SW
     
     i <- i+1
@@ -288,22 +306,22 @@ multisite_calibration <- function(data_use, save_data = FALSE){
   allsites_train$SWp <- apply(sw_train, 1, mean)
   allsites_test$SWp <- apply(sw_test, 1, mean)
   
-  i <-1
-  for (site in unique(allsites_test$site)){
-     allsites[allsites_test$site==site,]$GPPp <- gpp_test[,i]
-     allsites[allsites_test$site==site,]$ETp <- et_test[,i]
-     allsites[allsites_test$site==site,]$SWp <- sw_test[,i]
-     i <- i+1
-  }
+  
+  #if (scenario=='exp3'){
+  #  i <-1
+  #  for (site in unique(allsites_test$site)){
+  #     allsites[allsites_test$site==site,]$GPPp <- gpp_test[,i]
+  #     allsites[allsites_test$site==site,]$ETp <- et_test[,i]
+  #     allsites[allsites_test$site==site,]$SWp <- sw_test[,i]
+  #     i <- i+1
+  #  }
+  #}
   
   if (save_data){
     allsitesF <- rbind(allsites_train, allsites_test)
+    write.csv(allsitesF, file=paste0("~/PycharmProjects/physics_guided_nn/data/allsitesF_", scenario,"_", data_use, ".csv"), row.names = FALSE)
     
-    if (data_use== 'full'){
-      write.csv(allsitesF, file="~/PycharmProjects/physics_guided_nn/data/allsitesF.csv", row.names = FALSE)
-    }
-    
-    pdf(file="~/PycharmProjects/physics_guided_nn/results/Pmultisitefit_BayesPriors.pdf", width=15, height=12)
+    pdf(file=paste0("~/PycharmProjects/physics_guided_nn/plots/Pmultisitefit_BayesPriors", scenario,"_", data_use,".pdf"), width=15, height=12)
     par(mfrow=c(4, 4), mar=c(3,3,3,1))
     for (i in 1:ncol(fit[[1]]$X)){ # loop over parameters fitted
       #fit1[[1]]$chain[1]
@@ -315,51 +333,45 @@ multisite_calibration <- function(data_use, save_data = FALSE){
     dev.off()
   }
   
-  
-  
   ## Generate files for prediction results ##
   
-  save(gpp_train, file = paste0("~/PycharmProjects/physics_guided_nn/data/2GPPp_train_", data_use, ".Rdata"))
-  save(gpp_test, file = paste0("~/PycharmProjects/physics_guided_nn/data/2GPPp_test_", data_use, ".Rdata"))
+  #save(gpp_train, file = paste0("~/PycharmProjects/physics_guided_nn/data/2GPPp_train_", data_use, ".Rdata"))
+  #save(gpp_test, file = paste0("~/PycharmProjects/physics_guided_nn/data/2GPPp_test_", data_use, ".Rdata"))
   
+  #GPP_train <- apply(gpp_train, 1, mean)
+  #GPP_train_std <- apply(gpp_train, 1, sd)
   
-  GPP_train <- apply(gpp_train, 1, mean)
-  GPP_train_std <- apply(gpp_train, 1, sd)
-  
-  mae <- function(yhat, test=T, site = NA){
+  mae <- function(yhat, test=T, year = NA){
     if (test){
-      mae <- sum(abs(allsites_test[allsites_test$site == site,]$GPP - yhat))/length(yhat)
+      subset_obs <- allsites_test[allsites_test$year == year,]$GPP
+      subset_mod <- yhat[allsites_test$year == year]
+      mae <- sum(abs(subset_obs - subset_mod))/length(subset_mod)
     }else{
       mae <- sum(abs(allsites_train$GPP - yhat))/length(yhat)
     }
     return(mae)
   }
-  rmse <- function(yhat, test=T, site=NA){
+  rmse <- function(yhat, test=T, year=NA){
     if (test){
-      rmse <- sqrt(sum((allsites_test[allsites_test$site == site,]$GPP - yhat)^2)/length(yhat))
+      subset_obs <- allsites_test[allsites_test$year == year,]$GPP
+      subset_mod <- yhat[allsites_test$year == year]
+      rmse <- sqrt(sum((subset_obs - subset_mod)^2)/length(subset_mod))
     }else{
       rmse <- sqrt(sum((allsites_train$GPP - yhat)^2)/length(yhat))
     }
     return(rmse)
   }
   
-  perfpormance_preles_full <- matrix(NA, nrow=length(unique(allsites_train$site)), ncol=4)
-  perfpormance_preles_full[,1] <- apply(gpp_train, 2, rmse, test=F)
-  i <-1
-  for (site in unique(allsites_test$site)){
-    perfpormance_preles_full[i,2] <- apply(gpp_test[,i], 2, rmse, test=T, site=site)
-    i <- i+1
-  }
-  perfpormance_preles_full[,3] <- apply(gpp_train, 2, mae, test=F)
-  i <-1
-  for (site in unique(allsites_test$site)){
-    perfpormance_preles_full[i,2] <- apply(gpp_test[,i], 2, rmse, test=T, site=site)
-    i <- i+1
-  }
+  performance_preles <- matrix(NA, nrow=length(unique(allsites_train$site)), ncol=4)
+  performance_preles[,1] <- apply(gpp_train, 2, rmse, test=F)
+  performance_preles[,2] <- apply(gpp_test, 2, rmse, test=T, year=2008)
+    
+  performance_preles[,3] <- apply(gpp_train, 2, mae, test=F)
+  performance_preles[,4] <- apply(gpp_test, 2, mae, test=T, year=2008)
   
-  write.csv(perfpormance_preles_full, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/2preles_eval_", data_use, "_performance.csv"))
-  write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/2preles_eval_preds_test_", data_use, "2.csv"))
+  write.csv(performance_preles, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/2preles_eval_", data_use, "_", scenario, "_performance.csv"))
+  write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/2preles_eval_preds_test_", data_use, "_", scenario, ".csv"))
 }
 
-multisite_calibration(data_use = 'sparse')
-multisite_calibration(data_use = 'full')
+multisite_calibration(data_use = 'full', scenario = 'exp3')
+multisite_calibration(data_use = 'sparse', scenario = 'exp3')
