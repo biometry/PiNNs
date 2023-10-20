@@ -27,21 +27,21 @@ def eval2reg(data_use='full', of=False, v=2):
     else:
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, eval=True)
         
-    train_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
-    train_y = y[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_x = x[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_y = y[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
     if data_use=="full":
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
     else:
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
-    test_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
-    test_y = y[((y.index.year == 2005) | (y.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_x = x[(x.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_y = y[(y.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
     train_x = train_x.drop(['site_x', 'site_y'],axis=1)
     test_x = test_x.drop(['site_x', 'site_y'],axis=1)
     print('TrainTest',train_x, train_y, test_x, test_y)
     yp.index = pd.DatetimeIndex(x.index)
-    yp = yp[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    yp = yp[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
         
     if data_use=="full":
         yp = yp.drop(pd.DatetimeIndex(['2005-01-01']))
@@ -95,14 +95,14 @@ def eval2reg(data_use='full', of=False, v=2):
         'eta': eta}
     print('HYPERPARAMETERS', hp)
     data_dir = "./data/"
-    data = f"reg_{data_use}"
+    data = f"3reg_{data_use}"
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=reg, emb=False, exp=2)
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/2reg_{data_use}_eval_tloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/2reg_{data_use}_eval_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'/scratch/project_2000527/pgnn/results/2reg_{data_use}_eval_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/3reg_{data_use}_eval_tloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/3reg_{data_use}_eval_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'/scratch/project_2000527/pgnn/results/3reg_{data_use}_eval_vaeloss.csv')
 
 
     mse = nn.MSELoss()
@@ -122,7 +122,7 @@ def eval2reg(data_use='full', of=False, v=2):
         i += 1
         #import model
         model = models.NMLP(x_train.shape[1], y_train.shape[1], model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"2reg_{data_use}_model{i}.pth"))))
+        model.load_state_dict(torch.load(''.join((data_dir, f"23reg_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)
@@ -144,9 +144,9 @@ def eval2reg(data_use='full', of=False, v=2):
     print(performance)
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/2reg_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project_2000527/pgnn/results/2reg_eval_preds_{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project_2000527/pgnn/results/2reg_eval_preds_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/3reg_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project_2000527/pgnn/results/3reg_eval_preds_{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project_2000527/pgnn/results/3reg_eval_preds_{data_use}_test.csv')
 
 
 

@@ -30,13 +30,14 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False, v=2):
     '''
 
     if data_use == 'sparse':
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, sparse=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, sparse=True, eval=True)
     else:
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, eval=True)
 
     # select NAS data
-    train_x = x[x.index.year==2005]
-    train_y = y[y.index.year==2005]
+    train_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_y = y[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    
     if data_use == "full":
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
@@ -45,12 +46,14 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False, v=2):
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
     print(x.index)
     
-    test_x = x[x.index.year==2008]
-    test_y = y[y.index.year==2008]
-    #test_x = test_x.drop(pd.DatetimeIndex(['2008-01-01']))
-    #test_y = test_y.drop(pd.DatetimeIndex(['2008-01-01']))    
+    test_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_y = y[((y.index.year == 2005) | (y.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
 
-    splits = 5
+    train_x = train_x.drop(['site_x', 'site_y'],axis=1)
+    test_x = test_x.drop(['site_x', 'site_y'],axis=1)
+    
+
+    splits = 4
     print(splits)
     print('TRAINTEST', train_x, train_y, test_x, test_y)
     train_y = train_y.to_frame()

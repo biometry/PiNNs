@@ -24,25 +24,34 @@ args = parser.parse_args()
 
 def eval2res(data_use='full', of=False, v=2):
     if data_use == 'sparse':
-        x, y, xt = utils.loaddata('exp2p', 1, dir="./data/", raw=True, sparse=True)
+        x, y, xt = utils.loaddata('exp2p', 1, dir="./data/", raw=True, sparse=True, eval=True) #1
     else:
-        x, y, xt = utils.loaddata('exp2p', 1, dir="./data/", raw=True)
+        x, y, xt = utils.loaddata('exp2p', 1, dir="./data/", raw=True, eval=True) #1
 
     print("OUUTT",x,y,xt)
     # select NAS data
     print(x.index)
-    train_x = x[x.index.year==2005]
-    train_y = y[y.index.year==2005]
+    
+
+    train_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_y = y[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    
+    
     if data_use=="full":
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
     else:
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
-    test_x = x[x.index.year==2008]
-    test_y = y[y.index.year==2008]
+
+    test_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_y = y[((y.index.year == 2005) | (y.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
+
+    train_x = train_x.drop(['site_x', 'site_y'],axis=1)
+    test_x = test_x.drop(['site_x', 'site_y'],axis=1)
+    
         
-    splits = 5
+    splits = 4
     print(splits)
     print(x, y)
     train_y = train_y.to_frame()

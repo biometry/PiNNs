@@ -23,11 +23,11 @@ def evalres(data_use='full', of=False, v=2):
 
     if data_use == 'sparse':
         # Load hyytiala
-        x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True, sparse=True)
+        x, y, xt = utils.loaddata('validation', 0, dir="./data/", raw=True, sparse=True) #1
         print('XT', xt)
         yp = pd.read_csv("./data/hyytialaF_sparse.csv")        
     else:
-        x, y, xt = utils.loaddata('validation', 1, dir="./data/", raw=True)
+        x, y, xt = utils.loaddata('validation', 0, dir="./data/", raw=True) #history=1
         yp = pd.read_csv("./data/hyytialaF_full.csv")
         
     
@@ -39,18 +39,18 @@ def evalres(data_use='full', of=False, v=2):
     
     
     n = [1,1]
-    x_tr, n = utils.add_history(yptr, n, 1)
-    x_te, n = utils.add_history(ypte, n, 1)
+    x_tr = yptr #x_tr, n = utils.add_history(yptr, n, 1)
+    x_te = ypte #x_te, n = utils.add_history(ypte, n, 1)
     x_tr, m, std = utils.standardize(x_tr, get_p=True)
     x_te = utils.standardize(x_te, [m, std])
 
     #y = y.to_frame()
-    train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])][1:]
-    train_y = y[~y.index.year.isin([2004,2005,2007,2008])][1:]
+    train_x = x_tr[~x_tr.index.year.isin([2004,2005,2007,2008])]#[1:]
+    train_y = y[~y.index.year.isin([2004,2005,2007,2008])]#[1:]
     splits = len(train_x.index.year.unique())
 
-    test_x = x_te[x_te.index.year == 2008][1:]
-    test_y = y[y.index.year == 2008][1:]
+    test_x = x_te[x_te.index.year == 2008]#[1:]
+    test_y = y[y.index.year == 2008]#[1:]
     print('TRAIN_X', train_x, train_y, test_x, test_y)
     splits = len(train_x.index.year.unique())
 
@@ -72,7 +72,7 @@ def evalres(data_use='full', of=False, v=2):
         lr = b[0]
         bs = b[1]
     if v == 2:
-        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/NresHP_{data_use}_new.csv")
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EMBresHP_{data_use}_new.csv") #f"/scratch/project_2000527/pgnn/results/NresHP_{data_use}_new.csv")
         a = d.loc[d.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         parms = np.array(np.matrix(a.parameters)).ravel()
@@ -95,7 +95,7 @@ def evalres(data_use='full', of=False, v=2):
 
 
     data_dir = "./data/"
-    data = f"res_{data_use}"
+    data = f"EMBres_{data_use}"
 
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, res=1, ypreles=None)
     print(tloss)
@@ -107,21 +107,21 @@ def evalres(data_use='full', of=False, v=2):
     t4 = []
     #t5 = []
     #t6 = []
-    for i in range(5000):
+    for i in range(5):
         t1.append(train_loss[0][i])
         t2.append(train_loss[1][i])
         t3.append(train_loss[2][i])
         t4.append(train_loss[3][i])
         #t5.append(train_loss[4][i])
         #t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'/scratch/project_2000527/pgnn/results/res_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'/scratch/project_2000527/pgnn/results/EMBres_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
     v4 = []
     #v5 = []
     #v6 = []
-    for i in range(5000):
+    for i in range(5):
         v1.append(val_loss[0][i])
         v2.append(val_loss[1][i])
         v3.append(val_loss[2][i])
@@ -129,7 +129,7 @@ def evalres(data_use='full', of=False, v=2):
         #v5.append(val_loss[4][i])
         #v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'/scratch/project_2000527/pgnn/results/res_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'/scratch/project_2000527/pgnn/results/EMBres_vloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -149,7 +149,7 @@ def evalres(data_use='full', of=False, v=2):
         i += 1
         #import model
         model = models.NMLP(x_train.shape[1], y.shape[1], model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"res_{data_use}_model{i}.pth"))))
+        model.load_state_dict(torch.load(''.join((data_dir, f"EMBres_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)
@@ -170,9 +170,9 @@ def evalres(data_use='full', of=False, v=2):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/res_eval__{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project_2000527/pgnn/results/res_eval_preds__{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project_2000527/pgnn/results/res_eval_preds__{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/EMBres_eval__{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project_2000527/pgnn/results/EMBres_eval_preds__{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project_2000527/pgnn/results/EMBres_eval_preds__{data_use}_test.csv')
 
 if __name__ == '__main__':
     evalres(args.d)

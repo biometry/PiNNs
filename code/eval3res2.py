@@ -32,8 +32,8 @@ def eval2res2(data_use='full', of=False, v=2):
     # select NAS data
     print(x.index)
 
-    train_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
-    train_y = y[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_x = x[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_y = y[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
     
     if data_use=="full":
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
@@ -42,18 +42,18 @@ def eval2res2(data_use='full', of=False, v=2):
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
 
-    test_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
-    test_y = y[((y.index.year == 2005) | (y.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_x = x[(x.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_y = y[(y.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
     
     yp.index = x.index
-    yp_tr = yp[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    yp_tr = yp[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
     if data_use=="full":
         yp_tr = yp_tr.drop(pd.DatetimeIndex(['2005-01-01']))
     else:
         yp_tr = yp_tr.drop(pd.DatetimeIndex(['2005-01-05']))
     yp_tr = yp_tr.drop(yp.columns.difference(['GPPp']), axis=1)
 
-    yp_te = yp[((y.index.year == 2005) | (y.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
+    yp_te = yp[(y.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
     yp_te = yp_te.drop(yp.columns.difference(['GPPp']), axis=1)
     train_x = train_x.drop(['site_x', 'site_y'],axis=1)
     test_x = test_x.drop(['site_x', 'site_y'],axis=1)
@@ -105,14 +105,14 @@ def eval2res2(data_use='full', of=False, v=2):
             'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "./data/"
-    data = f"res2_{data_use}"
+    data = f"3res2_{data_use}"
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2, res=2, ypreles = yp_tr)
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/2res2_{data_use}_eval_tloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/2res2_{data_use}_eval_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'/scratch/project_2000527/pgnn/results/2res2_{data_use}_eval_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/3res2_{data_use}_eval_tloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/3res2_{data_use}_eval_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'/scratch/project_2000527/pgnn/results/3res2_{data_use}_eval_vaeloss.csv')
 
 
     # Evaluation
@@ -131,7 +131,7 @@ def eval2res2(data_use='full', of=False, v=2):
         i += 1
         #import model
         model = models.RES(x_train.shape[1], 1, model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"2res2_{data_use}_model{i}.pth"))))
+        model.load_state_dict(torch.load(''.join((data_dir, f"23res2_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train, tr_yp)
@@ -152,9 +152,9 @@ def eval2res2(data_use='full', of=False, v=2):
                     'test_mae': test_mae}
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/2res2_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project_2000527/pgnn/results/2res2_eval_preds_{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project_2000527/pgnn/results/2res2_eval_preds_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/3res2_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'/scratch/project_2000527/pgnn/results/3res2_eval_preds_{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'/scratch/project_2000527/pgnn/results/3res2_eval_preds_{data_use}_test.csv')
 
 
 if __name__ == '__main__':

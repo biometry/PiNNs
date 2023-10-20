@@ -18,6 +18,7 @@ from slbfgs import sLBFGS
 
 
 def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptation=None, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None, qn =False):
+    torch.manual_seed(36)
     print("Hyperparams", hparams)
     nepoch = hparams['epochs']
     batchsize = hparams['batchsize']
@@ -97,6 +98,24 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                 model = models.EMB(X.shape[1], Y.shape[1], model_design['layersizes'], 27, 1)
             else:
                 model = models.sEMB(X.shape[1], Y.shape[1], model_design['layersizes'], 1, 3) #models.EMB
+                if data == "EMBpar":
+                    cid=0
+                    for child in model.children():
+                        cid+=1
+                        print("LAYER ", cid)
+                        print(child.parameters())
+                        if cid > 1:
+                            for param in child.parameters():
+                                param.requires_grad = False
+                    print("OVERVIEW")
+                    cid=0
+                    for child in model.children():
+                        cid+=1
+                        print("LAYER ", cid)
+                        print(child.parameters())
+                        for param in child.parameters():
+                            print(param.requires_grad)
+                            
         elif res == 2:
             model = models.RES(X.shape[1], Y.shape[1], model_design['layersizes'])
         elif not domain_adaptation is None:
@@ -110,8 +129,10 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             if domain_adaptation == 1:
                 #print("DOMAIN ADAPTAION: FINETUNING WEIGHTS")
                 model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
-                if exp == 2:
+                if exp == 2 and data.startswith("m"):
                     model.load_state_dict(torch.load(os.path.join(data_dir, f"2{data}_model{i+1}.pth")))
+                elif exp == 2 and data.startswith("3"):
+                    model.load_state_dict(torch.load(os.path.join(data_dir, f"2{data[1:]}_model{i+1}.pth")))
                 else:
                     model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i+1}.pth")))
 
@@ -119,8 +140,10 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             # Feature extraction: reuse weight from pretraining and retrain only last layer
             elif domain_adaptation > 1:
                 model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
-                if exp == 2:
+                if exp == 2 and data.startswith("m"):
                     model.load_state_dict(torch.load(os.path.join(data_dir, f"2{data}_model{i + 1}.pth")))
+                elif exp == 2 and data.startswith("3"):
+                    model.load_state_dict(torch.load(os.path.join(data_dir, f"2{data[1:]}_model{i+1}.pth")))
                 else:
                     model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i + 1}.pth")))
                 nlayers = len(model.layers)
@@ -135,7 +158,8 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                             p.requires_grad = False
         else:
             model = models.NMLP(X.shape[1], Y.shape[1], model_design['layersizes'])
-        #print("INIMODEL", model)
+
+        print("INIMODEL", model)
 
         criterion = nn.MSELoss()
         optimizer = optim.Adam(model.parameters(), lr = hparams['lr'])
@@ -182,8 +206,13 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                     elif emb:
                         if embtp is None:
                             loss = criterion(y_hat, yt) + eta*criterion(p, yp)
-                        elif exp!=2:
+                        elif exp!=2 and data != "EMBpar":
                             loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
+                        elif data == "EMBpar":
+                            print("Criterion")
+                            loss = criterion(p[..., 0:1], yp)
+                            print(loss)
+                            
                         else:
                             loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
                     else:
@@ -256,6 +285,9 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                             loss = criterion(y_hat_val, y_vall) + eta*criterion(pv, yp_vall)
                         elif exp!=2:
                             loss = criterion(y_hat_val, y_vall) + eta*criterion(pv[..., 0:1], yp_vall)
+                        elif data=="EMBpar":
+                            loss = criterion(pv[..., 0:1], yp_vall)
+                            print(loss)
                         else:
                             loss = criterion(y_hat_val, y_vall) + eta*criterion(pv[..., 0:1], yp_vall)
                     else:

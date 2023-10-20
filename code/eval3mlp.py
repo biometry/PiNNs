@@ -30,8 +30,8 @@ def eval2mlp(data_use='full', of=False, v=2):
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, eval=True)
 
     # select NAS data
-    train_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
-    train_y = y[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_x = x[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_y = y[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
 
     if data_use == "full":
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
@@ -39,8 +39,8 @@ def eval2mlp(data_use='full', of=False, v=2):
     else:
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
-    test_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
-    test_y = y[((y.index.year == 2005) | (y.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_x = x[(x.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_y = y[(y.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
     #test_x = test_x.drop(pd.DatetimeIndex(['2008-01-01']))
     #test_y = test_y.drop(pd.DatetimeIndex(['2008-01-01']))    
     train_x = train_x.drop(['site_x', 'site_y'],axis=1)
@@ -91,15 +91,15 @@ def eval2mlp(data_use='full', of=False, v=2):
             'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "./data/"
-    data = f"mlp_{data_use}"
+    data = f"3mlp_{data_use}"
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
 
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2)
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_trainloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/3mlp_{data_use}_trainloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/3mlp_{data_use}_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'/scratch/project_2000527/pgnn/results/3mlp_{data_use}_vaeloss.csv')
     
     
      # Evaluation
@@ -120,7 +120,7 @@ def eval2mlp(data_use='full', of=False, v=2):
         i += 1
         #import model
         model = models.NMLP(test_x.shape[1], 1, model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"2mlp_{data_use}_model{i}.pth"))))
+        model.load_state_dict(torch.load(''.join((data_dir, f"23mlp_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)
@@ -142,9 +142,9 @@ def eval2mlp(data_use='full', of=False, v=2):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/3mlp_eval_{data_use}_performance.csv')
     #pd.DataFrame.from_dict(preds_train).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_eval_preds_train.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_eval_preds_test.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'/scratch/project_2000527/pgnn/results/3mlp_{data_use}_eval_preds_test.csv')
 
 
     

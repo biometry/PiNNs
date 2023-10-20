@@ -3,7 +3,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import preles
+#import preles
 
 # naive feed forward MLP
 class NMLP(nn.Module):
@@ -295,21 +295,18 @@ class sEMB(nn.Module):
         
         
     def forward(self, x, cin, tp=None, sw=None):
-        print("forward")
+        
         pinit = self.parnet(x)
-        print("pinit")
         p = sparameter_constraint(pinit.type(torch.float64))
-        print("constraint")
         ppreds = sphysical_forward(p.type(torch.float64), cin, tp, sw)
-        print("phyforwardpass")
         y_hat = self.resnet(ppreds.type(torch.float32))
-        #print('PARAMETERS', ppreds.flatten())
+        
             
         return y_hat, ppreds.type(torch.float32)
         
         
 def sparameter_constraint(parameters):
-    p1 = torch.clamp(parameters[..., 0:1], min=-100, max=100).type(torch.float64)
+    p1 = torch.clamp(parameters[..., 0:1], min=-10, max=10).type(torch.float64)
     #p2 = torch.relu(parameters[..., 1:2]).type(torch.float64)
     #p3 = torch.relu(parameters[..., 2:3]).type(torch.float64)
     #p4 = parameters[..., 3:4].type(torch.float64)
@@ -352,7 +349,7 @@ def sphysical_forward(parameters, input_data, tp=None, sw=None):
     p2 = torch.tensor(0.45 , dtype=torch.float64) #torch.mean(parameters[..., 1:2], dtype=torch.float64) #torch.tensor(0.45, dtype=torch.float64) #torch.mean(parameters[..., 1:2], dtype=torch.float64)
     p3 = torch.tensor(0.118, dtype=torch.float64) #torch.mean(parameters[..., 2:3], dtype=torch.float64) #torch.tensor(0.118, dtype=torch.float64) #torch.mean(parameters[..., 2:3], dtype=torch.float64)
     p4 = torch.tensor(3, dtype=torch.float64) #torch.mean(parameters[..., 3:4], dtype=torch.float64)
-    p5 = torch.tensor(0.748018, dtype=torch.float64) #torch.mean(parameters[..., 4:5], dtype=torch.float64) #torch.tensor(0.748018, dtype=torch.float64) torch.mean(parameters[..., 4:5], dtype=torch.float64)
+    p5 = torch.mean(parameters[..., 0:1], dtype=torch.float64) #torch.tensor(0.748018, dtype=torch.float64) torch.mean(parameters[..., 4:5], dtype=torch.float64)
     p6 = torch.tensor(10.93, dtype=torch.float64) #torch.mean(parameters[..., 5:6], dtype=torch.float64)*12 #torch.tensor(13.233830, dtype=torch.float64) #torch.mean(parameters[..., 5:6], dtype=torch.float64)*12
     p7 = torch.tensor(-3.063, dtype=torch.float64) #torch.mean(parameters[..., 6:7], dtype=torch.float64)*10  #torch.tensor(-3.965787, dtype=torch.float64)
     p8 = torch.tensor(17.72, dtype=torch.float64) #torch.mean(parameters[..., 7:8], dtype=torch.float64)*10  #torch.tensor(18.766960, dtype=torch.float64) #torch.mean(parameters[..., 7:8], dtype=torch.float64)*10

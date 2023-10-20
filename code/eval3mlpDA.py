@@ -1,9 +1,7 @@
-# !/usr/bin/env python
-# coding: utf-8
-import utils
 import torch
 import pandas as pd
 import numpy as np
+import utils
 import models
 import torch.nn as nn
 import torch.optim as optim
@@ -17,34 +15,43 @@ import csv
 import training
 import argparse
 
-
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
+parser.add_argument('-a', metavar='da', type=int, help='define type of domain adaptation')
+#parser.add_argument('-s', metavar='splits', type=int, help='number of splits for CV')
 args = parser.parse_args()
 
+print(args)
 
-def eval2mlp(data_use='full', of=False, v=2):
+def eval2mlpDA(data_use="full", da=1, exp = "exp2", of=False, v=2):
+    '''
+    da specifies Domain Adaptation:                                                                                                                                        da = 1: using pretrained weight and fully retrain network                                                                                                 
+        da = 2: retrain only last layer.
+    '''
+
     if data_use == 'sparse':
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, sparse=True,eval=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, sparse=True, eval=True)
     else:
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, eval=True)
 
     # select NAS data
-    train_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
-    train_y = y[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
-
+    train_x = x[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_y = y[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
+    
     if data_use == "full":
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
     else:
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
-    test_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
-    test_y = y[((y.index.year == 2005) | (y.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
-    #test_x = test_x.drop(pd.DatetimeIndex(['2008-01-01']))
-    #test_y = test_y.drop(pd.DatetimeIndex(['2008-01-01']))    
+    print(x.index)
+    
+    test_x = x[(x.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_y = y[(y.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
+
     train_x = train_x.drop(['site_x', 'site_y'],axis=1)
     test_x = test_x.drop(['site_x', 'site_y'],axis=1)
+    
 
     splits = 4
     print(splits)
@@ -52,20 +59,29 @@ def eval2mlp(data_use='full', of=False, v=2):
     train_y = train_y.to_frame()
     test_y = test_y.to_frame()
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
+
+    #train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
+    #test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
+    #print('XY: ', train_x, train_y)
+    
+    # Load results from NAS
+    # Architecture
     if v!=2:
-        mlp_as = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_mlpAS_{data_use}.csv")
-        a = mlp_as.loc[mlp_as.ind_mini.idxmin()][1:5]
+        res_as = pd.read_csv(f"./results/EX2_mlpAS_{data_use}.csv")
+        a = res_as.loc[res_as.ind_mini.idxmin()][1:5]
         b = a.to_numpy()
         layersizes = list(b[np.isfinite(b)].astype(int))
         print('layersizes', layersizes)
+        # Debugging: Try different model structure, smaller last layer size
+        # layersizes[-1]=128
         model_design = {'layersizes': layersizes}
-        mlp_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2_mlpHP_{data_use}.csv")
-        a = mlp_hp.loc[mlp_hp.ind_mini.idxmin()][1:3]
+    
+        # Hyperparameters
+        res_hp = pd.read_csv(f"./results/EX2_mlpHP_{data_use}.csv")
+        a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
         b = a.to_numpy()
-        lr = b[0]
         bs = b[1]
-
-        
+        lr = b[0]
     else:
         d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EX2mlpHP_{data_use}_new.csv")
         a = d.loc[d.ind_mini.idxmin()]
@@ -76,33 +92,30 @@ def eval2mlp(data_use='full', of=False, v=2):
         model_design = {'layersizes': layersizes}
         print('layersizes', layersizes)
         model_design = {'layersizes': layersizes}
-
-    
+                                                    
+    # Learningrate
     if of:
-        res_hp = pd.read_csv(f"/scratch/project_2000527/pgnn/results/2mlp_lr_{data_use}.csv")
+        res_hp = pd.read_csv(f"./results/2mlp_lr_{data_use}.csv")
         a = res_hp.loc[res_hp.ind_mini.idxmin()][1:3]
         b = a.to_numpy()
         lr = b[0]
-
-
-
+    
+    # originally 5000 epochs
     hp = {'epochs': 5000,
-      'batchsize': int(bs),
-            'lr': lr}
+          'batchsize': int(bs),
+          'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "./data/"
-    data = f"mlp_{data_use}"
-    #print('DATA', train_x, train_y)
-    #print('TX', train_x, train_y)
+    data = f"3mlpDA_pretrained_{data_use}_{exp}"
+    
+    td, se, ae  = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, domain_adaptation=da, reg=None, emb=False, hp=False, exp=2)
 
-    td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2)
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_trainloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_vaeloss.csv')
-    
-    
-     # Evaluation
+    pd.DataFrame.from_dict(td).to_csv(f'3mlpDA_{data_use}_eval_tloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'3mlpDA_{data_use}_eval_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'3mlpDA_{data_use}_eval_vaeloss.csv')
+
+    # Evaluation
     mse = nn.MSELoss()
     mae = nn.L1Loss()
     x_train, y_train = torch.tensor(train_x.to_numpy(), dtype=torch.float32), torch.tensor(train_y.to_numpy(), dtype=torch.float32)
@@ -120,7 +133,7 @@ def eval2mlp(data_use='full', of=False, v=2):
         i += 1
         #import model
         model = models.NMLP(test_x.shape[1], 1, model_design['layersizes'])
-        model.load_state_dict(torch.load(''.join((data_dir, f"2mlp_{data_use}_model{i}.pth"))))
+        model.load_state_dict(torch.load(''.join((data_dir, f"2{data}_{da}_trained_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train = model(x_train)
@@ -142,12 +155,50 @@ def eval2mlp(data_use='full', of=False, v=2):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/3mlpDA{da}_eval_performance_{data_use}.csv')
     #pd.DataFrame.from_dict(preds_train).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_eval_preds_train.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'/scratch/project_2000527/pgnn/results/2mlp_{data_use}_eval_preds_test.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/3mlpDA{da}_eval_preds_test_{data_use}.csv')
+
+
+
+
+
+if __name__ == '__main__':
+   eval2mlpDA(data_use=args.d, da=args.a)
+   
+
+   
+
+
+'''
+with open('mlp_eval_performance.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
+    w = csv.DictWriter(f, performance.keys())
+    w.writeheader()
+    w.writerow(performance)
+
+
+with open('mlp_eval_preds.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
+    w = csv.DictWriter(f, preds.keys())
+    w.writeheader()
+    w.writerow(preds)
+'''
+    
+
 
 
     
 
-if __name__ == '__main__':
-    eval2mlp(args.d)
+
+
+
+
+
+
+
+
+
+
+
+
+
+

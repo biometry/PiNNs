@@ -23,7 +23,7 @@ args = parser.parse_args()
 
 print(args)
 
-def evalmlpDA(data_use="full", da=1, of=False, v=2):
+def evalmlpDA(data_use="full", da=1, of=False, v=2, N=5000):
     '''
     da specifies Domain Adaptation:                                                                                                                                       da = 1: using pretrained weight and fully retrain network                                                                                                 
         da = 2: retrain only last layer.
@@ -84,7 +84,7 @@ def evalmlpDA(data_use="full", da=1, of=False, v=2):
           'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "./data/"
-    data = f"mlpDA_pretrained_{data_use}"
+    data = f"mlpDA_pretrained_{data_use}_{N}"
     
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, domain_adaptation=da, reg=None, emb=False, hp=False)
     print(tloss)
@@ -118,11 +118,11 @@ def evalmlpDA(data_use="full", da=1, of=False, v=2):
       #  v5.append(val_loss[4][i])
       #  v6.append(val_loss[5][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/mlpDA{da}_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/mlpDA{da}_vloss_{data_use}_{N}.csv')
     #tloss = training.train(hp, model_design, train_x, train_y, data_dir, None, data, reg=None, emb=False)
     #tloss = cv.train(hp, model_design, train_x, train_y, data_dir=data_dir, data=data, splits=splits)
     #print("LOSS", tloss)
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/mlpDA{da}_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/mlpDA{da}_trainloss_{data_use}_{N}.csv')
     
     # Evaluation
     mse = nn.MSELoss()
@@ -164,9 +164,9 @@ def evalmlpDA(data_use="full", da=1, of=False, v=2):
         
         print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA{da}_eval_performance_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA{da}_eval_preds_train_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA{da}_eval_preds_test_{data_use}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA{da}_eval_performance_{data_use}_{N}.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA{da}_eval_preds_train_{data_use}_{N}.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA{da}_eval_preds_test_{data_use}_{N}.csv')
 
 
 

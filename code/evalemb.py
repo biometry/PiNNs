@@ -79,19 +79,30 @@ def evalemb(data_use='full', of=False, v=2):
     test_x.index, test_y.index, yp_te.index, rte.index = np.arange(0, len(test_x)), np.arange(0, len(test_y)), np.arange(0, len(yp_te)), np.arange(0, len(rte))
     print("train_x", train_x, rtr)
 
+    if v==1:
+        res_as = pd.read_csv(f"./Nemb2_{data_use}_AS.csv")
+        a = res_as.loc[res_as.val_loss.idxmin()][1:2]
+        b = str(a.values).split("[")[-1].split("]")[0].split(",")
+        c = [int(bb) for bb in b]
+        a = res_as.loc[res_as.val_loss.idxmin()][2:3]
+        b = str(a.values).split("[")[-1].split("]")[0].split(",")
+        d = [int(bb) for bb in b]
+        layersizes = [c, d]
+        print('layersizes', layersizes)
 
-    res_as = pd.read_csv(f"./Nemb2_{data_use}_AS.csv")
-    a = res_as.loc[res_as.val_loss.idxmin()][1:2]
-    b = str(a.values).split("[")[-1].split("]")[0].split(",")
-    c = [int(bb) for bb in b]
-    a = res_as.loc[res_as.val_loss.idxmin()][2:3]
-    b = str(a.values).split("[")[-1].split("]")[0].split(",")
-    d = [int(bb) for bb in b]
-    layersizes = [c, d]
-    print('layersizes', layersizes)
+        model_design = {'layersizes': layersizes}
 
-    model_design = {'layersizes': layersizes}
-
+    elif v==2:
+        d = pd.read_csv(f"/scratch/project_2000527/pgnn/results/EMBresHP_{data_use}_new.csv")
+        a = d.loc[d.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        parms = np.array(np.matrix(a.parameters)).ravel()
+        lr = parms[0]
+        bs = int(parms[1])
+        layersizes = [[32], layersizes]
+        model_design = {'layersizes': layersizes}
+        print('layersizes', layersizes)
+    
     #res_hp = pd.read_csv("results/Nemb2HP_m300.csv")
     #a = res_hp.loc[res_hp.val_loss.idxmin()][1:4]
     #b = a.to_numpy()
@@ -106,15 +117,14 @@ def evalemb(data_use='full', of=False, v=2):
 
 
     hp = {'epochs': 5000,
-      'batchsize': 365,
-      'lr': 0.001,
+      'batchsize': 16,
+      'lr': 0.1,
       'eta': 0.2
       }
 
-    print(hp)
-    qn =True
+    qn = False
     data_dir = "./data/"
-    data = "emb1"
+    data = "EMBpar"
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data,raw=rtr, reg=yp_tr, emb=True, ypreles=None, exp=1, embtp=2, sw= (swmn, swstd), qn=qn)
     #pd.DataFrame.from_dict(tloss).to_csv('res2_test.csv')
     print(tloss)
@@ -133,7 +143,7 @@ def evalemb(data_use='full', of=False, v=2):
         t4.append(train_loss[3][i])
         #t5.append(train_loss[4][i])
         #t6.append(train_loss[5][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'emb_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'EMBpar_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -144,7 +154,7 @@ def evalemb(data_use='full', of=False, v=2):
         v3.append(val_loss[2][i])
         v4.append(val_loss[3][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'emb_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'EMBpar_vloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -165,8 +175,8 @@ def evalemb(data_use='full', of=False, v=2):
     for i in range(splits):
         i += 1
         #import model
-        model = models.EMB(x_train.shape[1], y_train.shape[1], model_design['layersizes'], 27, 3)
-        model.load_state_dict(torch.load(''.join((data_dir, f"emb1_model{i}.pth"))))
+        model = models.sEMB(x_train.shape[1], y_train.shape[1], model_design['layersizes'], 1, 3)
+        model.load_state_dict(torch.load(''.join((data_dir, f"EMBpar_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             p_train, ptr = model(x_train, rtr, tp = 2, sw = (swmn, swstd))
@@ -189,11 +199,11 @@ def evalemb(data_use='full', of=False, v=2):
                'test_mae': test_mae}
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'emb_2eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'emb_2eval_{data_use}_preds_train.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'emb_2eval_{data_use}_preds_test.csv')
-    pd.DataFrame.from_dict(parameters_tr).to_csv(f'emb_2parameters_{data_use}_train.csv')
-    pd.DataFrame.from_dict(parameters_te).to_csv(f'emb_2parameters_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'EMBpar_2eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'EMBpar_2eval_{data_use}_preds_train.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'EMBpar_2eval_{data_use}_preds_test.csv')
+    pd.DataFrame.from_dict(parameters_tr).to_csv(f'EMBpar_2parameters_{data_use}_train.csv')
+    pd.DataFrame.from_dict(parameters_te).to_csv(f'EMBpar_2parameters_{data_use}_test.csv')
 
 
 if __name__ == '__main__':
