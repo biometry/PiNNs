@@ -191,7 +191,9 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
             data, mn, std = standardize(data, get_p=True)
         else:
 
+
             data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1))
+
 
 
 

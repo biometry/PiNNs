@@ -8,3 +8,12 @@ build/
 preles.log
 notebooks/
 preles.egg-info/
+
+simulations/
+results_final/
+models/
+plots/
+NAS/
+data
+unused
+plots.zip
