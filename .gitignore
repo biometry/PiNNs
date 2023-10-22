@@ -11,6 +11,9 @@ preles.egg-info/
 
 simulations/
 results_final/
+results_exp1/
+results_exp2/
+results_exp3/
 models/
 plots/
 NAS/
