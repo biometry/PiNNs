@@ -1,5 +1,5 @@
 ## Fit PRELES to site data
-
+setwd("~/PycharmProjects/physics_guided_nn/code")
 #### install/load relevant packages ####
 #devtools::install_github('MikkoPeltoniemi/Rpreles')
 library(Rpreles)
@@ -183,7 +183,7 @@ singlesite_calibration(data_use = 'sparse')
 ##=======================##
 
 
-multisite_calibration <- function(data_use, scenario = 'exp2', save_data = FALSE){
+multisite_calibration <- function(fit, data_use = 'sparse', scenario = 'exp2', save_data = FALSE){
   
   #load("EddyCovarianceDataBorealSites.rdata") # data for one site: s1-s4
   #attach(s1)
@@ -196,14 +196,13 @@ multisite_calibration <- function(data_use, scenario = 'exp2', save_data = FALSE
   if (scenario == 'exp2'){
     
     allsites_train <- allsites[(allsites$site %in% c("sr","bz", "ly", "co")), ]
-    allsites_test <- allsites[allsites$site == "h", ]
+    allsites_test <- allsites[((allsites$site == "h") & (allsites$year != 2004)), ]
     
   }else if (scenario =='exp3'){
     
     allsites_train <- allsites[(allsites$site %in% c("sr","bz", "ly", "co")), ]
     allsites_train <- allsites_train[(allsites_train$year %in% c("2005", "2004")), ]
-    allsites_test <- allsites[allsites$year == "2008", ]
-    attach(allsites_train)
+    allsites_test <- allsites[((allsites$site == "h") & (allsites$year == "2008")), ]
     
   }
 
@@ -213,68 +212,61 @@ multisite_calibration <- function(data_use, scenario = 'exp2', save_data = FALSE
     allsites_train <- makesparse(allsites_train)
   }
   
+  if (fit){
   
-  load("~/PycharmProjects/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
-  # par # note that "-999" is supposed to indiate NA!
-  pars <- par # unfortunate naming "par" replaced by "pars"
-  rm(par)
-  pars[pars=="-999"] <- NA
-  pars # note that some parameters are set without uncertainty (e.g. soildepth)
-  
-  pars[pars$name=="nu", 4] <- 10 # was 5
-  pars2tune <- c(5:11, 14:18, 31) # note that we omit 32, as it refers to ET
-  thispar <- pars$def
-  names(thispar) <- pars$name
-  
-  #### Bayesian Fitting ####
-
-  CVfit <- matrix(NA, nrow=nrow(pars), ncol = length(unique(allsites_train$site)))
-  
-  i <- 1
-  for (s in unique(allsites_train$site)){
+    load("~/PycharmProjects/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
+    # par # note that "-999" is supposed to indiate NA!
+    pars <- par # unfortunate naming "par" replaced by "pars"
+    rm(par)
+    pars[pars=="-999"] <- NA
+    pars # note that some parameters are set without uncertainty (e.g. soildepth)
     
-    df <- allsites_train[allsites_train$site != s,]
-    print(s)
+    pars[pars$name=="nu", 4] <- 10 # was 5
+    pars2tune <- c(5:11, 14:18, 31) # note that we omit 32, as it refers to ET
+    thispar <- pars$def
+    names(thispar) <- pars$name
     
-    ell <- function(pars, data=df){
-      # pars is a vector the same length as pars2tune
-      thispar[pars2tune] <- pars
-      # likelihood function, first shot: normal density
-      with(data, sum(dnorm(df$GPP, mean=PRELES(PAR=df$PAR, TAir=df$Tair, VPD=df$VPD, Precip=df$Precip, CO2=df$CO2, fAPAR=df$fapar , p=thispar)$GPP, sd=thispar[31], log=T)))
+    #### Bayesian Fitting ####
+  
+    CVfit <- matrix(NA, nrow=nrow(pars), ncol = length(unique(allsites_train$site)))
+    
+    i <- 1
+    for (s in unique(allsites_train$site)){
+      
+      df <- allsites_train[allsites_train$site != s,]
+      print(s)
+      
+      ell <- function(pars, data=df){
+        # pars is a vector the same length as pars2tune
+        thispar[pars2tune] <- pars
+        # likelihood function, first shot: normal density
+        with(data, sum(dnorm(df$GPP, mean=PRELES(PAR=df$PAR, TAir=df$Tair, VPD=df$VPD, Precip=df$Precip, CO2=df$CO2, fAPAR=df$fapar , p=thispar)$GPP, sd=thispar[31], log=T)))
+      }
+      priors <- createUniformPrior(lower=pars$min[pars2tune], upper=pars$max[pars2tune], best=pars$def[pars2tune])
+      setup <- createBayesianSetup(likelihood=ell, prior=priors, parallel=T)
+      settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
+      # run:
+      fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
+      save(fit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_fit_", s, "_", scenario, "_", data_use, ".Rdata"))
+      
+      pars_fit <- pars
+      pars_fit$def[pars2tune] <- MAP(fit)$parametersMAP
+      CVfit[,i] <- pars_fit$def
+      
+      i = i+1
     }
-    priors <- createUniformPrior(lower=pars$min[pars2tune], upper=pars$max[pars2tune], best=pars$def[pars2tune])
-    setup <- createBayesianSetup(likelihood=ell, prior=priors, parallel=T)
-    settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
-    # run:
-    fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
-    save(fit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_fit_", s, "_", scenario, "_", data_use, ".Rdata"))
     
-    pars_fit <- pars
-    pars_fit$def[pars2tune] <- MAP(fit)$parametersMAP
-    CVfit[,i] <- pars_fit$def
-    
-    i = i+1
+    save(CVfit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".Rdata"))
+    write.csv(CVfit, file=paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".csv"))
+  
   }
   
-  save(CVfit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".Rdata"))
-  write.csv(CVfit, file=paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".csv"))
-
-    
   gpp_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
   gpp_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
   et_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
   et_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
   sw_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
   sw_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
-
-  #testlength <- nrow(allsites[allsites_test$site==unique(allsites_test$site)[1],])
-  #gpp_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
-  #gpp_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
-  #et_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
-  #et_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
-  #sw_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
-  #sw_test <- matrix(NA, nrow=testlength, ncol=length(unique(allsites_train$site)))
-  
 
   load(file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".Rdata"))
   
@@ -321,16 +313,16 @@ multisite_calibration <- function(data_use, scenario = 'exp2', save_data = FALSE
     allsitesF <- rbind(allsites_train, allsites_test)
     write.csv(allsitesF, file=paste0("~/PycharmProjects/physics_guided_nn/data/allsitesF_", scenario,"_", data_use, ".csv"), row.names = FALSE)
     
-    pdf(file=paste0("~/PycharmProjects/physics_guided_nn/plots/Pmultisitefit_BayesPriors", scenario,"_", data_use,".pdf"), width=15, height=12)
-    par(mfrow=c(4, 4), mar=c(3,3,3,1))
-    for (i in 1:ncol(fit[[1]]$X)){ # loop over parameters fitted
+    #pdf(file=paste0("~/PycharmProjects/physics_guided_nn/plots/Pmultisitefit_BayesPriors", scenario,"_", data_use,".pdf"), width=15, height=12)
+    #par(mfrow=c(4, 4), mar=c(3,3,3,1))
+    #for (i in 1:ncol(fit[[1]]$X)){ # loop over parameters fitted
       #fit1[[1]]$chain[1]
       # for DEzs:
-      ests <- rbind(fit[[1]]$Z, fit[[2]]$Z, fit[[3]]$Z)
-      plot(density(ests[,i], from=min(ests[,i]), to=max(ests[,i])), main=pars[pars2tune[i],1], las=1)
-      abline(v=pars[pars2tune[i], 3:4], col="red")
-    }
-    dev.off()
+    #  ests <- rbind(fit[[1]]$Z, fit[[2]]$Z, fit[[3]]$Z)
+    #  plot(density(ests[,i], from=min(ests[,i]), to=max(ests[,i])), main=pars[pars2tune[i],1], las=1)
+    #  abline(v=pars[pars2tune[i], 3:4], col="red")
+    #}
+    #dev.off()
   }
   
   ## Generate files for prediction results ##
@@ -369,9 +361,17 @@ multisite_calibration <- function(data_use, scenario = 'exp2', save_data = FALSE
   performance_preles[,3] <- apply(gpp_train, 2, mae, test=F)
   performance_preles[,4] <- apply(gpp_test, 2, mae, test=T, year=2008)
   
-  write.csv(performance_preles, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/2preles_eval_", data_use, "_", scenario, "_performance.csv"))
-  write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/2preles_eval_preds_test_", data_use, "_", scenario, ".csv"))
-}
+  if (scenario == "exp2"){
+    write.csv(performance_preles, file=paste0("~/PycharmProjects/physics_guided_nn/results_", scenario, "/2preles_eval_", data_use, "_performance.csv"))
+    write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results_", scenario, "/2preles_eval_preds_test_", data_use, ".csv"))
+  }else if(scenario == "exp3"){
+    write.csv(performance_preles, file=paste0("~/PycharmProjects/physics_guided_nn/results_", scenario, "/3preles_eval_", data_use, "_performance.csv"))
+    write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results_", scenario, "/3preles_eval_preds_test_", data_use, ".csv"))
+  }
+  
+  }
 
-multisite_calibration(data_use = 'full', scenario = 'exp3')
-multisite_calibration(data_use = 'sparse', scenario = 'exp3')
+multisite_calibration(fit = FALSE, data_use = 'full', scenario = 'exp2', save_data = TRUE)
+multisite_calibration(fit = FALSE, data_use = 'sparse', scenario = 'exp2', save_data = TRUE)
+multisite_calibration(fit = FALSE, data_use = 'full', scenario = 'exp3', save_data = TRUE)
+multisite_calibration(fit = FALSE, data_use = 'sparse', scenario = 'exp3', save_data = TRUE)
