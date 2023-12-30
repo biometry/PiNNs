@@ -2,8 +2,9 @@
 # coding: utf-8
 import sys, os
 import os.path
-#sys.path.append("/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn/code")
-#os.chdir("/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn/code")
+
+sys.path.append("/Users/mw1205/PycharmProjects/physics_guided_nn/code")
+os.chdir("/Users/mw1205/PycharmProjects/physics_guided_nn/code")
 
 import numpy as np
 import pandas as pd
@@ -99,8 +100,6 @@ def read_in(type, data_dir=None, data_use=None, exp=None, sparse=False, n=None):
         out = pd.read_csv(''.join((data_dir, 'soro.csv')))
     if type == 'NAS' and data_dir != 'load' and data_use != "sparse":
         out = pd.read_csv(''.join((data_dir, 'hyytialaF_full.csv')))
-        print(out)
-        print(out.date)
         out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type == 'NAS' and data_dir != 'load' and data_use == "sparse":
         out = pd.read_csv(''.join((data_dir, 'hyytialaF_sparse.csv')))
@@ -124,6 +123,7 @@ def read_in(type, data_dir=None, data_use=None, exp=None, sparse=False, n=None):
     elif type == 'simulations' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, f'simulations_{data_use}_{exp}_10000.csv'))) #w/o n
 
+    print('Load data: ', type)
     return out
 
 
@@ -161,8 +161,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     if exp != 'exp2':
         exp = ''
     data = read_in(data_split, dir, data_use, exp, n=n)
-    print("read in")
-    print(data)
+
     rawdata = []
     if raw:
         rawdata = data.copy()
@@ -178,7 +177,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         print("EVAL")
         site = data.site
         data = data.drop(['site'],axis=1)
-        print(site)
+
     if ypcols:
         yp = data[ypcols]
         if data_split == 'exp2':
@@ -188,6 +187,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         if via:
             data, mn, std = standardize(data, get_p=True)
         else:
+
             print("NEWDATA")
             print(data)
             data = standardize(data)
@@ -214,7 +214,6 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         data = data.drop(['CO2', 'GPP', 'date'], axis=1)
         data['date'] = date
     if data_split.startswith("exp2") and eval:
-        print('reunite')
         data['site'] = site
     if sparse and data_split != 'validation' and data_split != 'exp2p' and data_split != 'exp2':
         if yp is not None:
@@ -230,15 +229,12 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
             else:
                 data, y, date = make_sparse(data[xcols], y, sparse=False, date=False)
 
-    print("before hist")
-    print(data)
+
     if history:
         x, y = add_history(data[xcols], y, history, batch_size)
     else:
         x, y = data[xcols], y
 
-    print("after hist")
-    print(data)
     if data_split != 'simulations':
         x.index = pd.DatetimeIndex(date[history:])
         y.index = pd.DatetimeIndex(date[history:])
@@ -258,7 +254,11 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
             out = x, y, rawdata, mn, std
         else:
             out = x, y, rawdata
-    
+
+
+    print('Load data: ', data_split, 'spare: ', sparse)
+
+
     return out
 
 
@@ -280,38 +280,33 @@ def make_sparse(x, y=False, sparse=False, date=False, it=7):
 
 
 def get_seasonal_data(data_use, model, prediction_scenario,
-                  current_dir='/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn'):
-    if prediction_scenario == 'temporal':
+                  current_dir='/Users/mw1205/PycharmProjects/physics_guided_nn'):
 
-        if data_use == 'sparse':
-            x, y, xt, mn, std = loaddata('validation', 1, dir=os.path.join(current_dir, "data/"), raw=True,
-                                               sparse=True, via=True)
-            if model in ['mlp', 'res', 'res2', 'reg', 'mlpDA']:
-                yp = pd.read_csv(os.path.join(current_dir, "data/hyytialaF_sparse.csv"))
-                yp.index = pd.DatetimeIndex(yp['date'])
+    if data_use == 'sparse':
+        sp = True
+    else:
+        sp = False
 
-        else:
-            x, y, xt, mn, std = loaddata('validation', 1, dir=os.path.join(current_dir, "data/"), raw=True,
-                                               via=True)
-            if model in ['mlp', 'res', 'res2', 'reg', 'mlpDA']:
-                yp = pd.read_csv(os.path.join(current_dir, "data/hyytialaF_full.csv"))
-                yp.index = pd.DatetimeIndex(yp['date'])
+    if prediction_scenario == 'exp1':
 
-    elif prediction_scenario == 'spatial':
+        x, y, xt, mn, std = loaddata('validation', 1, dir=os.path.join(current_dir, "data/"), raw=True,
+                                               sparse=sp, via=True)
+        if model in ['mlp', 'res', 'reg', 'mlpDA']:
+            yp = pd.read_csv(os.path.join(current_dir, f"data/hyytialaF_{data_use}.csv"))
+            yp.index = pd.DatetimeIndex(yp['date'])
 
-        if data_use == 'sparse':
-            x, y, xt, yp, mn, std = loaddata('exp2', 1, dir=os.path.join(current_dir, "data/"), raw=True,
-                                                   sparse=True, via=True)
-            if model in ['mlp', 'res', 'res2', 'reg', 'mlpDA']:
-                yp = pd.read_csv(os.path.join(current_dir, "data/allsitesF_sparse.csv"))
-                yp.index = pd.DatetimeIndex(yp['date'])
+    elif prediction_scenario != 'exp1':
 
-        else:
-            x, y, xt, yp, mn, std = loaddata('exp2', 1, dir=os.path.join(current_dir, "data/"), raw=True,
-                                                   via=True)
-            if model in ['mlp', 'res', 'res2', 'reg', 'mlpDA']:
-                yp = pd.read_csv(os.path.join(current_dir, "data/allsitesF_full.csv"))
-                yp.index = pd.DatetimeIndex(yp['date'])
+        x, y, xt, yp, mn, std = loaddata('exp2', 1, dir=os.path.join(current_dir, "data/"), raw=True,
+                                                   sparse=sp, via=True)
+
+        if model in ['mlp', 'res', 'reg', 'mlpDA']:
+            yp = pd.read_csv(os.path.join(current_dir, f"data/allsitesF_{prediction_scenario}_{data_use}.csv"))
+            yp.index = pd.DatetimeIndex(yp['date'])
+
+
+    if prediction_scenario != "exp1":
+        xt = xt.drop(0)
 
     thresholds = {'PAR': [yp['PAR'].min(), yp['PAR'].max()],
                   'Tair': [yp['Tair'].min(), yp['Tair'].max()],
@@ -324,20 +319,57 @@ def get_seasonal_data(data_use, model, prediction_scenario,
                   'SWp': [yp['SWp'].min(), yp['SWp'].max()]
                   }
 
-    if model in ['mlp', 'res2', 'reg', 'mlpDA']:
-        variables = ['Tair', 'VPD', 'Precip', 'PAR', 'fapar']
+    if model == 'res2':
+
+        yp.index = x.index
+        xt.index = x.index
+
+        if prediction_scenario == 'exp2':
+            yp = yp[((yp.index.year == 2005) | (yp.index.year == 2008)) & (xt.site == "h").values]
+            yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+        elif prediction_scenario == 'exp3':
+            yp = yp[(yp.index.year == 2008) & (xt.site == "h").values]
+            yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+
     elif model == 'res':
+
         yptr = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
-        ypte = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
-        y = yp.drop(yp.columns.difference(['GPP']), axis=1)
+        if prediction_scenario == 'exp1':
+            ypte = yp[(yp.index.year == 2008)]
+        elif prediction_scenario == 'exp2':
+            ypte = yp[((yp.index.year == 2005) | (yp.index.year == 2008)) & (yp.site == "h").values]
+        elif prediction_scenario == 'exp3':
+            ypte = yp[(yp.index.year == 2008) & (yp.site == "h").values]
+        ypte = ypte.drop(ypte.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
+        y = ypte.drop(ypte.columns.difference(['GPP']), axis=1)
         n = [1, 1]
         x_tr, n = add_history(yptr, n, 1)
         x_te, n = add_history(ypte, n, 1)
         x_tr, mn, std = standardize(x_tr, get_p=True)
         x_te = standardize(x_te, [mn, std])
-        test_x = x_te[x_te.index.year == 2008]
-        test_y = y[y.index.year == 2008][1:]
+        test_x = x_te
+        test_y = y  # [1:]
         variables = ['GPPp', 'ETp', 'SWp']
+
+
+    elif model in ['mlp', 'res2', 'reg', 'mlpDA']:
+
+        variables = ['Tair', 'VPD', 'Precip', 'PAR', 'fapar']
+
+        if prediction_scenario == 'exp1':
+
+            test_x = x[(x.index.year == 2008)][1:]
+            test_y = y[(y.index.year == 2008)][1:]
+
+        elif prediction_scenario == 'exp2':
+
+            test_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & (xt.site == "h").values][1:]
+            test_y = y[((y.index.year == 2005) | (y.index.year == 2008)) & (xt.site == "h").values][1:]
+
+        elif prediction_scenario == 'exp3':
+
+            test_x = x[(x.index.year == 2008) & (xt.site == "h").values][1:]
+            test_y = y[(y.index.year == 2008) & (xt.site == "h").values][1:]
 
     var_ranges = {}
     gridsize=200
@@ -349,36 +381,11 @@ def get_seasonal_data(data_use, model, prediction_scenario,
             var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[v])/std[v]
         var_ranges[v] = var_range
 
-    if model == 'res2':
-        yptr = yp.drop(yp.columns.difference(['GPPp']), axis=1)
-        ypte = yp.drop(yp.columns.difference(['GPPp']), axis=1)
-        yp_tr = yptr[~yptr.index.year.isin([2004, 2005, 2007, 2008])][1:]
-        yp_te = ypte[ypte.index.year == 2008][1:]
-        yp = ypte
-    if model == 'res':
-        yptr = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
-        ypte = yp.drop(yp.columns.difference(['GPPp', 'ETp', 'SWp']), axis=1)
-        y = yp.drop(yp.columns.difference(['GPP']), axis=1)
-        n = [1, 1]
-        x_tr, n = add_history(yptr, n, 1)
-        x_te, n = add_history(ypte, n, 1)
-        x_tr, mn, std = standardize(x_tr, get_p=True)
-        x_te = standardize(x_te, [mn, std])
-        test_x = x_te[x_te.index.year == 2008]
-        test_y = y[y.index.year == 2008][1:]
-        variables = ['GPPp', 'ETp', 'SWp']
-    # if model == 'reg':
-    #    yptr = yp.drop(yp.columns.difference(['GPPp']), axis=1)
-    #    ypte = yp.drop(yp.columns.difference(['GPPp']), axis=1)
-
-    elif model in ['mlp', 'res2', 'reg', 'mlpDA']:
-
-        test_x = x[x.index.year == 2008][1:]
-        test_y = y[y.index.year == 2008][1:]
-
     dat = test_x.copy()
+    dat.sort_index(inplace=True)
     if not yp is None:
         yp_dat = yp.copy()
+        yp_dat.sort_index(inplace=True)
 
     # Compute effect of variable at mean of 14 days around record dates for seasonal changes
     mar = dat['2008-03-13':'2008-03-27']

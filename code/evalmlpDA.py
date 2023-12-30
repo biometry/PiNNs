@@ -164,9 +164,9 @@ def evalmlpDA(data_use="full", da=1, of=False, v=2, N=5000):
         
         print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA{da}_eval_performance_{data_use}_{N}.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA{da}_eval_preds_train_{data_use}_{N}.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA{da}_eval_preds_test_{data_use}_{N}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA{da}_eval_{data_use}_performance.csv') #_{N}
+    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA{da}_eval_preds_{data_use}_train.csv') #_{N}
+    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA{da}_eval_preds_{data_use}_test.csv') #_{N}
 
 
 

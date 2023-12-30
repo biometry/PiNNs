@@ -7,60 +7,77 @@ library(Rpreles)
 #prediction_scenario = 'spatial'
 #gridsize=200
 
-predict_via <- function(x_test, data_use, prediction_scenario){
+predict_via <- function(day, data_use, prediction_scenario, point_wise = FALSE){
   
-  if (prediction_scenario =='temporal'){
+  if (prediction_scenario =='exp1'){
     CVfit = read.csv(paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".csv"))#[,2:6]
   }else{
-    CVfit = read.csv(paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, ".csv"))[,2:6]
+    CVfit = read.csv(paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", prediction_scenario, ".csv"))[,2:5]
   }
   
-  if (prediction_scenario == 'temporal'){
-    preds = matrix(nrow = nrow(x_test), ncol=ncol(CVfit))
+  if (prediction_scenario == 'exp1'){
+    preds = matrix(nrow = nrow(day), ncol=ncol(CVfit))
     for (i in 1:ncol(CVfit)){
-      preds[,i] = PRELES(PAR=x_test$PAR, TAir=x_test$Tair, VPD=x_test$VPD, Precip=x_test$Precip, CO2=x_test$CO2, fAPAR=x_test$fapar, p=CVfit[,i])$GPP
+      preds[,i] = PRELES(PAR=day$PAR, TAir=day$Tair, VPD=day$VPD, Precip=day$Precip, CO2=day$CO2, fAPAR=day$fapar, p=CVfit[,i])$GPP
     }
     preds = apply(preds, 1, mean)
   }else{
-    sites <- unique(x_test$X)
-    preds_sitewise <- list()
-    for (site in sites){
-      df <- x_test[x_test$X==site,]
+    if (point_wise){
+      points <- unique(day$X)
+      preds_sitewise <- numeric(length(points))
+      for (point in points){
+        df <- day[day$X==point,]
+        preds <- matrix(nrow = nrow(df), ncol=ncol(CVfit))
+        for (i in 1:ncol(CVfit)){
+          preds[,i] = PRELES(PAR=df$PAR, TAir=df$Tair, VPD=df$VPD, Precip=df$Precip, CO2=df$CO2, fAPAR=df$fapar, DOY = df$DOY, p=CVfit[,i])$GPP
+        }
+        preds <- apply(preds, 1, mean)
+        preds_sitewise[point] <- preds
+      }
+    }else{
+      df = day
       preds <- matrix(nrow = nrow(df), ncol=ncol(CVfit))
       for (i in 1:ncol(CVfit)){
-        preds[,i] = PRELES(PAR=df$PAR, TAir=df$Tair, VPD=df$VPD, Precip=df$Precip, CO2=df$CO2, fAPAR=df$fapar, p=CVfit[,i])$GPP
+          preds[,i] = PRELES(PAR=df$PAR, TAir=df$Tair, VPD=df$VPD, Precip=df$Precip, CO2=df$CO2, fAPAR=df$fapar, DOY = df$DOY, p=CVfit[,i])$GPP
       }
       preds <- apply(preds, 1, mean)
-      preds_sitewise[[site]] <- preds
+      }
     }
-  }
-  
   return(preds)
 }
 
 
-via <- function(data_use, prediction_scenario, gridsize = 200){
+via <- function(data_use, prediction_scenario, gridsize = 200, point_wise = FALSE){
   
-  if (prediction_scenario == 'temporal'){
-    if (data_use == "sparse"){
-      hyytiala <- read.csv("~/PycharmProjects/physics_guided_nn/data/hyytialaF_sparse.csv")
-    }else{
-      hyytiala <- read.csv("~/PycharmProjects/physics_guided_nn/data/hyytialaF_full.csv")
-    }
+  if (prediction_scenario == 'exp1'){
+    hyytiala <- read.csv("~/PycharmProjects/physics_guided_nn/data/hyytialaF_", data_use, ".csv")
   }else{
-    if (data_use == "sparse"){
-      hyytiala <- read.csv("~/PycharmProjects/physics_guided_nn/data/allsitesF_sparse.csv")
-    }else{
-      hyytiala <- read.csv("~/PycharmProjects/physics_guided_nn/data/allsitesF_full.csv")
-    }
+    hyytiala <- read.csv(paste0("~/PycharmProjects/physics_guided_nn/data/allsitesF_", prediction_scenario, "_", data_use, ".csv"))
   }
+  
   
   
   hyytiala$date <- as.Date(hyytiala$date)
   hyytiala$year <- format(hyytiala$date, format="%Y")
   
-  hyytiala_train <- hyytiala[!(hyytiala$year %in% c("2008", "2007", "2005", "2004")), ]
-  hyytiala_test <- hyytiala[hyytiala$year == "2008", ]
+  if (prediction_scenario == 'exp1'){
+    hyytiala_train <- hyytiala[!(hyytiala$year %in% c("2008", "2007", "2005", "2004")), ]
+
+    hyytiala_test <- hyytiala[hyytiala$year == "2008", ]
+    
+  }else if (prediction_scenario == 'exp2'){
+    
+    hyytiala_train <- hyytiala[(hyytiala$site %in% c("sr","bz", "ly", "co")), ]
+    hyytiala_test <- hyytiala[((hyytiala$site == "h") & (hyytiala$year != 2004)), ]
+    
+  }else if (prediction_scenario =='exp3'){
+    
+    hyytiala_train <- hyytiala[(hyytiala$site %in% c("sr","bz", "ly", "co")), ]
+    hyytiala_train <- hyytiala_train[(hyytiala_train$year %in% c("2005", "2004")), ]
+    hyytiala_test <- hyytiala[((hyytiala$site == "h") & (hyytiala$year == "2008")), ]
+    
+  }
+    
   hyytiala_test <- hyytiala_test[2:nrow(hyytiala_test),] # remove first day of year (Niklas, why?)
   
   variables = c('PAR', 'Tair', 'VPD', 'Precip', 'fapar')
@@ -88,21 +105,21 @@ via <- function(data_use, prediction_scenario, gridsize = 200){
       output = matrix(nrow = length(var_range), ncol = nrow(day))
       for (j in 1:length(var_range)){
         day[v] = var_range[j]
-        preds = predict_via(day, data_use, prediction_scenario)
+        preds = predict_via(day, data_use, prediction_scenario, point_wise = point_wise)
         output[j,] = preds
       }
-      write.csv(output, paste0("~/PycharmProjects/physics_guided_nn/results_final/via/", prediction_scenario, "/preles_", data_use, "_", v, "_via_cond_", day_names[n], ".csv"))
+      write.csv(output, paste0("~/PycharmProjects/physics_guided_nn/results_", prediction_scenario, "/via/preles_", data_use, "_", v, "_via_cond_", day_names[n], ".csv"))
       n = n+1
     }
   }
 }
 
-via("full", "temporal", gridsize = 200)
-via("sparse", "temporal", gridsize = 200)
+via(data_use = "full",prediction_scenario =  "exp1", gridsize = 200)
+via(data_use = "sparse",prediction_scenario =  "exp1", gridsize = 200)
 
-via("full", "spatial", gridsize = 200)
-via("sparse", "spatial", gridsize = 200)
+via(data_use = "full",prediction_scenario =  "exp2", gridsize = 200, point_wise = TRUE)
+via(data_use = "sparse",prediction_scenario =  "exp2", gridsize = 200, point_wise = TRUE)
 
-#out = PRELES(PAR = day$PAR, TAir = day$Tair, VPD = day$VPD, Precip = day$Precip, CO2 = day$CO2, fAPAR = day$fapar, p=CVfit[,4])$GPP
-#plot(out, type='l')
-#matplot(output, type='l')
+via(data_use = "full", prediction_scenario = "exp3", gridsize = 200, point_wise = TRUE)
+via(data_use = "sparse", prediction_scenario = "exp3", gridsize = 200, point_wise = TRUE)
+
