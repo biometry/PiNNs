@@ -2,37 +2,79 @@
 # coding: utf-8
 import utils
 import HP
-import utils
-import training
 import torch
 import pandas as pd
 import numpy as np
+import argparse
+import HPe
+import modelstry
+import torch.nn as nn
+import torch.optim as optim
+from sklearn import metrics
+from sklearn.model_selection import train_test_split
+import random
+import os
+from torch.utils.data import TensorDataset, DataLoader
+from torch import Tensor
+import csv
+import training
+import argparse
+import numpy as np
+from sklearn.model_selection import KFold
+import os
+from torch.autograd import Variable
 
-x, y, xt = utils.loaddata('NAS', 0, dir="./data/", raw=True)
 
-xt = xt.drop(['date', 'GPP', 'ET', 'GPPp', 'ETp', 'SWp', 'Unnamed: 0'], axis=1)
-print(xt)
+parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
+#parser.add_argument('-s', metavar='splits', type=int, help='define number of splits')
+args = parser.parse_args()
 
-l, m, yp = utils.loaddata('NAS', 0, dir="./data/", raw=True)
+print(args)
 
-yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
-print(yp)
-splits = len(x.index.year.unique())
-x.index, y.index, yp.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(yp))
+def ENemb(data_use="full", splits=None, v=2):
 
-y = y.to_frame()
+    if data_use == 'sparse':
+        x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True, sparse=True)
+    else:
+        x, y, xt = utils.loaddata('NAS', 1, dir="./data/", raw=True)
+    y = y.to_frame()
 
-arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 140, 4, emb=True)
+        
+    if splits is None:
+        splits = len(x.index.year.unique())
+    
+    
+    xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET'], axis=1)
+    xt = xt[1:]
+    xt.index = np.arange(0, len(xt))
 
-# architecture search
-layersizes, ag = HP.ArchitectureSearch(arch_grid, {'epochs': 100, 'batchsize': 16, 'lr':0.001, 'eta': 0.2}, x, y, splits, "arSemb", reg=yp, emb=True, raw = xt, hp=True)
-ag.to_csv("./NembAS.csv")
+    print("X and Y", x, y, xt)
+    
+    x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
+    
+    if v==1:
+        arch_grid = HP.ArchitectureSearchSpace(x.shape[1], y.shape[1], 800, 4)
 
-# Hyperparameter Search Space
-hpar_grid = HP.HParSearchSpace(140, reg=True, emb=True)
+        # architecture search
+        # original: use grid of 800 and epochs:100
+        layersizes, argrid = HP.ArchitectureSearch(arch_grid, {'epochs': 200, 'batchsize': 8, 'lr':0.001}, x, y, splits, "arSmlp", hp=True)
+        argrid.to_csv(f"/scratch/project_2000527/pgnn/results/NmlpAS_{data_use}.csv")
 
-# Hyperparameter search
-hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y, splits, "hpemb", reg=yp, emb=True, raw=xt, hp=True)
+        # Hyperparameter Search Space
+        hpar_grid = HP.HParSearchSpace(800)
+    
+        # Hyperparameter search
+        hpars, grid = HP.HParSearch(layersizes, hpar_grid, x, y,  splits, "hpmlp", hp=True)
+    
+        print( 'hyperparameters: ', hpars)
+        grid.to_csv(f"/scratch/project_2000527/pgnn/results/NmlpHP_{data_use}.csv")
+        
+    elif v==2:
+        arch_grid, par_grid = HPe.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 2, emb=True)
+        res = HPe.NASSearch(arch_grid, par_grid, x, y, splits, "NASemb", hp=True, emb=True, raw=xt)
+        res.to_csv(f"NembHP_{data_use}_new.csv")
 
-print( 'hyperparameters: ', hpars)
-grid.to_csv("./NembHP.csv")
+                
+if __name__ == '__main__':
+    ENemb(args.d)

@@ -57,7 +57,9 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             xr_train, xr_val = torch.tensor(raw.loc[t_idx].to_numpy(), dtype=torch.float32), torch.tensor(raw.loc[v_idx].to_numpy(), dtype=torch.float32)
         x_train, x_val = torch.tensor(X[X.index.isin(t_idx)].to_numpy(), dtype=torch.float32), torch.tensor(X[X.index.isin(v_idx)].to_numpy(), dtype=torch.float32)
         y_train, y_val = torch.tensor(Y[Y.index.isin(t_idx)].to_numpy(), dtype=torch.float32), torch.tensor(Y[Y.index.isin(v_idx)].to_numpy(), dtype=torch.float32)
-
+        if emb:
+            train_set = TensorDataset(x_train, y_train, xr_train)
+            val_set = TensorDataset(x_val, y_val, xr_val)
         if reg is not None:
             yp_train, yp_val = torch.tensor(reg.loc[t_idx].to_numpy(), dtype=torch.float32), torch.tensor(reg.loc[v_idx].to_numpy(), dtype=torch.float32)
             if emb:
@@ -70,7 +72,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             yp_train, yp_val = torch.tensor(ypreles.loc[t_idx].to_numpy(), dtype=torch.float32), torch.tensor(ypreles.loc[v_idx].to_numpy(), dtype=torch.float32)
             train_set = TensorDataset(x_train, y_train, yp_train)
             val_set = TensorDataset(x_val, y_val, yp_val)
-        else:
+        elif not emb:
             train_set = TensorDataset(x_train, y_train)
             val_set = TensorDataset(x_val, y_val)
             
@@ -95,9 +97,9 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
 
         if emb:
             if embtp is None:
-                model = models.EMB(X.shape[1], Y.shape[1], model_design['layersizes'], 27, 1)
+                model = models.EMB(X.shape[1], Y.shape[1], model_design['layersizes'], 12, 1)
             else:
-                model = models.sEMB(X.shape[1], Y.shape[1], model_design['layersizes'], 12, 1) #models.EMB
+                model = models.EMB(X.shape[1], Y.shape[1], model_design['layersizes'], 12, 1) #models.EMB
                 if data == "EMBpar":
                     cid=0
                     for child in model.children():
@@ -187,14 +189,14 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                     #if exp==2 and not emb:
                         #if res != 2:
                             #yp = yp.unsqueeze(-1)
-                    if emb:
-                        xr = train_data[3]
+                if emb:
+                    xr = train_data[2]
                 if not qn:
                     optimizer.zero_grad()
 
                     # forward
                     if emb:
-                        y_hat, p = model(xt, xr, embtp, sw)
+                        yp_hat, y_hat = model(xt, xr, embtp, sw)
                     elif res == 1:
                         y_hat = model(xt)
                     elif res == 2:
@@ -205,9 +207,9 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                         loss = criterion(y_hat, yt) + eta*criterion(y_hat, yp)
                     elif emb:
                         if embtp is None:
-                            loss = criterion(y_hat, yt) + eta*criterion(p, yp)
+                            loss = criterion(y_hat.flatten(), yt.flatten()) + criterion(yp_hat.flatten(), yt.flatten())
                         elif exp!=2 and data != "EMBpar":
-                            loss = criterion(y_hat, yt) + eta*criterion(p[..., 0:1], yp)
+                            loss = criterion(y_hat.flatten(), yt.flatten()) + criterion(yp_hat.flatten(), yt.flatten())
                         elif data == "EMBpar":
                             print("Criterion")
                             loss = criterion(p[..., 0:1], yp)
@@ -266,7 +268,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                             #    yp_vall = yp_vall.unsqueeze(-1)
                         if emb:
                             xrv = val_sample[3]
-                            y_hat_val, pv = model(x_vall, xrv, embtp, sw)
+                            yp_hat_val, y_hat_val = model(x_vall, xrv, embtp, sw)
                         elif res == 1:
                             y_hat_val = model(x_vall)
                         elif res == 2:
@@ -275,6 +277,9 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                         else:
                             y_hat_val = model(x_vall)
                         
+                    elif emb:
+                        xrv = val_sample[2]
+                        yp_hat_val, y_hat_val = model(x_vall, xrv, embtp, sw)
                     else:
                         y_hat_val = model(x_vall)
 
@@ -282,7 +287,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                         loss = criterion(y_hat_val, y_vall) + eta*criterion(y_hat_val, yp_vall)
                     elif reg is not None and emb:
                         if embtp is None:
-                            loss = criterion(y_hat_val, y_vall) + eta*criterion(pv, yp_vall)
+                            loss = criterion(y_hat_val.flatten(), y_vall.flatten()) + criterion(yp_hat_val.flatten(), y_vall.flatten())
                         elif exp!=2:
                             loss = criterion(y_hat_val, y_vall) + eta*criterion(pv[..., 0:1], yp_vall)
                         elif data=="EMBpar":
@@ -312,8 +317,8 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                 
                 model.eval()
                 if emb:
-                    y_hat_val, pv = model(x_val, xr_val, embtp, sw)
-                    y_hat_t, pt = model(x_train, xr, embtp, sw)
+                    yp_hat_val, y_hat_val = model(x_val, xr_val, embtp, sw)
+                    yp_hat_t, y_hat_t = model(x_train, xr, embtp, sw)
                 elif res == 1:
                     y_hat_val = model(x_val)
                     y_hat_t = model(x_train)
@@ -338,8 +343,8 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             print("EXP2 and not HP")
             model.eval()
             if emb:
-                y_hat_val, pv = model(x_val, xr_val, embtp, sw)
-                y_hat_t, pt = model(x_train, xr_train, embtp, sw)
+                yp_hat_val, y_hat_val = model(x_val, xr_val, embtp, sw)
+                yp_hat_t, y_hat_t = model(x_train, xr_train, embtp, sw)
             elif res == 1:
                 y_hat_val = model(x_val)
                 y_hat_t = model(x_train)

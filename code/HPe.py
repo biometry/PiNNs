@@ -30,15 +30,8 @@ def NASSearchSpace(input_size, output_size, agrid_size, pgrid_size, max_layers, 
 
     pgrid = []
     for i in range(pgrid_size):
-        if emb:
-            learning_rate = random.choice([1e-1, 9e-2, 8e-2, 7e-2, 6e-2, 5e-2, 4e-2, 3e-2, 2e-2, 1e-2, 9e-3, 8e-3, 7e-3, 6e-3, 5e-3, 4e-3, 3e-3, 2e-3, 1e-3\
-, 9e-4, 8e-4, 7e-4, 6e-4, 5e-4, 4e-4, 3e-4, 2e-4, 1e-4])
-            batchsize = random.choice([8, 16, 32, 64, 128])
-        else:
-
-            learning_rate = random.choice(np.round(np.linspace(1e-6, 0.1),4))
-
-            batchsize = random.choice([2, 4, 8, 16, 32, 64])
+        learning_rate = random.choice(np.round(np.linspace(1e-6, 0.1),4))
+        batchsize = random.choice([2, 4, 8, 16, 32, 64])
         if reg is not False:
             r = random.choice(np.round(np.linspace(0.0001, 1.000, 200), 4))
             if [learning_rate, batchsize, r] not in pgrid:
