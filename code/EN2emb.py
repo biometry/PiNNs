@@ -41,6 +41,7 @@ def EN2emb(data_use="full", splits=None, v=2):
         #print("DATA----",x,y,xt,yp)
         #x = x.drop(pd.DatetimeIndex(['2004-01-01']))
         #y = y.drop(pd.DatetimeIndex(['2004-01-01']))
+    y=y.to_frame()
     xt.index = pd.DatetimeIndex(xt['date'])
     print(xt)
     if data_use=="sparse":
