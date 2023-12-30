@@ -1,12 +1,9 @@
-
-
-
 # !/usr/bin/env python
 # coding: utf-8
 import sys, os
 import os.path
-sys.path.append("/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn/code")
-os.chdir("/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn/code")
+#sys.path.append("/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn/code")
+#os.chdir("/Users/Marieke_Wesselkamp/PycharmProjects/physics_guided_nn/code")
 
 import numpy as np
 import pandas as pd
@@ -125,7 +122,7 @@ def read_in(type, data_dir=None, data_use=None, exp=None, sparse=False, n=None):
         out = pd.read_csv(''.join((data_dir, 'allsitesF_exp2_sparse.csv')))
 
     elif type == 'simulations' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, f'simulations_{data_use}_{exp}_{n}.csv'))) #w/o n
+        out = pd.read_csv(''.join((data_dir, f'simulations_{data_use}_{exp}_10000.csv'))) #w/o n
 
     return out
 
@@ -143,7 +140,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
     elif data_split == "exp2" and eval:
         ypcols = ['GPPp', 'ETp', 'SWp']
-        xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos', 'site']
+        xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
     else:
         ypcols = None
         if doy:
@@ -178,21 +175,23 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         
     y = data['GPP']
     if data_split.startswith("exp2") and eval:
+        print("EVAL")
         site = data.site
         data = data.drop(['site'],axis=1)
         print(site)
     if ypcols:
         yp = data[ypcols]
         if data_split == 'exp2':
-            data = data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp', 'site'], axis=1)
+            data = data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1)
         else:
             data = data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1)
         if via:
             data, mn, std = standardize(data, get_p=True)
         else:
-
-
-            data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1))
+            print("NEWDATA")
+            print(data)
+            data = standardize(data)
+            #data = standardize(data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1))
 
 
 
@@ -259,7 +258,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
             out = x, y, rawdata, mn, std
         else:
             out = x, y, rawdata
-        
+    
     return out
 
 

@@ -28,27 +28,29 @@ def eval2mlp(data_use='full', of=False, v=2):
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, sparse=True,eval=True)
     else:
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="./data/", raw=True, eval=True)
-
+    xt.index = pd.DatetimeIndex(xt['date'])
+    xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET', 'X'], axis=1)[1:]
     # select NAS data
-    train_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
-    train_y = y[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_x = x[(xt.index.year == 2008) & (xt.site != "h")]
+    train_y = y[(xt.index.year == 2008) & (xt.site != "h")]
 
     if data_use == "full":
-        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
-        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
+        train_x = train_x.drop(pd.DatetimeIndex(['2008-01-01']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2008-01-01']))
     else:
-        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
-        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
-    test_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
-    test_y = y[((y.index.year == 2005) | (y.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
+        train_x = train_x.drop(pd.DatetimeIndex(['2008-01-02']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2008-01-02']))
+    test_x = x[(xt.index.year == 2008) & (xt.site == "h")]
+    test_y = y[(xt.index.year == 2008) & (xt.site == "h")]
     #test_x = test_x.drop(pd.DatetimeIndex(['2008-01-01']))
     #test_y = test_y.drop(pd.DatetimeIndex(['2008-01-01']))    
-    train_x = train_x.drop(['site_x', 'site_y'],axis=1)
-    test_x = test_x.drop(['site_x', 'site_y'],axis=1)
+    #train_x = train_x.drop(['site_x', 'site_y'],axis=1)
+    #test_x = test_x.drop(['site_x', 'site_y'],axis=1)
 
     splits = 4
     print(splits)
     print('TRAINTEST', train_x, train_y, test_x, test_y)
+
     train_y = train_y.to_frame()
     test_y = test_y.to_frame()
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))

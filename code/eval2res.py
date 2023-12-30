@@ -31,29 +31,30 @@ def eval2res(data_use='full', of=False, v=2):
     print("OUUTT",x,y,xt)
     # select NAS data
     print(x.index)
-    
+    xt.index = pd.DatetimeIndex(xt['date'])
+    xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET', 'X'], axis=1)[1:]
 
-    train_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
-    train_y = y[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_x = x[(x.index.year == 2008) & ((x.site_x != "h") & (x.site_y != "h"))]
+    train_y = y[(x.index.year == 2008) & ((x.site_x != "h") & (x.site_y != "h"))]
     
     
     if data_use=="full":
-        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
-        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
+        train_x = train_x.drop(pd.DatetimeIndex(['2008-01-01']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2008-01-01']))
     else:
-        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
-        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
+        train_x = train_x.drop(pd.DatetimeIndex(['2008-01-02']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2008-01-02']))
 
-    test_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
-    test_y = y[((y.index.year == 2005) | (y.index.year == 2008)) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_x = x[(x.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
+    test_y = y[(x.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
 
     train_x = train_x.drop(['site_x', 'site_y'],axis=1)
     test_x = test_x.drop(['site_x', 'site_y'],axis=1)
     
-        
+    
     splits = 4
     print(splits)
-    print(x, y)
+    print(train_x, train_y, test_x, test_y)
     train_y = train_y.to_frame()
     test_y = test_y.to_frame()
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))

@@ -18,7 +18,7 @@ from slbfgs import sLBFGS
 
 
 def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptation=None, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None, qn =False):
-    torch.manual_seed(36)
+    torch.manual_seed(999)
     print("Hyperparams", hparams)
     nepoch = hparams['epochs']
     batchsize = hparams['batchsize']
@@ -97,7 +97,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             if embtp is None:
                 model = models.EMB(X.shape[1], Y.shape[1], model_design['layersizes'], 27, 1)
             else:
-                model = models.sEMB(X.shape[1], Y.shape[1], model_design['layersizes'], 1, 3) #models.EMB
+                model = models.sEMB(X.shape[1], Y.shape[1], model_design['layersizes'], 12, 1) #models.EMB
                 if data == "EMBpar":
                     cid=0
                     for child in model.children():
@@ -461,7 +461,7 @@ def finetune(hparams, model_design, train, val, data_dir, data, reg=None, emb=Fa
             cid+=1
             print("LAYER ", cid)
             print(child.parameters())
-            if cid == 1:
+            if cid > 0:
                 for param in child.parameters():
                     param.requires_grad = False
     elif res == 2:
