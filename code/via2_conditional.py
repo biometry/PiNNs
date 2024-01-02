@@ -19,7 +19,7 @@ parser.add_argument('-d', metavar='data', type=str, help='define data usage: ful
 parser.add_argument('-m', metavar='model', type=str, help='define model: mlp, res, res2, reg, emb, da')
 args = parser.parse_args()
 
-def predict(test_x, test_y, m, data_use, prediction_scenario, yp=None, current_dir=''):
+def predict(test_x, test_y, m, data_use, prediction_scenario, yp, xt_test, current_dir=''):
 
     """
     Function to compute predictions over test_x, for a given model, and a data scenario.
@@ -38,18 +38,22 @@ def predict(test_x, test_y, m, data_use, prediction_scenario, yp=None, current_d
     # Load Architecture for the current model
     if m == 'mlpDA':
         res_as = pd.read_csv(os.path.join(current_dir, f"NAS/EX2mlpHP_{data_use}_new.csv"))
+        a = res_as.loc[res_as.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        model_design = {'layersizes': layersizes}
+    elif m == 'embtest':
+        pass
     else:
         res_as = pd.read_csv(os.path.join(current_dir, f"NAS/EX2{m}HP_{data_use}_new.csv"))
-    # Select best architecture and extract layer sizes
-    a = res_as.loc[res_as.ind_mini.idxmin()]
-    layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        a = res_as.loc[res_as.ind_mini.idxmin()]
+        layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
+        model_design = {'layersizes': layersizes}
 
-    model_design = {'layersizes': layersizes}
     data_dir = os.path.join(current_dir, f"models_{prediction_scenario}/")
 
-    if m == 'res2':
-        yp_test = torch.tensor(yp.to_numpy(), dtype=torch.float32)
     test_x, test_y = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
+    yp_test = torch.tensor(yp.to_numpy(), dtype=torch.float32)
+    xt_test = torch.tensor(xt_test.to_numpy(), dtype=torch.float32)
 
     # Create empty array for predictions of size monthly samples x num fold in crossvalidation
     preds_test = np.zeros((test_x.shape[0], 4))
@@ -61,6 +65,9 @@ def predict(test_x, test_y, m, data_use, prediction_scenario, yp=None, current_d
             model = models.NMLP(test_x.shape[1], 1, model_design['layersizes'])
         elif m == 'res2':
             model = models.RES(test_x.shape[1], 1, model_design['layersizes'])
+        elif m == 'embtest':
+            model = models.EMB(test_x.shape[1], 1, [[32], [32]], 12, 1)
+
 
         if prediction_scenario == 'exp2':
             if m =='mlpDA':
@@ -79,6 +86,8 @@ def predict(test_x, test_y, m, data_use, prediction_scenario, yp=None, current_d
         with torch.no_grad():
             if m == 'res2':
                 p_test = model(test_x, yp_test)
+            elif m == 'embtest':
+                p_test = model(test_x, xt_test)
             else:
                 p_test = model(test_x)
             # add predictions to array
@@ -90,7 +99,7 @@ def predict(test_x, test_y, m, data_use, prediction_scenario, yp=None, current_d
     return preds_test
 
 
-def via(data_use, model, prediction_scenario, yp=None, current_dir = '/Users/mw1205/PycharmProjects/physics_guided_nn'):
+def via(data_use, model, prediction_scenario, current_dir = '/Users/mw1205/PycharmProjects/physics_guided_nn'):
 
     if data_use == 'sparse':
         x, y, xt, yp, mn, std = utils.loaddata('exp2', 1, dir=os.path.join(current_dir,"data/"), raw=True, sparse=True, via=True)
@@ -99,6 +108,8 @@ def via(data_use, model, prediction_scenario, yp=None, current_dir = '/Users/mw1
         x, y, xt, yp, mn, std = utils.loaddata('exp2', 1, dir=os.path.join(current_dir,"data/"), raw=True, via=True)
 
     xt = xt.drop(0)
+    xt.index = pd.DatetimeIndex(xt.date)
+    xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET'], axis=1)
 
     if model in ['mlp','res', 'reg', 'mlpDA']:
         yp = pd.read_csv(os.path.join(current_dir,f"data/allsitesF_{prediction_scenario}_{data_use}.csv"))
@@ -146,26 +157,26 @@ def via(data_use, model, prediction_scenario, yp=None, current_dir = '/Users/mw1
         test_y = y # [1:]
 
         variables = ['GPPp', 'ETp', 'SWp']
-    #if model == 'reg':
-    #    yptr = yp.drop(yp.columns.difference(['GPPp']), axis=1)
-    #    ypte = yp.drop(yp.columns.difference(['GPPp']), axis=1)
 
-    elif model in ['mlp', 'res2', 'reg', 'mlpDA']:
+    elif model in ['mlp', 'res2', 'reg', 'mlpDA', 'embtest']:
 
         if prediction_scenario == 'exp1':
 
             test_x = x[(x.index.year == 2008)][1:]
             test_y = y[(y.index.year == 2008)][1:]
+            test_xt = xt[(xt.index.year == 2008)][1:]
 
         elif prediction_scenario == 'exp2':
 
             test_x = x[((x.index.year == 2005) | (x.index.year == 2008)) & (xt.site == "h").values][1:]
             test_y = y[((y.index.year == 2005) | (y.index.year == 2008)) & (xt.site == "h").values][1:]
+            test_xt = xt[((xt.index.year == 2005) | (xt.index.year == 2008)) & (xt.site == "h").values][1:]
 
         elif prediction_scenario == 'exp3':
 
             test_x = x[(x.index.year == 2008) & (xt.site == "h").values][1:]
             test_y = y[(y.index.year == 2008) & (xt.site == "h").values][1:]
+            test_xt = xt[(xt.index.year == 2008) & (xt.site == "h").values][1:]
 
         variables = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar']
 
@@ -178,28 +189,26 @@ def via(data_use, model, prediction_scenario, yp=None, current_dir = '/Users/mw1
             var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[''.join((v, '_x'))])/std[''.join((v, '_x'))]
         else:
             var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[v])/std[v]
-        output = {'mar':None, 'jun':None, 'sep':None, 'dec':None}
 
         dat = test_x.copy()
         dat.sort_index(inplace=True)
+        yp_dat = yp.copy()
+        yp_dat.sort_index(inplace=True)
+        xt_dat = test_xt.copy()
+        xt_dat.sort_index(inplace=True)
+
         # Compute effect of variable at mean of 14 days around record dates for seasonal changes
+        def via_subset(data):
+            mar = dat['2008-03-13':'2008-03-27']
+            jun = dat['2008-06-14':'2008-06-28']
+            sep = dat['2008-09-13':'2008-09-28']
+            dec = dat['2008-12-14':'2008-12-28']
+            days = {'mar':mar, 'jun':jun, 'sep':sep, 'dec':dec}
+            return days
 
-        mar = dat['2008-03-13':'2008-03-27']
-        jun = dat['2008-06-14':'2008-06-28']
-        sep = dat['2008-09-13':'2008-09-28']
-        dec = dat['2008-12-14':'2008-12-28']
-        days = {'mar':mar, 'jun':jun, 'sep':sep, 'dec':dec}
-
-        if not yp is None:
-
-            yp_dat = yp.copy()
-            yp_dat.sort_index(inplace=True)
-
-            yp_mar = yp_dat['2008-03-13':'2008-03-27']
-            yp_jun = yp_dat['2008-06-14':'2008-06-28']
-            yp_sep = yp_dat['2008-09-13':'2008-09-28']
-            yp_dec = yp_dat['2008-12-14':'2008-12-28']
-            days_yp = {'mar':yp_mar, 'jun':yp_jun, 'sep':yp_sep, 'dec':yp_dec}
+        days = via_subset(dat)
+        days_yp = via_subset(yp_dat)
+        days_xt = via_subset(xt_dat)
 
         # Compute predictions for each seasonal subset of data frame
         for mon, df in days.items():
@@ -211,11 +220,8 @@ def via(data_use, model, prediction_scenario, yp=None, current_dir = '/Users/mw1
                 df.loc[:,''.join((v, '_y'))] = i
 
                 # Compute PGNN prediction for current variable in the current season with the current model and data scenario.
-                if not yp is None:
-                    ps = predict(df, test_y, model, data_use, prediction_scenario = prediction_scenario, yp = days_yp[mon], current_dir=current_dir)
-                else:
-                    ps = predict(df, test_y, model, data_use, prediction_scenario = prediction_scenario,yp = yp, current_dir=current_dir)
-
+                ps = predict(df, test_y, model, data_use, prediction_scenario = prediction_scenario, yp = days_yp[mon],
+                             xt_test=days_xt[mon], current_dir=current_dir)
                 out_i.append(ps)
 
             pd.DataFrame(out_i).to_csv(os.path.join(current_dir,f'results_{prediction_scenario}/via/{model}_{data_use}_{v}_via_cond_{mon}.csv'))
@@ -223,25 +229,30 @@ def via(data_use, model, prediction_scenario, yp=None, current_dir = '/Users/mw1
 
 if __name__ == '__main__':
 
-    via('sparse', 'mlp', prediction_scenario = 'exp2')
-    via('sparse', 'mlp', prediction_scenario = 'exp3')
-    via('full', 'mlp', prediction_scenario = 'exp2')
-    via('full', 'mlp', prediction_scenario = 'exp3')
+    via('sparse', 'embtest', prediction_scenario = 'exp2')
+    via('sparse', 'embtest', prediction_scenario = 'exp3')
+    via('full', 'embtest', prediction_scenario = 'exp2')
+    via('full', 'embtest', prediction_scenario = 'exp3')
 
-    via('sparse', 'reg', prediction_scenario='exp2')
-    via('sparse', 'reg', prediction_scenario='exp3')
-    via('full', 'reg', prediction_scenario='exp2')
-    via('full', 'reg', prediction_scenario='exp3')
+    #via('sparse', 'mlp', prediction_scenario='exp2')
+    #via('sparse', 'mlp', prediction_scenario='exp3')
+    #via('full', 'mlp', prediction_scenario='exp2')
+    #via('full', 'mlp', prediction_scenario='exp3')
 
-    via('sparse', 'mlpDA', prediction_scenario='exp2')
-    via('sparse', 'mlpDA', prediction_scenario='exp3')
-    via('full', 'mlpDA', prediction_scenario='exp2')
-    via('full', 'mlpDA', prediction_scenario='exp3')
+    #via('sparse', 'reg', prediction_scenario='exp2')
+    #via('sparse', 'reg', prediction_scenario='exp3')
+    #via('full', 'reg', prediction_scenario='exp2')
+    #via('full', 'reg', prediction_scenario='exp3')
 
-    via('sparse', 'res', prediction_scenario='exp2')
-    via('sparse', 'res', prediction_scenario='exp3')
-    via('full', 'res', prediction_scenario='exp2')
-    via('full', 'res', prediction_scenario='exp3')
+    #via('sparse', 'mlpDA', prediction_scenario='exp2')
+    #via('sparse', 'mlpDA', prediction_scenario='exp3')
+    #via('full', 'mlpDA', prediction_scenario='exp2')
+    #via('full', 'mlpDA', prediction_scenario='exp3')
+
+    #via('sparse', 'res', prediction_scenario='exp2')
+    #via('sparse', 'res', prediction_scenario='exp3')
+    #via('full', 'res', prediction_scenario='exp2')
+    #via('full', 'res', prediction_scenario='exp3')
 
     #via('sparse', 'res2', prediction_scenario = 'exp2')
     #via('sparse', 'res2', prediction_scenario = 'exp3')
