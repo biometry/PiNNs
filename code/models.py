@@ -3,7 +3,10 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import preles
+try:
+    import preles
+except ModuleNotFoundError:
+    print('Could not load Preles')
 
 # naive feed forward MLP
 class NMLP(nn.Module):
@@ -174,7 +177,7 @@ def physical_forward(parameters, input_data, tp=None, sw=None):
     if tp is None:
         out = GPP.unsqueeze(-1)
     else:
-        out = orch.stack((GPP.flatten(), ET.flatten(), (SW.flatten()-sw[0])/sw[1]), dim=1)
+        out = torch.stack((GPP.flatten(), ET.flatten(), (SW.flatten()-sw[0])/sw[1]), dim=1)
 
     #print(op[0])
     return out
