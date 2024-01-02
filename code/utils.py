@@ -3,8 +3,8 @@
 import sys, os
 import os.path
 
-sys.path.append("/Users/mw1205/PycharmProjects/physics_guided_nn/code")
-os.chdir("/Users/mw1205/PycharmProjects/physics_guided_nn/code")
+#sys.path.append("/Users/mw1205/PycharmProjects/physics_guided_nn/code")
+#os.chdir("/Users/mw1205/PycharmProjects/physics_guided_nn/code")
 
 import numpy as np
 import pandas as pd
@@ -121,7 +121,7 @@ def read_in(type, data_dir=None, data_use=None, exp=None, sparse=False, n=None):
         out = pd.read_csv(''.join((data_dir, 'allsitesF_exp2_sparse.csv')))
 
     elif type == 'simulations' and data_dir != 'load':
-        out = pd.read_csv(''.join((data_dir, f'simulations_{data_use}_{exp}_10000.csv'))) #w/o n
+        out = pd.read_csv(''.join((data_dir, f'simulations_{data_use}_{exp}_5000.csv'))) #w/o n
 
     print('Load data: ', type)
     return out

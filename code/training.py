@@ -18,7 +18,7 @@ from slbfgs import sLBFGS
 
 
 def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptation=None, reg=None, emb=False, raw=None, res=None, ypreles=None, exp=None, hp=False, embtp=None, sw=None, qn =False):
-    torch.manual_seed(999)
+    torch.manual_seed(2)
     print("Hyperparams", hparams)
     nepoch = hparams['epochs']
     batchsize = hparams['batchsize']

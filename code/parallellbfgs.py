@@ -68,14 +68,14 @@ test_x.index, test_y.index, yp_te.index, rte.index = np.arange(0, len(test_x)), 
 
 model_design = {'layersizes': [[128], [128]]}
 
-hp = {'epochs': 1000,
+hp = {'epochs': 1,
       'batchsize': int(30),
       'lr': 0.1,
       'eta': 0
       }
 
 
-results =training.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), "./data/", "embof", (yp_tr, yp_te), True, (rtr, rte), None, None, None, (swmn, swstd), 2, True, 1)
+results = training.finetune(hp, model_design, (train_x, train_y), (test_x, test_y), "./data/", "embof", (yp_tr, yp_te), True, (rtr, rte), None, None, None, (swmn, swstd), 2, True, 1)
 print(results)
 
 
