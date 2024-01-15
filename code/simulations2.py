@@ -274,7 +274,7 @@ fig.savefig('results/temp.png')
 
 
 if __name__ == '__main__':
-    gen_simulations(n=10000, fix_pars=True, data_use='sparse', exp='')
+    gen_simulations(n=10, fix_pars=True, data_use='full', exp='exp2')
     #gen_simulations(n = 500, fix_pars=True, data_use='sparse', exp='')
     #gen_simulations(n=1000, fix_pars=True, data_use='full', exp='exp2')
     #gen_simulations(n=1000, fix_pars=True, data_use='sparse', exp='exp2')

@@ -196,13 +196,13 @@ def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir 
 
     if exp == 'exp2':
         train_x['site_num'] = train_x['site_num'].astype(str)
-        mapping = {'h':1, 's':2, 'b':3, 'l':4 ,'c':5}
+        mapping = {'h':1, 'sr':2, 'bz':3, 'ly':4 ,'co':5}
         train_x = train_x.replace({'site_num':mapping})
 
     if exp == 'exp2':
 
         #train_x['site'] = pd.to_numeric(train_x['site'], errors='ignore').astype(int)
-        #print(train_x['site'])
+        print("TRAINX", train_x.site_num.unique())
         gamTair = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']], train_x['Tair'])
         gamPrecip = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']], train_x['Precip'])
         gamVPD = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']],train_x['VPD'])

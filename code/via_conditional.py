@@ -2,8 +2,8 @@
 # coding: utf-8
 import sys, os
 import os.path
-sys.path.append("/Users/mw1205/PycharmProjects/physics_guided_nn/code")
-os.chdir("/Users/mw1205/PycharmProjects/physics_guided_nn/code")
+sys.path.append('/users/mosernik/physics_guided_nn/code') #"/Users/mw1205/PycharmProjects/physics_guided_nn/code")
+os.chdir('/users/mosernik/physics_guided_nn/code') #"/Users/mw1205/PycharmProjects/physics_guided_nn/code")
 
 import torch
 import pandas as pd
@@ -12,7 +12,7 @@ import utils
 import models
 import argparse
 
-current_dir = "/Users/mw1205/PycharmProjects/physics_guided_nn"
+current_dir = '/users/mosernik/physics_guided_nn' #"/Users/mw1205/PycharmProjects/physics_guided_nn"
 
 parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
@@ -26,7 +26,7 @@ def predict(test_x, test_y, m, data_use, yp, xt_test, current_dir=''):
         a = res_as.loc[res_as.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         model_design = {'layersizes': layersizes}
-    elif m == 'embtest':
+    elif m == 'emb':
         pass
     else:
         res_as = pd.read_csv(os.path.join(current_dir, f"NAS/N{m}HP_{data_use}_new.csv"))
@@ -36,9 +36,9 @@ def predict(test_x, test_y, m, data_use, yp, xt_test, current_dir=''):
 
 
     data_dir = os.path.join(current_dir, "models_exp1/")
-
+    print("DATA",test_x, test_y, yp)
     test_x, test_y = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
-    yp_test = torch.tensor(yp.to_numpy(), dtype=torch.float32)
+    #yp_test = torch.tensor(yp.to_numpy()) #, dtype=torch.float32)
     xt_test = torch.tensor(xt_test.to_numpy(), dtype=torch.float32)
 
     preds_test = np.zeros((test_x.shape[0], 4))
@@ -50,7 +50,7 @@ def predict(test_x, test_y, m, data_use, yp, xt_test, current_dir=''):
             model = models.NMLP(test_x.shape[1], 1, model_design['layersizes'])
         elif m == 'res2':
             model = models.RES(test_x.shape[1], 1, model_design['layersizes'])
-        elif m == 'embtest':
+        elif m == 'emb':
             model = models.EMB(test_x.shape[1], 1, [[32], [32]], 12, 1)
 
         if m =='mlpDA':
@@ -62,8 +62,8 @@ def predict(test_x, test_y, m, data_use, yp, xt_test, current_dir=''):
         with torch.no_grad():
             if m == 'res2':
                 p_test = model(test_x, yp_test)
-            elif m == 'embtest':
-                p_test = model(test_x, xt_test)
+            elif m == 'emb':
+                pp_test, p_test = model(test_x, xt_test) #p_test = EMB output
             else:
                 p_test = model(test_x)
             preds_test[:,i-1] = p_test.flatten().numpy()
@@ -73,7 +73,7 @@ def predict(test_x, test_y, m, data_use, yp, xt_test, current_dir=''):
     return preds_test
 
 
-def via(data_use, model, prediction_scenario, current_dir = '/Users/mw1205/PycharmProjects/physics_guided_nn'):
+def via(data_use, model, prediction_scenario, current_dir ='/users/mosernik/physics_guided_nn'): #'/Users/mw1205/PycharmProjects/physics_guided_nn'):
 
 
     if data_use == 'sparse':
@@ -114,7 +114,7 @@ def via(data_use, model, prediction_scenario, current_dir = '/Users/mw1205/Pycha
         test_x = x_te[x_te.index.year == 2008]
         test_y = y[y.index.year == 2008][1:]
         variables = ['GPPp', 'ETp', 'SWp']
-    elif model == 'embtest':
+    elif model == 'emb':
         xt.index = pd.DatetimeIndex(xt.date)
         xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET'], axis=1)
         test_xt = xt[xt.index.year == 2008]
@@ -165,8 +165,9 @@ def via(data_use, model, prediction_scenario, current_dir = '/Users/mw1205/Pycha
 
 if __name__ == '__main__':
 
-    via('full', 'embtest', prediction_scenario = 'temporal')
-    via('sparse', 'embtest', prediction_scenario = 'temporal')
+    via('sparse', 'emb', prediction_scenario = 'temporal')
+    via('full', 'emb', prediction_scenario = 'temporal')
+    #via('sparse', 'embtest', prediction_scenario = 'temporal')
     #via('sparse', 'mlp', prediction_scenario = 'temporal')
     #via('full', 'mlp', prediction_scenario = 'temporal')
     #via('sparse', 'res2', prediction_scenario = 'temporal')
