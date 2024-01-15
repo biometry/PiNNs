@@ -92,10 +92,10 @@ via <- function(data_use, prediction_scenario, gridsize = 200, point_wise = FALS
     
     if (prediction_scenario == 'spatial'){x_test$X = gsub("[^a-zA-Z]", "", x_test$X)}
     
-    mar = with(x_test, x_test[(date >= "2008-03-13" & date <= "2008-03-27"),])[,c(3:13)]
-    jun = with(x_test, x_test[(date >= "2008-06-14" & date <= "2008-06-28"),])[,c(3:13)]
-    sep = with(x_test, x_test[(date >= "2008-09-13" & date <= "2008-09-27"),])[,c(3:13)]
-    dec = with(x_test, x_test[(date >= "2008-12-14" & date <= "2008-12-28"),])[,c(3:13)]
+    mar = with(x_test, x_test[(date >= "2008-03-13" & date <= "2008-03-27"),])[,c(3:14)]
+    jun = with(x_test, x_test[(date >= "2008-06-14" & date <= "2008-06-28"),])[,c(3:14)]
+    sep = with(x_test, x_test[(date >= "2008-09-13" & date <= "2008-09-27"),])[,c(3:14)]
+    dec = with(x_test, x_test[(date >= "2008-12-14" & date <= "2008-12-28"),])[,c(3:14)]
   
     days = list(mar, jun, sep, dec)
     
@@ -117,9 +117,11 @@ via <- function(data_use, prediction_scenario, gridsize = 200, point_wise = FALS
 via(data_use = "full",prediction_scenario =  "exp1", gridsize = 200)
 via(data_use = "sparse",prediction_scenario =  "exp1", gridsize = 200)
 
-via(data_use = "full",prediction_scenario =  "exp2", gridsize = 200, point_wise = TRUE)
-via(data_use = "sparse",prediction_scenario =  "exp2", gridsize = 200, point_wise = TRUE)
+via(data_use = "full",prediction_scenario =  "exp2", gridsize = 200, point_wise = FALSE)
+via(data_use = "sparse",prediction_scenario =  "exp2", gridsize = 200, point_wise = FALSE)
 
-via(data_use = "full", prediction_scenario = "exp3", gridsize = 200, point_wise = TRUE)
-via(data_use = "sparse", prediction_scenario = "exp3", gridsize = 200, point_wise = TRUE)
+via(data_use = "full", prediction_scenario = "exp3", gridsize = 200, point_wise = FALSE)
+via(data_use = "sparse", prediction_scenario = "exp3", gridsize = 200, point_wise = FALSE)
 
+
+PRELES()

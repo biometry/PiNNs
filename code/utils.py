@@ -140,7 +140,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
         xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
     elif data_split == "exp2" and eval:
         ypcols = ['GPPp', 'ETp', 'SWp']
-        xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos']
+        xcols = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar', 'doy_sin', 'doy_cos', 'site']
     else:
         ypcols = None
         if doy:
@@ -181,7 +181,7 @@ def loaddata(data_split, history, batch_size=None, dir=None, raw=False, doy=True
     if ypcols:
         yp = data[ypcols]
         if data_split == 'exp2':
-            data = data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1)
+            data = data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp', 'site'], axis=1)
         else:
             data = data.drop(['CO2', 'date', 'DOY', 'GPP', 'X', 'GPPp', 'ETp', 'SWp'], axis=1)
         if via:
