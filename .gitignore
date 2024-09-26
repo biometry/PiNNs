@@ -16,6 +16,7 @@ build/
 preles.log
 notebooks/
 preles.egg-info/
+data/
 
 simulations/
 results_final/
