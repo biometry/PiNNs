@@ -1,5 +1,25 @@
+source("install_packages.R")
+
 library(BayesianTools)
 library(Rpreles)
+library(this.path)
+
+path_to_data <- paste0(dirname(this.path::this.dir()), "/data")
+
+create_results_folder <- function(parent_dir, folder_name = "results") {
+  
+  results_dir <- file.path(parent_dir, folder_name)
+  
+  if (!dir.exists(results_dir)) {
+    
+    dir.create(results_dir)
+    message("No 'results' folder was found and has been created at: ", results_dir)
+  } else {
+    message("The 'results' folder already exists at: ", results_dir)
+  }
+  
+  return(results_dir)
+}
 
 create_nas_data <- function(pars_def = TRUE, write = FALSE){
   
@@ -7,13 +27,13 @@ create_nas_data <- function(pars_def = TRUE, write = FALSE){
   ## Create data set for NAS ##
   ##=========================##
   
-  hyytiala <- read.csv("~/PycharmProjects/physics_guided_nn/data/hyytiala.csv")
+  hyytiala <- read.csv(paste0(path_to_data, "/hyytiala.csv"))
   hyytiala$date <- as.Date(hyytiala$date)
   hyytiala$year <- format(hyytiala$date, format="%Y")
   hyytiala_nas <- hyytiala[(hyytiala$year %in% c( "2005", "2004")), ]
   attach(hyytiala_nas)
   
-  load("~/PycharmProjects/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
+  load(paste0(path_to_data, "/parameterRanges.rdata")) # parameter defaults/ranges
   # par # note that "-999" is supposed to indiate NA!
   pars <- par # unfortunate naming "par" replaced by "pars"
   rm(par)
@@ -31,11 +51,6 @@ create_nas_data <- function(pars_def = TRUE, write = FALSE){
     
     gpp <-  PRELES(PAR=PAR, TAir=Tair, VPD=VPD, Precip=Precip, CO2=CO2, fAPAR=fapar, p=thispar)$GPP #, 
     et <- PRELES(PAR=PAR, TAir=Tair, VPD=VPD, Precip=Precip, CO2=CO2, fAPAR=fapar, p=thispar)$ET
-    #sw <- PRELES(PAR=PAR, TAir=Tair, VPD=VPD, Precip=Precip, CO2=CO2, fAPAR=fapar, p=thispar)$SW
-    #qq <- cbind(GPP, ET)
-    
-    #library(mvtnorm)
-    #dd <- dmvnorm(qq, mean=apply(mm, 2, mean),  log=T)
     
     ell <- function(pars, data=hyytiala_nas){
       # pars is a vector the same length as pars2tune
@@ -43,14 +58,13 @@ create_nas_data <- function(pars_def = TRUE, write = FALSE){
       # likelihood function, first shot: normal density
       with(data, (sum(dnorm(GPP, mean=gpp, sd = thispar[31], log=T)) + 
                     sum(dnorm(ET, mean=et, sd = thispar[31], log=T))))
-      #with(data, (sum(dnorm(GPP, mean=gpp, sd = thispar[31], log=T))))
     }
     priors <- createUniformPrior(lower=pars$min[pars2tune], upper=pars$max[pars2tune], best=pars$def[pars2tune])
     setup <- createBayesianSetup(likelihood=ell, prior=priors, parallel=T)
     settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
     # run:
     fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
-    save(fit, file = "~/PycharmProjects/physics_guided_nn/data/Psinglesite_NAS_fit.Rdata")
+    save(fit, file = paste0(path_to_data, "/Psinglesite_NAS_fit.Rdata"))
     summary(fit)
     
     pars_fit <- pars
@@ -77,7 +91,7 @@ create_nas_data <- function(pars_def = TRUE, write = FALSE){
   }
   
   if (write){
-    write.csv(hyytiala_nas, file="~/PycharmProjects/physics_guided_nn/data/hyytialaNAS.csv", row.names = FALSE)
+    write.csv(hyytiala_nas, file=paste0(path_to_data, "/hyytialaNAS.csv"), row.names = FALSE)
   }
   
   return(hyytiala_nas, mae)
@@ -86,7 +100,7 @@ create_nas_data <- function(pars_def = TRUE, write = FALSE){
 
 example_fit <- function(){
   
-  hyytiala <- read.csv("~/PycharmProjects/physics_guided_nn/data/hyytiala.csv")
+  hyytiala <- read.csv(paste0(path_to_data, "/hyytiala.csv"))
   hyytiala$date <- as.Date(hyytiala$date)
   hyytiala$year <- format(hyytiala$date, format="%Y")
   
@@ -167,11 +181,11 @@ example_fit <- function(){
   settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
   # run:
   fit1 <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
-  save(fit1, file = "~/PycharmProjects/physics_guided_nn/data/Psinglesite_example_fit.Rdata")
+  save(fit1, file = paste0(path_to_data, "/Psinglesite_example_fit.Rdata"))
   
   #### Check whether estimates reach prior boundary ####
   summary(fit1)
-  pdf(file="~/PycharmProjects/physics_guided_nn/results_final/Psinglesitefit_BayesPriors.pdf", width=15, height=12)
+  pdf(file=paste0(paste0(dirname(this.path::this.dir()), "/results"), "/Psinglesitefit_BayesPriors.pdf"), width=15, height=12)
   par(mfrow=c(4, 4), mar=c(3,3,3,1))
   for (i in 1:ncol(fit1[[1]]$X)){ # loop over parameters fitted
     #fit1[[1]]$chain[1]

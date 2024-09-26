@@ -1,11 +1,17 @@
+source("helpers.R")
+source("install_packages.R")
+
 library(Rpreles)
 library(BayesianTools)
+library(this.path)
 
-setwd("~/PycharmProjects/PiNNs")
+setwd(this.path::this.dir())
+print(getwd())
 
-source("r/helpers.R")
+path_to_data <- paste0(dirname(this.path::this.dir()), "/data")
+path_to_results <- create_results_folder(dirname(this.path::this.dir()))
 
-load("data/parameterRanges.rdata") # parameter defaults/ranges
+load(paste0(path_to_data, "/parameterRanges.rdata")) # parameter defaults/ranges
 # par # note that "-999" is supposed to indiate NA!
 pararms <- par # unfortunate naming "par" replaced by "pararms"
 rm(par)
@@ -23,7 +29,7 @@ pars2tune <- c(5:11, 14:18, 31) # note that we omit 32, as it refers to ET
 thispar <- pararms$def
 names(thispar) <- pararms$name
 
-hyytiala <- read.csv("data/hyytiala.csv")
+hyytiala <- read.csv(paste0(path_to_data, "/hyytiala.csv"))
 hyytiala$date <- as.Date(hyytiala$date)
 hyytiala$year <- format(hyytiala$date, format="%Y")
 
@@ -135,7 +141,7 @@ pars_fit$def[pars2tune] <- MAP(fit)$parametersMAP
 gpp_preds <- PRELES(PAR=hyytiala_test$PAR, TAir=hyytiala_test$Tair, VPD=hyytiala_test$VPD, Precip=hyytiala_test$Precip, CO2=hyytiala_test$CO2, fAPAR=hyytiala_test$fapar, p=pars_fit$def)$GPP
 
 
-pdf(file=paste0("/Users/mw1205/Library/Mobile Documents/com~apple~CloudDocs/Projects/physics_guided_nn_meta/manuscript/revisions/PRELES_no_sd_fit.pdf"), width=15, height=12)
+pdf(file=paste0(path_to_results, paste0("/PRELES_no_sd_fit.pdf")), width=15, height=12)
 par(mfrow=c(4, 4), mar=c(3,3,3,1))
 for (i in 1:ncol(fit[[1]]$Z)){ # loop over parameters fitted
   plot(density(fit[[1]]$Z[,i]), from=min(fit[[1]]$Z[,i]), to=max(fit[[1]]$Z[,i]), main=pararms[pars2tune[i],1], las=1)

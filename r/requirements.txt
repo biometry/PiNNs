@@ -1,0 +1,5 @@
+Rpreles==1.0
+BayesianTools==0.1.8
+this.path==2.5.0
+devtools==2.4.5
+usethis==2.2.2

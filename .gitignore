@@ -32,3 +32,10 @@ NAS/
 data
 unused
 plots.zip
+bin/
+results/
+
+spatio_temporal/results/
+temporal/results/
+spatial/results/
+r/results/

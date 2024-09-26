@@ -2,14 +2,33 @@
 # VIA PRELES / conditional #
 #==========================#
 
+source("install_packages.R")
+source("helpers.R")
+
 library(Rpreles)
+library(this.path)
+
+setwd(this.path::this.dir())
+print(getwd())
+
+path_to_data <- paste0(dirname(this.path::this.dir()), "/data")
+
+spatial_prediction <- paste0(dirname(this.path::this.dir()), "/spatial")
+temporal_prediction <- paste0(dirname(this.path::this.dir()), "/temporal")
+spatiotemporal_prediction <- paste0(dirname(this.path::this.dir()), "/spatio_temporal")
+
+# Create results folder if not already existing
+path_to_spatial <- create_results_folder(spatial_prediction, folder_name = "results/via")
+path_to_temporal <- create_results_folder(temporal_prediction, folder_name = "results/via")
+path_to_spatiotemporal <- create_results_folder(spatiotemporal_prediction, folder_name = "results/via")
+
 
 predict_via <- function(day, data_use, prediction_scenario, point_wise = FALSE){
   
   if (prediction_scenario =='exp1'){
-    CVfit = read.csv(paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".csv"))#[,2:6]
+    CVfit = read.csv(paste0(path_to_data, paste0("/Psinglesite_CVfit_", data_use, ".csv")))#[,2:6]
   }else{
-    CVfit = read.csv(paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", prediction_scenario, ".csv"))[,2:5]
+    CVfit = read.csv(paste0(path_to_data, paste0("/Pmultisite_CVfit_", data_use, "_", prediction_scenario, ".csv")))[,2:5]
   }
   
   if (prediction_scenario == 'exp1'){
@@ -44,12 +63,12 @@ predict_via <- function(day, data_use, prediction_scenario, point_wise = FALSE){
 }
 
 
-via <- function(data_use, prediction_scenario, gridsize = 200, point_wise = FALSE){
+via <- function(data_use, prediction_scenario, path_to_results, gridsize = 200, point_wise = FALSE){
   
   if (prediction_scenario == 'exp1'){
-    hyytiala <- read.csv(paste0("~/PycharmProjects/physics_guided_nn/data/hyytialaF_", data_use, ".csv"))
+    hyytiala <- read.csv(paste0(path_to_data, paste0("/hyytialaF_", data_use, ".csv")))
   }else{
-    hyytiala <- read.csv(paste0("~/PycharmProjects/physics_guided_nn/data/allsitesF_", prediction_scenario, "_", data_use, ".csv"))
+    hyytiala <- read.csv(paste0(path_to_data, paste0("/allsitesF_", prediction_scenario, "_", data_use, ".csv")))
   }
   
   
@@ -105,20 +124,17 @@ via <- function(data_use, prediction_scenario, gridsize = 200, point_wise = FALS
         preds = predict_via(day, data_use, prediction_scenario, point_wise = point_wise)
         output[j,] = preds
       }
-      write.csv(output, paste0("~/PycharmProjects/physics_guided_nn/results_", prediction_scenario, "/via/preles_", data_use, "_", v, "_via_cond_", day_names[n], ".csv"))
+      write.csv(output, paste0(path_to_results, paste0("/preles_", data_use, "_", v, "_via_cond_", day_names[n], ".csv")))
       n = n+1
     }
   }
 }
 
-via(data_use = "full",prediction_scenario =  "exp1", gridsize = 200)
-via(data_use = "sparse",prediction_scenario =  "exp1", gridsize = 200)
+via(data_use = "full",prediction_scenario =  "exp1", path_to_results = path_to_temporal, gridsize = 200)
+via(data_use = "sparse",prediction_scenario =  "exp1", path_to_results = path_to_temporal,  gridsize = 200)
 
-via(data_use = "full",prediction_scenario =  "exp2", gridsize = 200, point_wise = FALSE)
-via(data_use = "sparse",prediction_scenario =  "exp2", gridsize = 200, point_wise = FALSE)
+via(data_use = "full",prediction_scenario =  "exp2", gridsize = 200, path_to_results = path_to_spatial, point_wise = FALSE)
+via(data_use = "sparse",prediction_scenario =  "exp2", gridsize = 200,path_to_results = path_to_spatial,  point_wise = FALSE)
 
-via(data_use = "full", prediction_scenario = "exp3", gridsize = 200, point_wise = FALSE)
-via(data_use = "sparse", prediction_scenario = "exp3", gridsize = 200, point_wise = FALSE)
-
-
-PRELES()
+via(data_use = "full", prediction_scenario = "exp3", gridsize = 200, path_to_results = path_to_spatiotemporal, point_wise = FALSE)
+via(data_use = "sparse", prediction_scenario = "exp3", gridsize = 200, path_to_results = path_to_spatiotemporal, point_wise = FALSE)

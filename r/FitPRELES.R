@@ -1,11 +1,26 @@
-## Fit PRELES to site data
-setwd("~/PycharmProjects/physics_guided_nn/code")
-#### install/load relevant packages ####
-#devtools::install_github('MikkoPeltoniemi/Rpreles')
+source("helpers.R")
+source("install_packages.R")
+
+library(this.path)
 library(Rpreles)
 library(BayesianTools)
 
-source("helpers.R")
+## Fit PRELES to site data
+setwd(this.path::this.dir())
+print(getwd())
+
+# specifiy paths
+path_to_data <- paste0(dirname(this.path::this.dir()), "/data")
+path_to_results  <- paste0(dirname(this.path::this.dir()), "/results")
+
+spatial_prediction <- paste0(dirname(this.path::this.dir()), "/spatial")
+temporal_prediction <- paste0(dirname(this.path::this.dir()), "/temporal")
+spatiotemporal_prediction <- paste0(dirname(this.path::this.dir()), "/spatio_temporal")
+
+# Create results folder if not already existing
+path_to_spatial <- create_results_folder(spatial_prediction)
+path_to_temporal <- create_results_folder(temporal_prediction)
+path_to_spatiotemporal <- create_results_folder(spatiotemporal_prediction)
 
 #set flags
 make_nas_data = FALSE
@@ -25,7 +40,7 @@ makesparse <- function(train){
 }
 
 load_pars <- function(){
-  load("~/PycharmProjects/physics_guided_nn/data/parameterRanges.rdata") # parameter defaults/ranges
+  load(paste0(path_to_data, "/parameterRanges.rdata")) # parameter defaults/ranges
   # par # note that "-999" is supposed to indiate NA!
   pars <- par # unfortunate naming "par" replaced by "pars"
   rm(par)
@@ -46,7 +61,7 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
   names(thispar) <- pars$name
   
   
-  hyytiala <- read.csv("~/PycharmProjects/physics_guided_nn/data/hyytiala.csv")
+  hyytiala <- read.csv(paste0(path_to_data, "/hyytiala.csv"))
   hyytiala$date <- as.Date(hyytiala$date)
   hyytiala$year <- format(hyytiala$date, format="%Y")
   
@@ -77,7 +92,7 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
     settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
     # run:
     fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
-    save(fit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_fit_", year,"_", data_use, ".Rdata"))
+    save(fit, file = paste0(paste0(path_to_data, "/Psinglesite_fit_", year,"_", data_use, ".Rdata")))
     
     pars_fit <- pars
     pars_fit$def[pars2tune] <- MAP(fit)$parametersMAP
@@ -85,8 +100,8 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
     i = i+1
   }
   
-  save(CVfit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".Rdata"))
-  write.csv(CVfit, file=paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".csv"))
+  save(CVfit, file = paste0(path_to_data, paste0("/Psinglesite_CVfit_", data_use, ".Rdata")))
+  write.csv(CVfit, file=paste0(path_to_data, paste0("/Psinglesite_CVfit_", data_use, ".csv")))
   
    
   gpp_train <- matrix(NA, nrow=nrow(hyytiala_train), ncol=length(unique(hyytiala_train$year)))
@@ -96,7 +111,7 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
   sw_train <- matrix(NA, nrow=nrow(hyytiala_train), ncol=length(unique(hyytiala_train$year)))
   sw_test <- matrix(NA, nrow=nrow(hyytiala_test), ncol=length(unique(hyytiala_train$year)))
   
-  load(file = paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_CVfit_", data_use, ".Rdata"))
+  load(file = paste0(paste0(path_to_data, "/Psinglesite_CVfit_", data_use, ".Rdata")))
 
   for (i in 1:length(unique(hyytiala_train$year))){
   
@@ -122,10 +137,12 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
   
   if (save_data){
     hyytialaF <- rbind(hyytiala_train, hyytiala_test)
-    write.csv(hyytialaF, file=paste0("~/PycharmProjects/physics_guided_nn/data/hyytialaF_", data_use, ".csv"), row.names = FALSE)
+    write.csv(hyytialaF, 
+              file=paste0(path_to_data, paste0("/hyytialaF_", data_use, ".csv")), 
+              row.names = FALSE)
     ## Generate files for prediction results ##
-    save(gpp_train, file = "~/PycharmProjects/physics_guided_nn/data/GPPp_singlesite_train.Rdata")
-    save(gpp_test, file = "~/PycharmProjects/physics_guided_nn/data/GPPp_singlesite_test.Rdata")
+    save(gpp_train, file = paste0(path_to_data, "/GPPp_singlesite_train.Rdata"))
+    save(gpp_test, file = paste0(path_to_data, "/GPPp_singlesite_test.Rdata"))
   }
   
   GPP_train <- apply(gpp_train, 1, mean)
@@ -146,15 +163,15 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
   perfpormance_preles_full[,1] <- apply(gpp_test, 2, rmse)
   perfpormance_preles_full[,2] <- apply(gpp_test, 2, mae)
   
-  write.csv(perfpormance_preles_full, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/preles_eval_", data_use, "_performance.csv"))
-  write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results_final/preles_eval_preds_test_", data_use, ".csv"))
+  write.csv(perfpormance_preles_full, file=paste0(path_to_temporal, paste0("/preles_eval_", data_use, "_performance.csv")))
+  write.csv(gpp_test, file=paste0(path_to_temporal, paste0("/preles_eval_preds_test_", data_use, ".csv")))
   
 }
 
 multisite_calibration <- function(data_use = 'sparse', scenario = 'exp2', fit = FALSE, save_data = FALSE){
   
 
-  allsites <- read.csv("~/PycharmProjects/physics_guided_nn/data/allsites.csv")
+  allsites <- read.csv(paste0(path_to_data, "/allsites.csv"))
   allsites$date <- as.Date(allsites$date)
   allsites$year <- format(allsites$date, format="%Y")
   print(unique(allsites$year))
@@ -208,7 +225,7 @@ multisite_calibration <- function(data_use = 'sparse', scenario = 'exp2', fit = 
       settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
       # run:
       fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
-      save(fit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_fit_", s, "_", scenario, "_", data_use, ".Rdata"))
+      save(fit, file = paste0(path_to_data, paste0("/Pmultisite_fit_", s, "_", scenario, "_", data_use, ".Rdata")))
       
       pars_fit <- pars
       pars_fit$def[pars2tune] <- MAP(fit)$parametersMAP
@@ -217,8 +234,8 @@ multisite_calibration <- function(data_use = 'sparse', scenario = 'exp2', fit = 
       i <- i+1
     }
     
-    save(CVfit, file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".Rdata"))
-    write.csv(CVfit, file=paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".csv"))
+    save(CVfit, file = paste0(path_to_data,paste0("/Pmultisite_CVfit_", data_use, "_", scenario, ".Rdata")))
+    write.csv(CVfit, file=paste0(path_to_data,paste0("/Pmultisite_CVfit_", data_use, "_", scenario, ".csv")))
   
   }
   
@@ -229,7 +246,7 @@ multisite_calibration <- function(data_use = 'sparse', scenario = 'exp2', fit = 
   sw_train <- matrix(NA, nrow=nrow(allsites_train), ncol=length(unique(allsites_train$site)))
   sw_test <- matrix(NA, nrow=nrow(allsites_test), ncol=length(unique(allsites_train$site)))
 
-  load(file = paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_CVfit_", data_use, "_", scenario, ".Rdata"))
+  load(file = paste0(path_to_data,paste0("/Pmultisite_CVfit_", data_use, "_", scenario, ".Rdata")))
   
   for (i in 1:length(unique(allsites_train$site))){
     
@@ -255,8 +272,9 @@ multisite_calibration <- function(data_use = 'sparse', scenario = 'exp2', fit = 
   
   if (save_data){
     allsitesF <- rbind(allsites_train, allsites_test)
-    write.csv(allsitesF, file=paste0("~/PycharmProjects/physics_guided_nn/data/allsitesF_", scenario,"_", data_use, ".csv"), row.names = FALSE)
-
+    write.csv(allsitesF, 
+              file=paste0(path_to_data, "/allsitesF_", scenario, "_", data_use, ".csv"), 
+              row.names = FALSE)
   }
   
   ## Generate files for prediction results ##
@@ -290,23 +308,23 @@ multisite_calibration <- function(data_use = 'sparse', scenario = 'exp2', fit = 
   performance_preles[,4] <- apply(gpp_test, 2, mae, test=T, year=2008)
   
   if (scenario == "exp2"){
-    write.csv(performance_preles, file=paste0("~/PycharmProjects/physics_guided_nn/results_", scenario, "/2preles_eval_", data_use, "_performance.csv"))
-    write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results_", scenario, "/2preles_eval_preds_test_", data_use, ".csv"))
+    write.csv(performance_preles, file=paste0(path_to_spatial, paste0("/2preles_eval_", data_use, "_performance.csv")))
+    write.csv(gpp_test, file=paste0(path_to_spatial,paste0("/2preles_eval_preds_test_", data_use, ".csv")))
   }else if(scenario == "exp3"){
-    write.csv(performance_preles, file=paste0("~/PycharmProjects/physics_guided_nn/results_", scenario, "/3preles_eval_", data_use, "_performance.csv"))
-    write.csv(gpp_test, file=paste0("~/PycharmProjects/physics_guided_nn/results_", scenario, "/3preles_eval_preds_test_", data_use, ".csv"))
+    write.csv(performance_preles, file=paste0(path_to_spatiotemporal,paste0("/3preles_eval_", data_use, "_performance.csv")))
+    write.csv(gpp_test, file=paste0(path_to_spatiotemporal, paste0("/3preles_eval_preds_test_", data_use, ".csv")))
   }
   
 }
 
 
-singlesite_calibration(data_use = 'full', save_data=FALSE)
-singlesite_calibration(data_use = 'sparse', save_data=FALSE)
+singlesite_calibration(data_use = 'full', save_data=TRUE)
+singlesite_calibration(data_use = 'sparse', save_data=TRUE)
 
-multisite_calibration(data_use = 'full', scenario = 'exp2', fit = TRUE, save_data = FALSE)
-multisite_calibration(data_use = 'sparse', scenario = 'exp2', fit = TRUE, save_data = FALSE)
-multisite_calibration(data_use = 'full', scenario = 'exp3', fit = TRUE, save_data = FALSE)
-multisite_calibration(data_use = 'sparse', scenario = 'exp3', fit = TRUE,  save_data = FALSE)
+multisite_calibration(data_use = 'full', scenario = 'exp2', fit = TRUE, save_data = TRUE)
+multisite_calibration(data_use = 'sparse', scenario = 'exp2', fit = TRUE, save_data = TRUE)
+multisite_calibration(data_use = 'full', scenario = 'exp3', fit = TRUE, save_data = TRUE)
+multisite_calibration(data_use = 'sparse', scenario = 'exp3', fit = TRUE,  save_data = TRUE)
 
 #==============================#
 # Plot posterior distributions #
@@ -322,13 +340,13 @@ plot_posterior_singlesite <- function(data_use){
   years <- c(2009,2010,2011,2012)
   ests <- NULL
   for (year in years){ # loop over years to load CV MCMC chain fits.
-    load(paste0("~/PycharmProjects/physics_guided_nn/data/Psinglesite_fit_", year,"_", data_use, ".Rdata"))
+    load(paste0(path_to_data, paste0("/Psinglesite_fit_", year,"_", data_use, ".Rdata")))
     fit[[1]]$chain[1]
     est <- rbind(fit[[1]]$Z, fit[[2]]$Z, fit[[3]]$Z)
     ests <- rbind(ests, est)
   }
   
-  pdf(file=paste0("~/PycharmProjects/physics_guided_nn/plots/calibration/Psinglesite_fit_BayesPriors_", data_use,".pdf"), width=15, height=12)
+  pdf(file=paste0(path_to_temporal, paste0("/Psinglesite_fit_BayesPriors_", data_use,".pdf"), width=15, height=12))
   par(mfrow=c(4, 4), mar=c(3,3,3,1))
   for (i in 1:ncol(fit[[1]]$X)){ # loop over parameters fitted
     plot(density(ests[,i], from=min(ests[,i]), to=max(ests[,i])), main=pars[pars2tune[i],1], las=1)
@@ -337,30 +355,36 @@ plot_posterior_singlesite <- function(data_use){
   dev.off()
 }
 
-plot_posterior_multisite <- function(data_use, experiment){
+plot_posterior_multisite <- function(data_use, experiment, results_path, pars, pars2tune){
   
   sites <- c('bz','co','ly','sr')
   ests <- NULL
-  for (site in sites){ # loop over years
-    load(paste0("~/PycharmProjects/physics_guided_nn/data/Pmultisite_fit_", site,"_", experiment, "_", data_use, ".Rdata"))
-    fit[[1]]$chain[1]
-    est <- rbind(fit[[1]]$Z, fit[[2]]$Z, fit[[3]]$Z)
-    ests <- rbind(ests, est)
+  
+  # Loop over the sites
+  for (site in sites) { 
+    # Load the fit object for the specific site
+    load(paste0(results_path, "/Pmultisite_fit_", site, "_", experiment, "_", data_use, ".Rdata"))
+    # Combine posterior samples for all chains
+    ests <- rbind(ests, rbind(fit[[1]]$Z, fit[[2]]$Z, fit[[3]]$Z))
+  }
+
+  pdf(file = paste0(results_path, "/Pmultisite_fit_BayesPriors_exp3_", data_use, ".pdf"), width = 15, height = 12)
+  par(mfrow = c(4, 4), mar = c(3,3,3,1)) 
+  
+  for (i in 1:ncol(fit[[1]]$X)) {
+    
+    plot(density(ests[,i], from = min(ests[,i]), to = max(ests[,i])), 
+         main = pars[pars2tune[i], 1], las = 1)
+    abline(v = pars[pars2tune[i], 3:4], col = "red")
   }
   
-  pdf(file=paste0("~/PycharmProjects/physics_guided_nn/plots/calibration/Pmultisite_fit_BayesPriors_exp3_", data_use,".pdf"), width=15, height=12)
-  par(mfrow=c(4, 4), mar=c(3,3,3,1))
-  for (i in 1:ncol(fit[[1]]$X)){ # loop over parameters fitted
-    
-    plot(density(ests[,i], from=min(ests[,i]), to=max(ests[,i])), main=pars[pars2tune[i],1], las=1)
-    abline(v=pars[pars2tune[i], 3:4], col="red")
-  }
   dev.off()
 }
 
+
 plot_posterior_singlesite(data_use = 'full')
 plot_posterior_singlesite(data_use = 'sparse')
-plot_posterior_multisite(data_use = 'full', experiment = 'exp2')
-plot_posterior_multisite(data_use = 'sparse', experiment = 'exp2')
-plot_posterior_multisite(data_use = 'full', experiment = 'exp3')
-plot_posterior_multisite(data_use = 'sparse', experiment = 'exp3')
+plot_posterior_multisite(data_use = 'full', experiment = 'exp2', results_path = path_to_spatial)
+plot_posterior_multisite(data_use = 'sparse', experiment = 'exp2',results_path = path_to_spatial)
+plot_posterior_multisite(data_use = 'full', experiment = 'exp3', results_path = path_to_spatiotemporal)
+plot_posterior_multisite(data_use = 'sparse', experiment = 'exp3', results_path = path_to_spatiotemporal)
