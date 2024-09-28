@@ -12,12 +12,13 @@ The repository is structured as follows:
 Data source for creating PRELES and the neural networks forcing can be found at: https://github.com/COST-FP1304-PROFOUND/ProfoundData<br/>
 C source code of the model PRELES in ./src can be found at: https://github.com/MikkoPeltoniemi/Rpreles<br/>
 
-## Set up computing environment
+## Set up R and Python environments
 
+PRELES calibration is conducted in R with the BayesionTools package, while integration with, neural network training and evaluation is conducted in Python. Therefore we need to setup both computing environments before results can be reproduced. In addition, we compile a python version of PRELES for reproducing results of the Physics Embedding. 
 
 - R: The scripts run safely in R v4.3.1 / v4.2.1 with the package versions listed in requirements_r.txt. Packages can be installed with "install_packages.R", missing packages are installed on the fly when running main.R. 
 
-- Python: Package versions and dependencies are listed in requirements.txt. Create a virtual environment before installtion, e.g. directly in the project directory with
+- Python: Package versions and dependencies are listed in requirements.txt. Create a virtual environment before installation, e.g. directly in your local project directory with
 ```console
 python -m venv pinns
 source venv/bin/activate
@@ -25,6 +26,17 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-- Preles-Compilation: For PRELES compilation, see README file in src folder.
+- Preles-Compilation: For instructions on PRELES compilation, see README file in src folder.
 
-## Installation of R and Python packages
+## Computing instructions
+
+1. Calibrate PRELES and generate predictions
+
+2. Run neural architecture search
+
+3. Pre-training for domain adaptation
+
+4. Evaluate models
+
+5. Variable importance analysis
+
