@@ -138,7 +138,7 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
   if (save_data){
     hyytialaF <- rbind(hyytiala_train, hyytiala_test)
     write.csv(hyytialaF, 
-              file=paste0(path_to_data, paste0("/hyytialaF_", data_use, ".csv")), 
+              file=paste0(path_to_data, paste0("/hyytiala_", data_use, ".csv")), 
               row.names = FALSE)
     ## Generate files for prediction results ##
     save(gpp_train, file = paste0(path_to_data, "/GPPp_singlesite_train.Rdata"))
@@ -273,7 +273,7 @@ multisite_calibration <- function(data_use = 'sparse', scenario = 'exp2', fit = 
   if (save_data){
     allsitesF <- rbind(allsites_train, allsites_test)
     write.csv(allsitesF, 
-              file=paste0(path_to_data, "/allsitesF_", scenario, "_", data_use, ".csv"), 
+              file=paste0(path_to_data, "/allsites_", scenario, "_", data_use, ".csv"), 
               row.names = FALSE)
   }
   

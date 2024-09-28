@@ -8,7 +8,7 @@ This repository contains the code that accompanies the article (DOI). The proces
 - pretrained NN (domain adapted) (*DA*)
 - physics embedding NN (*emb*)
 
-PINNs are evaluated (i) in temporal, spatial and spatio-temporal prediction scenarios (see folder structure) (i) and in data-rich and data-sparse regimes. The instructions below will walk you through the code if you want to reproduce our or create your own PINNs. <br/>
+PINNs are evaluated (i) in temporal, spatial and spatio-temporal prediction scenarios (see folder structure) (i) and in data-rich and data-sparse regimes. The instructions below will walk you through the code if you want to reproduce our or create your own PINNs. Because of heavy ressource use during PiNN development, we strongly recommend you to work on an HPC and submit with bash scripts to your scheduling system during the neural architecture search and also consider it for the model training. <br/>
 
 The repository is structured as follows:
 - ./src: contains the source code of the model PRELES
@@ -44,11 +44,29 @@ The data, models and hyperparamters we used for our experiments are available at
 
 For the PRELES calibration and simulation, run main.R (in *r*). This will call install_packages.R, PRELES_predictions.R and conditional_via.R. In PRELES_predictions.R, we fit PRELES with BayesianTools (https://github.com/florianhartig/BayesianTools) in, make GPP predictions in all model scenarios, and evaluate them against observations. For inference, we run a conditional variable importance analysis in conditional_via.R. **Attention**: PRELES_predictions.R with the default sampling of 50000 per MCMC chain will take hours to run! If you want to conduct a test run, reduce sample size strongly. Running main.R will create a *results* subfolder in each predictive experiment folder. PRELES performances are written to .csv files and saved in *results*, whereas the neural network input data files, merged with PRELES predictions, are saved to *data*.
 
+We create four files in total. hyytiala files will be loaded with the temporal prediction scenario, allsites files will be loaded with the spatial and spatio_temoporal prediction scenario. The endings _sparse and _full indicate the data availablity scenario.
+
+- hyytiala_full.csv
+- hyytiala_sparse.csv
+- allsites_exp2_full.csv
+- allsites_exp2_full.csv
+
+The following four steps to develop the PiNNs are carried out in most parts for each prediction scenario separately, with overlaps in the spatial and spatio-temporal experiment.
+
 ## Neural achitecture search
 
-## Neural network training
+Now that we have the neural network input data, we can start a neural architecture and hyperparameter search (NAS) to optimise PINN and algorithmic parameters. We run a sparate NAS for purely temporal (*temporal/nas*) and for spatial and spatio-temporal (*spatial/nas*) PINNs. Each *nas* folder contains four scripts, the endings of which indicate the target PiNN for the respective architecture: mlp, reg, res, res2 (see above). The architecture for the emb was constructed and tuned manually, for the DA we reused the mlp architecture.
 
-## PiNN predictions
+Submit the scripts on your HPC node with bash scripts, where you specify the respective scenario for the python call. That, means for the temporal full scenario  e.g. with
+```console
+@PiNNs~:python temporal/nas/ENmlp.py --d full
+```
+
+You can reduce runtime by reducing the search space of the random search with parameters **agrid** and **pgrid** in *misc/NASSearchSpace*.
+
+## Neural network training and PiNN predictions
+
+### Pretraining
 
 ## Variable importance analysis
 

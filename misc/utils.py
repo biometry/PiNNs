@@ -94,26 +94,26 @@ def read_in(type, data_dir=None, data_use=None, exp=None, sparse=False, n=None):
         out = dataset.ProfoundData(type).__getitem__()
     # subset station
     if type == 'NAS' and data_dir != 'load' and data_use != "sparse":
-        out = pd.read_csv(''.join((data_dir, 'hyytialaF_full.csv')))
+        out = pd.read_csv(''.join((data_dir, 'hyytiala_full.csv')))
         out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type == 'NAS' and data_dir != 'load' and data_use == "sparse":
-        out = pd.read_csv(''.join((data_dir, 'hyytialaF_sparse.csv')))
+        out = pd.read_csv(''.join((data_dir, 'hyytiala_sparse.csv')))
         out = out[pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
 
     elif type == 'NASp' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, 'hyytialaNAS.csv')))
 
     elif type == 'validation' and data_dir != 'load' and data_use == 'full':
-        out = pd.read_csv(''.join((data_dir, 'hyytialaF_full.csv')))
+        out = pd.read_csv(''.join((data_dir, 'hyytiala_full.csv')))
         out = out[~pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
     elif type == 'validation' and data_dir != 'load' and data_use == 'sparse':
-        out = pd.read_csv(''.join((data_dir, 'hyytialaF_sparse.csv')))
+        out = pd.read_csv(''.join((data_dir, 'hyytiala_sparse.csv')))
         out = out[~pd.DatetimeIndex(out['date']).year.isin([2004,2005])]
 
     elif type.startswith('exp2') and data_dir != 'load' and data_use != "sparse":
-        out = pd.read_csv(''.join((data_dir, 'allsitesF_exp2_full.csv')))
+        out = pd.read_csv(''.join((data_dir, 'allsites_exp2_full.csv')))
     elif type.startswith('exp2') and data_dir != 'load' and data_use == "sparse":
-        out = pd.read_csv(''.join((data_dir, 'allsitesF_exp2_sparse.csv')))
+        out = pd.read_csv(''.join((data_dir, 'allsites_exp2_sparse.csv')))
 
     elif type == 'simulations' and data_dir != 'load':
         out = pd.read_csv(''.join((data_dir, f'simulations_{data_use}_{exp}_{n}.csv')))
