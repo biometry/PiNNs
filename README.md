@@ -1,6 +1,6 @@
 # Process-informed neural networks: a hybrid modelling approach to improve predictive performance and inference of neural networks in ecology and beyond
 
-This repository contains the code that accompanies the article (DOI). The process-based model PRELES is combined with neural networks into what we call process-informed neural networks (PINNs), in accordance with similar approaches in physics. We broadly understand as PiNNs any type of neural network that incorporates process model knowledge during the training. PiNNs learn weights and biases jointly from process-model simulations and observations. Simulations from the process model, or the model structure itself constrain the training algorithm during optimisation. The trained PiNNs then perform prediction tasks for C-fluxes in temperate forests, and they are evaluated and compared with the predictions of PRELES and a vanilla neural network. The provided code considers five different types of PINNs which are 
+This repository contains the code that accompanies the article (DOI). The process-based model PRELES is combined with neural networks into what we call process-informed neural networks (PINNs), in accordance with similar approaches in physics. We broadly understand as PiNNs any type of neural network that incorporates process model knowledge during the training. PiNNs learn weights and biases jointly from process-model simulations and observations. Simulations from the process model, or the model structure itself constrain the training algorithm during optimisation. The trained PiNNs then perform prediction tasks for C-fluxes in temperate forests (specifically: Gross primary prodctivity, GPP), and they are evaluated and compared with the predictions of PRELES and a vanilla neural network. The provided code considers five different types of PINNs which are 
 
 - bias correction NN (*res*)
 - parallel process NN (*res2*)
@@ -23,7 +23,7 @@ C source code of the model PRELES in ./src can be found at: https://github.com/M
 ## Set up Python and R environments
 
 
-- R: The scripts run safely in R v4.3.1 / v4.2.1 with the package versions in requirements_r.txt. For installation run "install_packages.R", or directly run main.R where packages will be installed on the fly. 
+- R: The scripts run safely in R v4.3.1 / v4.2.1 with the package versions in requirements_r.txt. For installation, run "install_packages.R", or directly run main.R where packages will be installed on the fly. 
 
 - Python: Package versions and dependencies are in requirements.txt. Create a virtual environment with before installation, e.g. directly in your project directory with
 ```console
@@ -32,18 +32,21 @@ C source code of the model PRELES in ./src can be found at: https://github.com/M
 
 @PiNNs~:pip install -r requirements.txt
 ```
-
-- Preles-Compilation: For PRELES compilation, see README file in src folder.
+We will need a compiled version of PRELES for creating the embedded physics NN: see the accompanying README file in *src* folder.
 
 ## Data, Models and Hyperparameters
 
-The data, models and hyperparamters we used for our experiments are available at the following OSF repository: 10.17605/OSF.IO/7GZBN. If you use them, we are always happy about a citation.
+The data, models and hyperparamters we used for our experiments are available at in an OSF repository https://osf.io/7gzbn/ (DOI: 10.17605/OSF.IO/7GZBN). If you use them, we are always happy about a citation.
+
+## PRELES calibration and prediction
+
+For the PRELES calibration and simulation, run main.R (in *r*). This will call install_packages.R, PRELES_predictions.R and conditional_via.R. In PRELES_predictions.R, we fit PRELES with BayesianTools (https://github.com/florianhartig/BayesianTools) in, make GPP predictions in all model scenarios, and evaluate them against observations. For inference, we run a conditional variable importance analysis in conditional_via.R. **Attention**: PRELES_predictions.R with the default sampling of 50000 per MCMC chain will take hours to run! If you want to conduct a test run, reduce sample size strongly. Running main.R will create a *results* subfolder in each predictive experiment folder. PRELES performances are written to .csv files and saved in *results*, whereas the neural network input data files, merged with PRELES predictions, are saved to *data*.
 
 ## Neural achitecture search
 
-## Model training
+## Neural network training
 
-## Model evaluation
+## PiNN predictions
 
 ## Variable importance analysis
 
