@@ -1,41 +1,17 @@
-name: pgnn
+name: pinns
 channels:
   - pytorch
   - conda-forge
   - defaults
 dependencies:
-  - _libgcc_mutex=0.1=conda_forge
-  - cudatoolkit=10.2.89=h8f6ccaa_8
-  - magma-cuda110=2.5.2=1
-  - matplotlib=3.4.2=py37h89c1867_0
-  - matplotlib-base=3.4.2=py37hdd32ed1_0
-  - mkl=2020.4=h726a3e6_304
-  - mkl-include=2021.2.0=h726a3e6_389
-  - ninja=1.10.2=h4bd325d_0
-  - numba=0.53.1=py37h134767a_0
-  - numpy=1.20.3=py37h038b26d_1
-  - pandas=1.2.4=py37h219a48f_0
-  - pango=1.42.4=h69149e4_5
-  - patsy=0.5.1=py_0
-  - pcre=8.44=he1b5a44_0
-  - pip=21.1.2=pyhd8ed1ab_0
-  - pixman=0.40.0=h36c2ea0_0
-  - pthread-stubs=0.4=h36c2ea0_1001
-  - pybind11=2.6.1=py37hc928c03_0
-  - pycparser=2.20=pyh9f0ad1d_2
-  - pyopenssl=20.0.1=pyhd8ed1ab_0
-  - pyparsing=2.4.7=pyh9f0ad1d_0
-  - pyqt=5.12.3=py37h8685d9f_4
-  - pysocks=1.7.1=py37h89c1867_3
-  - python=3.7.10=hffdb5ce_100_cpython
-  - python-dateutil=2.8.1=py_0
-  - python-graphviz=0.16=pyhd3deb0d_1
-  - python_abi=3.7=1_cp37m
-  - pytorch=1.8.1=py3.7_cuda10.2_cudnn7.6.5_0
-  - pytz=2021.1=pyhd8ed1ab_0
-  - pyyaml=5.4.1=py37h5e8e339_0
-  - scikit-learn=0.24.2=py37h18a542f_0
-  - scipy=1.6.3=py37h29e03ee_0
-  - setuptools=49.6.0=py37h89c1867_3
-  - six=1.16.0=pyh6c4a22f_0
+  - python=3.9
+  - pytorch=1.8.1
+  - pygam=0.9
+  - numpy=1.21
+  - pandas=1.2.4
+  - ninja=1.10.2
+  - matplotlib=3.4.2
+  - scikit-learn=0.24.2
+  - scipy=1.6.3
+  - smt=1.3.0
 
