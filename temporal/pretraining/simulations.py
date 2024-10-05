@@ -111,7 +111,7 @@ def climate_simulations(train_x, exp):
     return(climsims)    
 
 
-def parameter_samples(n_samples, fix_pars = False, parameters = ['beta', 'chi', 'X[0]', 'gamma', 'alpha'], datadir = ',,/../data/'):
+def parameter_samples(n_samples, fix_pars = False, parameters = ['beta', 'chi', 'X[0]', 'gamma', 'alpha'], datadir = '../../data/'):
 
     '''
     This function generates samples from the default parameter space of Preles in a LHS design.
@@ -288,14 +288,9 @@ fig.savefig('results/temp.png')
 
 
 if __name__ == '__main__':
-    if args.e == 'exp1':
-        exp=''
-    else:
-        exp='exp2'
-    gen_simulations(n=args.n, fix_pars=True, data_use=args.d, exp=exp)
-    #gen_simulations(n = 500, fix_pars=True, data_use='sparse', exp='')
-    #gen_simulations(n=1000, fix_pars=True, data_use='full', exp='exp2')
-    #gen_simulations(n=1000, fix_pars=True, data_use='sparse', exp='exp2')
+
+    gen_simulations(n=args.n, fix_pars=True, data_use=args.d, exp='')
+
     
     
 
