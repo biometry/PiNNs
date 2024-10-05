@@ -12,19 +12,19 @@ import pandas as pd
 import numpy as np
 import argparse
 
-parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
-def EN2mlp(data_use='full', splits=None):
+def EN2mlp(data_use='full'):
     if data_use == 'sparse':
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, sparse=True)
     else:
         x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True)
         x = x.drop(pd.DatetimeIndex(['2004-01-01']))
         y = y.drop(pd.DatetimeIndex(['2004-01-01']))
+
     # select NAS data
-    print(x.index.year)
     x = x[x.index.year == 2004]
     y = y[y.index.year == 2004]
     
