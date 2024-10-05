@@ -25,7 +25,7 @@ parser.add_argument('-a', metavar='da', type=int, help='define type of domain ad
 args = parser.parse_args()
 
 
-def eval2mlpDA(data_use="full", da=1, exp = "exp2"):
+def eval2mlpDA(data_use="full", da=1, exp = "exp2", N=5000):
     '''
     da specifies Domain Adaptation:                                                                                                                                        da = 1: using pretrained weight and fully retrain network                                                                                                 
         da = 2: retrain only last layer.
@@ -74,19 +74,19 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2"):
     model_design = {'layersizes': layersizes}
     
     # originally 5000 epochs
-    hp = {'epochs': 5000,
+    hp = {'epochs': 5,
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "../models/"
-    data = f"mlpDA_pretrained_{data_use}_{exp}"
+    data = f"mlpDA_pretrained_{data_use}_{exp}_{N}"
     
     td, se, ae  = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, domain_adaptation=da, reg=None, emb=False, hp=False, exp=2)
 
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'/results/2mlpDA_{data_use}_eval_tloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'/results/2mlpDA_{data_use}_eval_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'/results/2mlpDA_{data_use}_eval_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'./results/2mlpDA_{data_use}_eval_tloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'./results/2mlpDA_{data_use}_eval_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'./results/2mlpDA_{data_use}_eval_vaeloss.csv')
 
     # Evaluation
     mse = nn.MSELoss()
