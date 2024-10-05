@@ -20,12 +20,10 @@ from torch import Tensor
 import csv
 import argparse
 
-parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 parser.add_argument('-a', metavar='da', type=int, help='define type of domain adaptation')
 args = parser.parse_args()
-
-print(args)
 
 def evalmlpDA(data_use="full", da=1, N=5000):
     '''
@@ -61,7 +59,7 @@ def evalmlpDA(data_use="full", da=1, N=5000):
     model_design = {'layersizes': layersizes}
     print('layersizes', layersizes)
     # originally 5000 epochs
-    hp = {'epochs': 5000,
+    hp = {'epochs': 5,
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
