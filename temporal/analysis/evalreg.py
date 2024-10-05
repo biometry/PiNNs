@@ -22,7 +22,7 @@ from torch import Tensor
 import csv
 import argparse
 
-parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
@@ -54,7 +54,7 @@ def evalreg(data_use='full'):
     test_x = x[x.index.year == 2008][1:]
     test_y = y[y.index.year == 2008][1:]
 
-    print('XYREG', train_x, train_y, reg_tr, test_x, test_y, reg_te)
+
     
     splits = len(train_x.index.year.unique())
     train_x.index, train_y.index, reg_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(reg_tr)) 
