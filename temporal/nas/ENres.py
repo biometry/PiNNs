@@ -30,7 +30,7 @@ def ENres(data_use="full"):
     
     arch_grid, par_grid = HP.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
     res = HP.NASSearch(arch_grid, par_grid, x, y, splits, "NASres", hp=True)
-    res.to_csv(f"/results/NresHP_{data_use}.csv")
+    res.to_csv(f"./results/NresHP_{data_use}.csv")
 if __name__ == '__main__':
     ENres(args.d)
 
