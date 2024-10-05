@@ -39,8 +39,8 @@ def eval3res2(data_use='full', of=False):
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
     else:
-        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
-        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
+        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-02']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-02']))
 
     test_x = x[(x.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
     test_y = y[(y.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
@@ -50,7 +50,7 @@ def eval3res2(data_use='full', of=False):
     if data_use=="full":
         yp_tr = yp_tr.drop(pd.DatetimeIndex(['2005-01-01']))
     else:
-        yp_tr = yp_tr.drop(pd.DatetimeIndex(['2005-01-05']))
+        yp_tr = yp_tr.drop(pd.DatetimeIndex(['2005-01-02']))
     yp_tr = yp_tr.drop(yp.columns.difference(['GPPp']), axis=1)
 
     yp_te = yp[(y.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
