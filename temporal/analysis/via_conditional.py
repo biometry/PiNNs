@@ -93,7 +93,7 @@ def via(data_use, model, prediction_scenario, current_dir =''):
                   'SWp': [yp['SWp'].min(), yp['SWp'].max()]
                   }
 
-    gridsize = 2
+    gridsize = 200
     
     if model == 'res2':
         yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
