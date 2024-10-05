@@ -16,7 +16,7 @@ parser.add_argument('-d', metavar='data', type=str, help='define data usage: ful
 parser.add_argument('-m', metavar='model', type=str, help='define model: mlp, res, res2, reg, emb, da')
 args = parser.parse_args()
 
-def predict(test_x, test_y, m, data_use, prediction_scenario, yp, xt_test, current_dir=''):
+def predict(test_x, test_y, m, data_use, prediction_scenario, yp, xt_test, current_dir='', N=10, da=1):
 
     """
     Function to compute predictions over test_x, for a given model, and a data scenario.
@@ -34,14 +34,14 @@ def predict(test_x, test_y, m, data_use, prediction_scenario, yp, xt_test, curre
     """
     # Load Architecture for the current model
     if m == 'mlpDA':
-        res_as = pd.read_csv(f"../nas/results/N2mlpHP_{data_use}.csv")
+        res_as = pd.read_csv(f"../../spatial/nas/results/N2mlpHP_{data_use}.csv")
         a = res_as.loc[res_as.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         model_design = {'layersizes': layersizes}
     elif m == 'emb':
         pass
     else:
-        res_as = pd.read_csv(f"../nas/results/N2{m}HP_{data_use}.csv")
+        res_as = pd.read_csv(f"../../spatial/nas/results/N2{m}HP_{data_use}.csv")
         a = res_as.loc[res_as.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         model_design = {'layersizes': layersizes}
@@ -49,8 +49,11 @@ def predict(test_x, test_y, m, data_use, prediction_scenario, yp, xt_test, curre
     data_dir = "../models/"
 
     test_x, test_y = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
-    #yp_test = torch.tensor(yp.to_numpy(), dtype=torch.float32)
-    xt_test = torch.tensor(xt_test.to_numpy(), dtype=torch.float32)
+    if m == "res2":
+        yp_test = torch.tensor(yp.to_numpy(), dtype=torch.float32)
+
+    if m != "res":
+        xt_test = torch.tensor(xt_test.to_numpy(), dtype=torch.float32)
 
     # Create empty array for predictions of size monthly samples x num fold in crossvalidation
     preds_test = np.zeros((test_x.shape[0], 4))
@@ -68,14 +71,14 @@ def predict(test_x, test_y, m, data_use, prediction_scenario, yp, xt_test, curre
 
         if prediction_scenario == 'exp2':
             if m =='mlpDA':
-                model.load_state_dict(torch.load(''.join((data_dir, f"2{m}_pretrained_{data_use}_exp2_1_trained_model{i}.pth"))))
+                model.load_state_dict(torch.load(''.join((data_dir, f"23{m}_pretrained_{data_use}_exp2_1_trained_model{i}.pth"))))
             else:
-                model.load_state_dict(torch.load(''.join((data_dir, f"2{m}_{data_use}_model{i}.pth"))))
+                model.load_state_dict(torch.load(''.join((data_dir, f"23{m}_{data_use}_model{i}.pth"))))
         else:
             if m =='mlpDA':
-                model.load_state_dict(torch.load(''.join((data_dir, f"23{m}_pretrained_{data_use}_exp2_1_trained_model{i}.pth"))))
+                model.load_state_dict(torch.load(''.join((data_dir, f"23{m}_pretrained_{data_use}_exp2_{N}_{da}_trained_model{i}.pth"))))
             elif m == 'emb':
-                model.load_state_dict(torch.load(''.join((data_dir, f"3{m}_{data_use}_model{i}.pth"))))
+                model.load_state_dict(torch.load(''.join((data_dir, f"23{m}_{data_use}_model{i}.pth"))))
             else:
                 model.load_state_dict(torch.load(''.join((data_dir, f"23{m}_{data_use}_model{i}.pth"))))
 
@@ -108,10 +111,14 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
 
     xt = xt.drop(0)
     xt.index = pd.DatetimeIndex(xt.date)
-    xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET'], axis=1)
+    if model != "res":
+        xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET', 'X', 'X.1', 'X.2'], axis=1)
+    else:
+        xt = xt.drop(['date', 'year', 'GPP', 'ET', 'X', 'X.1', 'X.2'], axis=1)
+    
 
-    if model in ['mlp','res', 'reg', 'mlpDA']:
-        yp = pd.read_csv("../../data/allsitesF_{prediction_scenario}_{data_use}.csv")
+    if model in ['mlp','res', 'reg', 'mlpDA', 'emb']:
+        yp = pd.read_csv(f"../../data/allsitesF_{data_use}.csv")
         yp = yp.drop(0)
         yp.index = pd.to_datetime(yp['date'], format='%Y-%m-%d')
     print("XT", xt)
@@ -124,6 +131,17 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
                   #'GPPp': [xt['GPPp'].min(), xt['GPPp'].max()],
                   #'ETp': [xt['ETp'].min(), xt['ETp'].max()],
                   #'SWp': [xt['SWp'].min(), xt['SWp'].max()]
+                  }
+    if model == "res":
+        thresholds = {'PAR': [xt['PAR'].min(), xt['PAR'].max()],
+                  'Tair': [xt['Tair'].min(), xt['Tair'].max()],
+                  'VPD': [xt['VPD'].min(), xt['VPD'].max()],
+                  'Precip': [xt['Precip'].min(), xt['Precip'].max()],
+                  # 'co2': [],
+                  'fapar': [xt['fapar'].min(), xt['fapar'].max()],
+                  'GPPp': [xt['GPPp'].min(), xt['GPPp'].max()],
+                  'ETp': [xt['ETp'].min(), xt['ETp'].max()],
+                  'SWp': [xt['SWp'].min(), xt['SWp'].max()]
                   }
     print("END")
     if model == 'res2':
@@ -153,6 +171,7 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
         x_tr, mn, std = utils.standardize(x_tr, get_p=True)
         x_te = utils.standardize(x_te, [mn, std])
         test_x = x_te
+        test_xt = xt[((xt.index.year == 2005) | (xt.index.year == 2008)) & (xt.site == "h").values][1:]
         test_y = y # [1:]
 
         variables = ['GPPp', 'ETp', 'SWp']
@@ -179,8 +198,9 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
 
         variables = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar']
 
-
-    gridsize = 200
+    if model != 'res':
+        test_xt = test_xt.drop(['site'], axis=1)
+    gridsize = 2
 
     for v in variables:
         # Create variable values over complete ranges and standardize by full dataset
@@ -197,7 +217,7 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
         xt_dat.sort_index(inplace=True)
 
         # Compute effect of variable at mean of 14 days around record dates for seasonal changes
-        def via_subset(data):
+        def via_subset(dat):
             mar = dat['2008-03-13':'2008-03-27']
             jun = dat['2008-06-14':'2008-06-28']
             sep = dat['2008-09-13':'2008-09-28']
@@ -228,5 +248,5 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
 
 if __name__ == '__main__':
 
-    via('full', 'emb', prediction_scenario = 'exp2')
+    via(args.d, args.m, prediction_scenario = 'exp3')
 
