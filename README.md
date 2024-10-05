@@ -34,11 +34,11 @@ PRELES calibration is conducted in R with the BayesionTools package, while integ
 
 @PiNNs~:pip install -r requirements.txt
 ```
-We will need a compiled version of PRELES for creating the embedded physics NN: see the accompanying README file in *src* folder.
+After initializing the environment it is essential to create the PRELES pytorch c++ extension. Please proceed in folder *src* with the compilation of the PRELES source code.
 
 ## Data, Models and Hyperparameters
 
-The data, models and hyperparamters we used for our experiments are available at in an OSF repository https://osf.io/7gzbn/ (DOI: 10.17605/OSF.IO/7GZBN). If you use them, we are always happy about a citation.
+The data, models and hyperparamters we used for our experiments are available at in an OSF repository https://osf.io/7gzbn/ (DOI: 10.17605/OSF.IO/7GZBN). Please cite our publication if you use them.
 
 ## PRELES calibration and prediction
 
@@ -46,10 +46,10 @@ For the PRELES calibration and simulation, run main.R (in *r*). This will call i
 
 We create four files in total. hyytiala files will be loaded with the temporal prediction scenario, allsites files will be loaded with the spatial and spatio_temoporal prediction scenario. The endings _sparse and _full indicate the data availablity scenario.
 
-- hyytiala_full.csv
-- hyytiala_sparse.csv
-- allsites_exp2_full.csv
-- allsites_exp2_full.csv
+- hyytialaF_full.csv
+- hyytialaF_sparse.csv
+- allsitesF_exp2_full.csv
+- allsitesF_exp2_full.csv
 
 The following four steps to develop the PiNNs are carried out in most parts for each prediction scenario separately, with overlaps in the spatial and spatio-temporal experiment.
 
@@ -57,17 +57,58 @@ The following four steps to develop the PiNNs are carried out in most parts for 
 
 Now that we have the neural network input data, we can start a neural architecture and hyperparameter search (NAS) to optimise PINN and algorithmic parameters. We run a sparate NAS for purely temporal (*temporal/nas*) and for spatial and spatio-temporal (*spatial/nas*) PINNs. Each *nas* folder contains four scripts, the endings of which indicate the target PiNN for the respective architecture: mlp, reg, res, res2 (see above). The architecture for the emb was constructed and tuned manually, for the DA we reused the mlp architecture.
 
-Submit the scripts on your HPC node with bash scripts, where you specify the respective scenario for the python call. That, means for the temporal full scenario  e.g. with
+Before proceeding with the architecture and hyperparameter search create a results folder as follows
 ```console
-@PiNNs~:python temporal/nas/ENmlp.py --d full
+@PiNNs~:cd temporal/nas
+@PiNNs~:mkdir results
 ```
 
-You can reduce runtime by reducing the search space of the random search with parameters **agrid** and **pgrid** in *misc/NASSearchSpace*.
+Now execute the following lines of code. Note that the flag -d is used to specify the data scenario (full or sparse).
+```console 
+@PiNNs~:python ENmlp.py -d full
+@PiNNs~:python ENmlp.py -d sparse
+```
+
+You can reduce runtime by reducing the search space of the random search with parameters **agrid** and **pgrid** in *misc/NASSearchSpace*. To run the network architecture and hyperparameter search for the spatial and spatio-temporal experiments follow the same steps in the folder *spatial*, e.g.
+```console
+@PiNNs~: cd spatial/nas
+@PiNNs~: mkdir results
+@PiNNs~: python EN2mlp.py -d full
+```
+
+
+## Pretraining
+
+Before neural network training, one model version is pretrained on PRELES simulations (in *pretraining*). To prepare the data set for the pre-training, run *simulation.py*.
+Assuming you are in the main folder PiNNs and want to proceed with the temporal experiment, run
+```console
+@PiNNs~:cd temporal/pretraining
+@PiNNs~:mkdir results
+@PiNNs~:python simulations.py -d full -n 5000
+```
+where the flag -d defines the data scenario an -n the parameter sample size. This file calls the respective data file, e.g. hyttialaF_full.csv. Running the simulation will create a large synthetic data set: (1) input data is augmented with Generalised Additive Models, (2) PRELES parameters are sampled at a predefined size in a Latin Hypercube Design and (3) PRELES GPP simulations are generated. This file will be saved to the experiments' respective results folder. 
+
+Next call pretraining.py. This script will use the vanilla MLP architecture (*results/NmlpHP_{data_use}.csv*, data_use = full or sparse) to train on the synthetic data set. Make sure to run this on your HPC node, as specifically for the spatial scenario runtime is extensive. To reduce runtime, change parameter sample size with the flag -n. Proceed as
+```console
+@PiNNs~:cd temporal/pretraining/
+@PiNNs~:python pretraining.py -d full -n 5000
+```
 
 ## Neural network training and PiNN predictions
 
-### Pretraining
+Training and evaluation happen simulatenously when calling the model-specific evaluation files in respective *analysis* folders. Each run calls *training.py* from *misc* and requires model specific files for architectural choices (as e.g. in *nas/results/NmlpHP_{data_use}.csv*). Change hard-coded epochs in the eval_function if you want to reduce runtime. Again, set data availability scenario manually with the flag -d full or -d sparse. Before running the training and evaluation scripts create a results folder. Proceed e.g. as
+```console
+@PiNNs~:cd temporal/analysis
+@PiNNs~:mkdir results
+@PiNNs~:python evalmlp.py --d full
+```
+Model performances will be saved to the respective results folder, while model parameters will be saved to the folder *temporal/models*. Note that for the domain adaptation the parameter *N* in evalmlpDA.py must be the same as the flag -n in simulations.py and pretraining.py. Further note that eval2mlpDA.py requires the flag -a which we set in our experiments to 1. It defines which layers should be retrained with the empirical data, where -a 1 defines all layers to be retrained and -a 2 defines only last layers to be retrained.
+
 
 ## Variable importance analysis
 
+Now that PiNNs are trained and evaluated, first inference steps are conducted with a conditional variable importance analysis. In each *analysis* folder, call *via_conditional.py*. This file requires the model structure selected in the NAS, taken from *NmlpHP_{data_use}.csv*. It also requires model state dictionaries (trained network weights and biases), saved during model training to e.g. *temporal/models*. The via_conditional.py script will analyse variable importances for each input variable separately at the seasonal mean of the other variables. 
 
+## Visualise results
+
+Finally, to visualise results and save plots of comparitive model performances and variable importances, created as described above, call *misc/visualise_results.py*.
