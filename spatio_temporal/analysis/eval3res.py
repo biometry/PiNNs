@@ -40,8 +40,8 @@ def eval3res(data_use='full'):
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
     else:
-        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
-        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
+        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-02']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-02']))
 
     test_x = x[(x.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
     test_y = y[(y.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
@@ -121,7 +121,7 @@ def eval3res(data_use='full'):
 
 
     pd.DataFrame.from_dict(performance).to_csv(f'./results/3res_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'.results/3res_eval_preds_{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/3res_eval_preds_{data_use}_train.csv')
     pd.DataFrame.from_dict(preds_test).to_csv(f'./results/3res_eval_preds_{data_use}_test.csv')
 
 
