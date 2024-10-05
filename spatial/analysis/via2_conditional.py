@@ -16,7 +16,7 @@ parser.add_argument('-d', metavar='data', type=str, help='define data usage: ful
 parser.add_argument('-m', metavar='model', type=str, help='define model: mlp, res, res2, reg, emb, da')
 args = parser.parse_args()
 
-def predict(test_x, test_y, m, data_use, prediction_scenario, yp, xt_test, current_dir=''):
+def predict(test_x, test_y, m, data_use, prediction_scenario, yp, xt_test, current_dir='', da=1, N=10):
 
     """
     Function to compute predictions over test_x, for a given model, and a data scenario.
@@ -47,12 +47,15 @@ def predict(test_x, test_y, m, data_use, prediction_scenario, yp, xt_test, curre
         model_design = {'layersizes': layersizes}
 
     data_dir = "../models/"
-
+    print(test_x.shape)
     test_x, test_y = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
-    #yp_test = torch.tensor(yp.to_numpy(), dtype=torch.float32)
-    xt_test = torch.tensor(xt_test.to_numpy(), dtype=torch.float32)
+    if m == 'res2':
+        yp_test = torch.tensor(yp.to_numpy(), dtype=torch.float32)
 
-    # Create empty array for predictions of size monthly samples x num fold in crossvalidation
+    if m != "res":
+        xt_test = torch.tensor(xt_test.to_numpy(), dtype=torch.float32)
+
+    # Create empty array for predictions of size monthly samples x num fold in crossvalidation    
     preds_test = np.zeros((test_x.shape[0], 4))
 
     for i in range(4):
@@ -68,12 +71,12 @@ def predict(test_x, test_y, m, data_use, prediction_scenario, yp, xt_test, curre
 
         if prediction_scenario == 'exp2':
             if m =='mlpDA':
-                model.load_state_dict(torch.load(''.join((data_dir, f"2{m}_pretrained_{data_use}_exp2_1_trained_model{i}.pth"))))
+                model.load_state_dict(torch.load(''.join((data_dir, f"2{m}_pretrained_{data_use}_exp2_{N}_{da}_trained_model{i}.pth"))))
             else:
                 model.load_state_dict(torch.load(''.join((data_dir, f"2{m}_{data_use}_model{i}.pth"))))
         else:
             if m =='mlpDA':
-                model.load_state_dict(torch.load(''.join((data_dir, f"23{m}_pretrained_{data_use}_exp2_1_trained_model{i}.pth"))))
+                model.load_state_dict(torch.load(''.join((data_dir, f"23{m}_pretrained_{data_use}_exp2_{N}_{da}_trained_model{i}.pth"))))
             elif m == 'emb':
                 model.load_state_dict(torch.load(''.join((data_dir, f"3{m}_{data_use}_model{i}.pth"))))
             else:
@@ -108,32 +111,47 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
 
     xt = xt.drop(0)
     xt.index = pd.DatetimeIndex(xt.date)
-    xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET'], axis=1)
-
-    if model in ['mlp','res', 'reg', 'mlpDA']:
-        yp = pd.read_csv("../../data/allsitesF_{prediction_scenario}_{data_use}.csv")
+    if model != "res":
+        xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET', 'X', 'X.1', 'X.2'], axis=1)
+    else:
+        xt = xt.drop(['date', 'year', 'GPP', 'ET', 'X', 'X.1', 'X.2'], axis=1)
+        
+    if model in ['mlp','res', 'reg', 'mlpDA', 'emb']:
+        yp = pd.read_csv(f"../../data/allsitesF_{data_use}.csv")
         yp = yp.drop(0)
         yp.index = pd.to_datetime(yp['date'], format='%Y-%m-%d')
-    print("XT", xt)
-    thresholds = {'PAR': [xt['PAR'].min(), xt['PAR'].max()],
+
+    if model != "res":
+        thresholds = {'PAR': [xt['PAR'].min(), xt['PAR'].max()],
                   'Tair': [xt['Tair'].min(), xt['Tair'].max()],
                   'VPD': [xt['VPD'].min(), xt['VPD'].max()],
                   'Precip': [xt['Precip'].min(), xt['Precip'].max()],
                   # 'co2': [],
-                  'fapar': [xt['fapar'].min(), xt['fapar'].max()] #,
+                  'fapar': [xt['fapar'].min(), xt['fapar'].max()]
                   #'GPPp': [xt['GPPp'].min(), xt['GPPp'].max()],
                   #'ETp': [xt['ETp'].min(), xt['ETp'].max()],
                   #'SWp': [xt['SWp'].min(), xt['SWp'].max()]
                   }
-    print("END")
+    else:
+        thresholds = {'PAR': [xt['PAR'].min(), xt['PAR'].max()],
+                  'Tair': [xt['Tair'].min(), xt['Tair'].max()],
+                  'VPD': [xt['VPD'].min(), xt['VPD'].max()],
+                  'Precip': [xt['Precip'].min(), xt['Precip'].max()],
+                  # 'co2': [],
+                  'fapar': [xt['fapar'].min(), xt['fapar'].max()],
+                  'GPPp': [xt['GPPp'].min(), xt['GPPp'].max()],
+                  'ETp': [xt['ETp'].min(), xt['ETp'].max()],
+                  'SWp': [xt['SWp'].min(), xt['SWp'].max()]
+                  }
     if model == 'res2':
 
         yp.index = x.index
-        xt.index = x.index
+        #xt.index = x.index
 
         if prediction_scenario == 'exp2':
             yp = yp[((yp.index.year == 2005) | (yp.index.year == 2008)) & (xt.site == "h").values]
             yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
+
         elif prediction_scenario == 'exp3':
             yp = yp[(yp.index.year == 2008) & (xt.site == "h").values]
             yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
@@ -154,8 +172,9 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
         x_te = utils.standardize(x_te, [mn, std])
         test_x = x_te
         test_y = y # [1:]
-
+        test_xt = xt[((xt.index.year == 2005) | (xt.index.year == 2008)) & (xt.site == "h").values][1:]
         variables = ['GPPp', 'ETp', 'SWp']
+        print('TESTX' , test_x)
 
     elif model in ['mlp', 'res2', 'reg', 'mlpDA', 'emb']:
 
@@ -179,12 +198,14 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
 
         variables = ['PAR', 'Tair', 'VPD', 'Precip', 'fapar']
 
-
-    gridsize = 200
-
+    if model != 'res':
+        test_xt = test_xt.drop(['site'], axis=1)
+    gridsize = 2
+    
+    print("TESTX", test_x)
     for v in variables:
         # Create variable values over complete ranges and standardize by full dataset
-        if model == 'res':
+        if model == "res":
             var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[''.join((v, '_x'))])/std[''.join((v, '_x'))]
         else:
             var_range = (np.linspace(thresholds[v][0], thresholds[v][1], gridsize)-mn[v])/std[v]
@@ -193,11 +214,12 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
         dat.sort_index(inplace=True)
         yp_dat = yp.copy()
         yp_dat.sort_index(inplace=True)
+
         xt_dat = test_xt.copy()
         xt_dat.sort_index(inplace=True)
 
         # Compute effect of variable at mean of 14 days around record dates for seasonal changes
-        def via_subset(data):
+        def via_subset(dat):
             mar = dat['2008-03-13':'2008-03-27']
             jun = dat['2008-06-14':'2008-06-28']
             sep = dat['2008-09-13':'2008-09-28']
@@ -205,9 +227,12 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
             days = {'mar':mar, 'jun':jun, 'sep':sep, 'dec':dec}
             return days
 
+       
         days = via_subset(dat)
         days_yp = via_subset(yp_dat)
         days_xt = via_subset(xt_dat)
+        
+
 
         # Compute predictions for each seasonal subset of data frame
         for mon, df in days.items():
@@ -217,8 +242,11 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
                 # Create data frame only from the current variable
                 df.loc[:,''.join((v, '_x'))] = i
                 df.loc[:,''.join((v, '_y'))] = i
-
+                
+                    
                 # Compute PGNN prediction for current variable in the current season with the current model and data scenario.
+                print("DF", df)
+
                 ps = predict(df, test_y, model, data_use, prediction_scenario = prediction_scenario, yp = days_yp[mon],
                              xt_test=days_xt[mon], current_dir=current_dir)
                 out_i.append(ps)
@@ -228,5 +256,5 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
 
 if __name__ == '__main__':
 
-    via('full', 'emb', prediction_scenario = 'exp2')
+    via(args.d, args.m, prediction_scenario = 'exp2')
 
