@@ -22,7 +22,7 @@ import argparse
 
 
 
-parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
@@ -30,13 +30,15 @@ def eval3emb(data_use="full"):
 
     if data_use == "sparse":
        x,y,xt,yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, sparse=True, eval=True)
-       d1 = ['2005-01-05']
+       d1 = ['2005-01-02']
     else:
         x,y,xt,yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, sparse=False, eval=True)
         d1 = ['2005-01-01']
     y=y.to_frame()
     xt.index = pd.DatetimeIndex(xt['date'])
-    xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET', 'X'], axis=1)[1:]
+    print("XT", xt)
+    xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET', 'X', 'X.1', 'X.2'], axis=1)[1:]
+
 
     train_x = x[(x.index.year == 2005) & (xt.site != "h")]
     train_y = y[(x.index.year == 2005) & (xt.site != "h")]
@@ -57,10 +59,6 @@ def eval3emb(data_use="full"):
     print('layersizes', layersizes)
 
 
-    print("TRAIN DATA", train_x, train_y, train_xt)
-    print("TEST DATA", test_x, test_y, test_xt)
-
-
     test_xt.index = np.arange(0, len(test_xt))
     test_x.index = np.arange(0, len(test_x))
     test_y.index = np.arange(0, len(test_y))
@@ -68,10 +66,13 @@ def eval3emb(data_use="full"):
     train_y.index= np.arange(0, len(train_y))
     train_xt.index=np.arange(0, len(train_xt))
 
-    print("TRAIN DATA", train_x, train_y, train_xt)
+    train_x = train_x.drop(['site_x', 'site_y'], axis=1)   
+    test_x = test_x.drop(['site_x', 'site_y'], axis=1)
+
+    print("TRAIN DATA", train_x, train_y, test_x, test_y)
     batchsize = 366
     lr = 1e-06
-    hp = {'epochs': 5000,
+    hp = {'epochs': 2,
                           'batchsize': batchsize,
                               'lr': lr}
     data_dir = "../models/"
@@ -101,18 +102,18 @@ def eval3emb(data_use="full"):
     for i in range(splits):
         i += 1
         #import model
-        model = models.EMB(x.shape[1], 1, layersizes, 12, 1)
-        model.load_state_dict(torch.load(''.join((data_dir, f"3emb_{data_use}_model{i}.pth"))))
+        model = models.EMB(train_x.shape[1], 1, layersizes, 12, 1)
+        model.load_state_dict(torch.load(''.join((data_dir, f"23emb_{data_use}_model{i}.pth"))))
         model.eval()
         with torch.no_grad():
             ypp, p_train = model(x_train, xt_train)
             ypt, p_test = model(x_test, xt_test)
             preds_train.update({f'train_emb{i}': p_train.flatten().numpy()})
             preds_test.update({f'test_emb{i}': p_test.flatten().numpy()})
-            train_rmse.append(mse(p_train.flatten(), y_train).tolist())
-            train_mae.append(mae(p_train.flatten(), y_train).tolist())
-            test_rmse.append(mse(p_test.flatten(), y_test).tolist())
-            test_mae.append(mae(p_test.flatten(), y_test).tolist())
+            train_rmse.append(mse(p_train.flatten(), y_train.flatten()).tolist())
+            train_mae.append(mae(p_train.flatten(), y_train.flatten()).tolist())
+            test_rmse.append(mse(p_test.flatten(), y_test.flatten()).tolist())
+            test_mae.append(mae(p_test.flatten(), y_test.flatten()).tolist())
 
     performance = {'train_RMSE': train_rmse,
                'train_MAE': train_mae,
