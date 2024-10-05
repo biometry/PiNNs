@@ -1,26 +1,41 @@
-random
+# !/usr/bin/env python
+# coding: utf-8
+# @author: Marieke Wesselkamp
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from misc import utils
+from misc import models
+from misc import training
+import torch
+import pandas as pd
+import numpy as np
+import torch.nn as nn
+import torch.optim as optim
+from sklearn import metrics
+from sklearn.model_selection import train_test_split
+import random
 import os
 from torch.utils.data import TensorDataset, DataLoader
 from torch import Tensor
 import csv
-import training
 import argparse
 
-parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
+parser.add_argument('-n', metavar='number', type=int, help='define number of replicates')
 args = parser.parse_args()
 
 
-def pretraining2(data_use="full", exp="exp2"):
+def pretraining2(data_use="full", exp="exp2", N=5000):
     
     ## Define splits
     splits = 5
 
     # Load data for pretraining
     if data_use == 'full':
-        x, y, r  = utils.loaddata('simulations', 1, dir="../../data/", exp=exp)
+        x, y, r  = utils.loaddata('simulations', 1, dir="./results/", exp=exp, n=N)
     else:
-        x, y, r = utils.loaddata('simulations', 1, dir="../../data/", sparse=True, exp=exp)
+        x, y, r = utils.loaddata('simulations', 1, dir="./results/", sparse=True, exp=exp, n=N)
     y = y.to_frame()
     
     ## Split into training and test
@@ -45,7 +60,7 @@ def pretraining2(data_use="full", exp="exp2"):
           'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "../models/"
-    data = f"mlpDA_pretrained_{data_use}_{exp}"
+    data = f"mlpDA_pretrained_{data_use}_{exp}_{N}"
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, hp=False, exp=2)
     
 
@@ -95,7 +110,7 @@ def pretraining2(data_use="full", exp="exp2"):
     pd.DataFrame.from_dict(ae).to_csv(f'./results/mlpDA2_eval_vaeloss_{data_use}_{exp}.csv')
 
 if __name__ == '__main__':
-    pretraining2(data_use=args.d)
+    pretraining2(data_use=args.d, N=args.n)
     
     
 
