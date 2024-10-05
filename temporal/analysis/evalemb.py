@@ -72,7 +72,7 @@ def evalemb(data_use="full"):
     t2 = []
     t3 = []
     t4 = []
-    for i in range(5):
+    for i in range(5000):
         t1.append(train_loss[0][i])
         t2.append(train_loss[1][i])
         t3.append(train_loss[2][i])
@@ -81,7 +81,7 @@ def evalemb(data_use="full"):
     v2 = []
     v3 = []
     v4 = []
-    for i in range(5):
+    for i in range(5000):
         v1.append(val_loss[0][i])
         v2.append(val_loss[1][i])
         v3.append(val_loss[2][i])
@@ -143,7 +143,7 @@ def evalemb(data_use="full"):
 
     print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/emb_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'./results/emb_eval_{data_use}_performance.csv')
     pd.DataFrame.from_dict(preds_train).to_csv(f'./results/emb_eval_preds_{data_use}_train.csv')
     pd.DataFrame.from_dict(preds_test).to_csv(f'./results/emb_eval_preds_{data_use}_test.csv')
 
