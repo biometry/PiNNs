@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 import argparse
 
-parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
@@ -27,7 +27,7 @@ def EN2res(data_use='full'):
     x = x[x.index.year == 2004]
     y = y[y.index.year == 2004]
     y = y.to_frame()
-    print('XY',x, y)
+
     splits = 5
     x.index, y.index = np.arange(0, len(x)), np.arange(0, len(y))
     
