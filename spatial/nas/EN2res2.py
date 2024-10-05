@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 import argparse
 
-parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
@@ -30,7 +30,7 @@ def EN2res2(data_use='full'):
     y = y.to_frame()
     splits = 5
     x.index, y.index, yp.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(yp))
-    
+
     arch_grid, par_grid = HP.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
     res = HP.NASSearch(arch_grid, par_grid, x, y, splits, "2hpres2",exp=2, ypreles=yp, hp=True)
 
