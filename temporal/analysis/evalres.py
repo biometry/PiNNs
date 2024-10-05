@@ -22,7 +22,7 @@ from torch import Tensor
 import csv
 import argparse
 
-parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
@@ -31,7 +31,6 @@ def evalres(data_use='full'):
     if data_use == 'sparse':
         # Load hyytiala
         x, y, xt = utils.loaddata('validation', 1, dir="../../data/", raw=True, sparse=True)
-        print('XT', xt)
         yp = pd.read_csv("../../data/hyytialaF_sparse.csv")        
     else:
         x, y, xt = utils.loaddata('validation', 1, dir="../../data/", raw=True)
