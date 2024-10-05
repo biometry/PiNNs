@@ -200,7 +200,7 @@ def via(data_use, model, prediction_scenario, current_dir = ''):
 
     if model != 'res':
         test_xt = test_xt.drop(['site'], axis=1)
-    gridsize = 2
+    gridsize = 200
 
     for v in variables:
         # Create variable values over complete ranges and standardize by full dataset
