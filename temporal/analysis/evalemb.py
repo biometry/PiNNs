@@ -22,7 +22,7 @@ from torch.autograd import Variable
 import argparse
 
 
-parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
@@ -72,7 +72,7 @@ def evalemb(data_use="full"):
     t2 = []
     t3 = []
     t4 = []
-    for i in range(5000):
+    for i in range(5):
         t1.append(train_loss[0][i])
         t2.append(train_loss[1][i])
         t3.append(train_loss[2][i])
@@ -81,7 +81,7 @@ def evalemb(data_use="full"):
     v2 = []
     v3 = []
     v4 = []
-    for i in range(5000):
+    for i in range(5):
         v1.append(val_loss[0][i])
         v2.append(val_loss[1][i])
         v3.append(val_loss[2][i])
