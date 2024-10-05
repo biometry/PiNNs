@@ -23,6 +23,7 @@ def ENres2(data_use='full'):
         x, y, xt = utils.loaddata('NAS', 1, dir="../../data/", raw=True)
     ypreles = xt.drop(xt.columns.difference(['GPPp']), axis=1)[1:]
 
+
     splits = len(x.index.year.unique())
 
     y = y.to_frame()
@@ -30,7 +31,7 @@ def ENres2(data_use='full'):
             
     arch_grid, par_grid = HP.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
     res = HP.NASSearch(arch_grid, par_grid, x, y, splits, "NASpres2", res=2, ypreles=ypreles, hp=True)
-    res.to_csv(f"/results/Nres2HP_{data_use}.csv")
+    res.to_csv(f"./results/Nres2HP_{data_use}.csv")
 
 
 if __name__ == '__main__':
