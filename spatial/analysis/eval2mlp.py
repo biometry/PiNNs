@@ -20,7 +20,7 @@ import csv
 import argparse
 
 
-parser = argparse.ArgumentParser(description='Define data usage and splits')
+parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
