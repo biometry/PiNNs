@@ -1,17 +1,20 @@
-# How to convert preles to python module
+# Creating a PRELES pytorch c++ extension
+Here is a recipe for creating the pytorch c++ extension of PRELES. Make sure you have the project environment installed and loaded.
+
 ## Check compiler
-This code runs with
+This code runs with gcc compiler, e.g.
 ```console
-niklas@hpc:~$ gcc --version
+@PiNNs~: gcc --version
 gcc (GCC) 9.1.0
 Copyright (C) 2019 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ```
 
-## Add preles as cpp-extension
+## Create pytorch c++ extension
+Next we create the pytorch c++ extension. We use setuptools and the file setup.py to proceed as follows
 ```console
-niklas@hpc:~$ python setup.py install
+@PiNNs~: python setup.py install
 running install
 running bdist_egg
 running egg_info
@@ -29,9 +32,10 @@ Processing dependencies for preles==0.0.0
 Finished processing dependencies for preles==0.0.0
 ```
 
-## Test if preles works properly
+## Tests
+We check if we can call PRELES now from python by
 ```console
-niklas@hpc:~$ python
+@PiNNs~: python
 Python 3.7.10 | packaged by conda-forge | (default, Feb 19 2021, 16:07:37)
 [GCC 9.3.0] on linux
 Type "help", "copyright", "credits" or "license" for more information.
@@ -39,3 +43,4 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> import preles
 >>>
 ```
+Note that it is required to import torch before importing preles. To make predictions with PRELES in python call *preles.preles()*. This is equivalent to the R function used to make PRELES predictions. Note that in python it takes torch tensors as inputs. 
