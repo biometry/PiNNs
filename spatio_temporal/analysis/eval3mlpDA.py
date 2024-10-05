@@ -26,7 +26,7 @@ parser.add_argument('-a', metavar='da', type=int, help='define type of domain ad
 args = parser.parse_args()
 
 
-def eval2mlpDA(data_use="full", da=1, exp = "exp2"):
+def eval2mlpDA(data_use="full", da=1, exp = "exp2", N=5000):
     '''
     da specifies Domain Adaptation:                                                                                                                                        da = 1: using pretrained weight and fully retrain network                                                                                                 
         da = 2: retrain only last layer.
@@ -45,8 +45,8 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2"):
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
     else:
-        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
-        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
+        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-02']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-02']))
     print(x.index)
     
     test_x = x[(x.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
@@ -80,14 +80,14 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2"):
           'lr': lr}
     print('HYPERPARAMETERS', hp)
     data_dir = "../models/"
-    data = f"3mlpDA_pretrained_{data_use}_{exp}"
+    data = f"3mlpDA_pretrained_{data_use}_{exp}_{N}"
     
-    td, se, ae  = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, domain_adaptation=da, reg=None, emb=False, hp=False, exp=2)
+    td, se, ae  = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, domain_adaptation=1, reg=None, emb=False, hp=False, exp=2)
 
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'/results/3mlpDA_{data_use}_eval_tloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'/results/3mlpDA_{data_use}_eval_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'/results/3mlpDA_{data_use}_eval_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'./results/3mlpDA_{data_use}_eval_tloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'./results/3mlpDA_{data_use}_eval_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'./results/3mlpDA_{data_use}_eval_vaeloss.csv')
 
     # Evaluation
     mse = nn.MSELoss()
