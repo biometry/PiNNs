@@ -36,8 +36,8 @@ def eval3reg(data_use='full', of=False):
         train_x = train_x.drop(pd.DatetimeIndex(['2005-01-01']))
         train_y = train_y.drop(pd.DatetimeIndex(['2005-01-01']))
     else:
-        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-05']))
-        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-05']))
+        train_x = train_x.drop(pd.DatetimeIndex(['2005-01-02']))
+        train_y = train_y.drop(pd.DatetimeIndex(['2005-01-02']))
     test_x = x[(x.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
     test_y = y[(y.index.year == 2008) & ((x.site_x == "h") & (x.site_y == "h"))]
     train_x = train_x.drop(['site_x', 'site_y'],axis=1)
@@ -49,7 +49,7 @@ def eval3reg(data_use='full', of=False):
     if data_use=="full":
         yp = yp.drop(pd.DatetimeIndex(['2005-01-01']))
     else:
-        yp = yp.drop(pd.DatetimeIndex(['2005-01-05']))
+        yp = yp.drop(pd.DatetimeIndex(['2005-01-02']))
     reg = yp.drop(yp.columns.difference(['GPPp']), axis=1)
 
     splits = 4
@@ -59,7 +59,7 @@ def eval3reg(data_use='full', of=False):
     train_x.index, train_y.index, reg.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(reg))
     print(len(train_x), len(train_y), len(reg))
     
-    d = pd.read_csv(f"../../spatial/results/N2regHP_{data_use}.csv")
+    d = pd.read_csv(f"../../spatial/nas/results/N2regHP_{data_use}.csv")
     a = d.loc[d.ind_mini.idxmin()]
     layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
     parms = np.array(np.matrix(a.parameters)).ravel()
@@ -132,4 +132,4 @@ def eval3reg(data_use='full', of=False):
 
 
 if __name__=='__main__':
-    eval2reg(args.d)
+    eval3reg(args.d)
