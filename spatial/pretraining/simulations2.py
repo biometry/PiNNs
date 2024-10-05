@@ -39,7 +39,7 @@ def climate_simulations(train_x, exp):
     X_new['year'] = year_new[0]
     if exp == 'exp2':
         X_new['site_num'] = site_new[0]
-        print(X_new)
+        
     
     #%% Predict to new data set
     with open('./results/gamTair', 'rb') as f:
@@ -61,11 +61,11 @@ def climate_simulations(train_x, exp):
 
     if exp == 'exp2':
 
-        print(train_x['site_num'] == site_new[0])
+        #print(train_x['site_num'] == site_new[0])
 
         Tair_true = train_x.loc[train_x['site_num']==site_new[0],'Tair']
 
-        print(len(Tair_true))
+        #print(len(Tair_true))
 
         Precip_true = train_x.loc[train_x['site_num'] == site_new[0], 'Precip']
         VPD_true = train_x.loc[train_x['site_num'] == site_new[0], 'VPD']
@@ -173,7 +173,7 @@ def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir 
         x['site'] = xt['site'].values
         x['site_num'] = xt['site'].values
         x['DOY'] = xt['DOY'].values
-        print(x)
+        print("SITENUM", x.site_num.unique())
 
         x = x[x.index.year == 2008]
         y = y[y.index.year == 2008]
@@ -199,14 +199,14 @@ def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir 
     #train_x = train_x.drop(['date'], axis=1)
 
     if exp == 'exp2':
-        train_x['site_num'] = train_x['site_num'].astype(str)
-        mapping = {'h':1, 'sr':2, 'bz':3, 'ly':4 ,'co':5}
-        train_x = train_x.replace({'site_num':mapping})
+        #train_x['site_num'] = train_x['site_num'].astype(str)
+        mapping = {'h':1, 's':2, 'b':3, 'l':4 ,'c':5}
+        train_x = train_x.replace({'site_num': mapping})
 
     if exp == 'exp2':
 
-        #train_x['site'] = pd.to_numeric(train_x['site'], errors='ignore').astype(int)
-        print(train_x['site_num'])
+        train_x['site'] = train_x['site_num']#pd.to_numeric(train_x['site'], errors='ignore').astype(int)
+        print("SITENUMBER", train_x['site_num'])
         gamTair = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']], train_x['Tair'])
         gamPrecip = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']], train_x['Precip'])
         gamVPD = GAM(s(0, by=2, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year', 'site_num']],train_x['VPD'])
@@ -273,7 +273,7 @@ def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir 
         d.append(c)
 
     d = pd.concat(d)
-    d.to_csv(f'./results/simulations_{data_use}_{exp}.csv', index=False)
+    d.to_csv(f'./results/simulations_{data_use}_{exp}_{n}.csv', index=False)
 
 
 
@@ -288,5 +288,5 @@ fig.savefig('results/temp.png')
 
 
 if __name__ == '__main__':
-    gen_simulations(n=1, fix_pars=True, data_use='full', exp='exp2')
+    gen_simulations(n=args.n, fix_pars=True, data_use=args.d, exp='exp2')
 
