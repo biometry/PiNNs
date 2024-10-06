@@ -46,8 +46,8 @@ We create four files in total. hyytiala files will be loaded with the temporal p
 
 - hyytialaF_full.csv
 - hyytialaF_sparse.csv
-- allsitesF_exp2_full.csv
-- allsitesF_exp2_full.csv
+- allsitesF_full.csv
+- allsitesF_sparse.csv
 
 The following four steps to develop the PiNNs are carried out in most parts for each prediction scenario separately, with overlaps in the spatial and spatio-temporal experiment.
 
