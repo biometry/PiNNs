@@ -2,7 +2,6 @@
 # VIA PRELES / conditional #
 #==========================#
 
-source("install_packages.R")
 source("helpers.R")
 
 library(Rpreles)

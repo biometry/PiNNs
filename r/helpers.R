@@ -1,5 +1,3 @@
-source("install_packages.R")
-
 library(BayesianTools)
 library(Rpreles)
 library(this.path)

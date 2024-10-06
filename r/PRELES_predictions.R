@@ -1,5 +1,4 @@
 source("helpers.R")
-source("install_packages.R")
 
 library(this.path)
 library(Rpreles)
