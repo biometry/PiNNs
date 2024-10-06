@@ -24,14 +24,10 @@ C source code of the model PRELES in ./src can be found at: https://github.com/M
 
 PRELES calibration is conducted in R with the BayesionTools package, while integration with, neural network training and evaluation is conducted in Python. Therefore we need to setup both computing environments before results can be reproduced. In addition, we compile a python version of PRELES for reproducing results of the Physics Embedding. 
 
-- R: The scripts run safely in R v4.3.1 / v4.2.1 with the package versions in r/requirements.txt. For their manual installation, run "install_packages.R". Alternatively, make sure to have renv installed, navigate to r, restore the project from the lockfile in R: This will install missing package versions and dependencies specified in r/renv. Afterwards, you can run main.R with Rscript.
+- R: The scripts run safely in R v4.3.1 / v4.2.1 with the package versions in r/requirements.txt. For their manual installation, run "install_packages.R". Alternatively, make sure to have renv installed, navigate to r and run main.R with Rscript. This restores the project from the lockfile in R and installs missing package versions and dependencies specified in r/renv.
 
 ```console
 @PiNNs~:cd r
-@PiNNs/r~:R
-...
-> renv::restore()
-> quit()
 @PiNNs/r~:Rscript main.R
 ```
 
