@@ -24,7 +24,16 @@ C source code of the model PRELES in ./src can be found at: https://github.com/M
 
 PRELES calibration is conducted in R with the BayesionTools package, while integration with, neural network training and evaluation is conducted in Python. Therefore we need to setup both computing environments before results can be reproduced. In addition, we compile a python version of PRELES for reproducing results of the Physics Embedding. 
 
-- R: The scripts run safely in R v4.3.1 / v4.2.1 with the package versions in r/requirements.txt. For manual installation, run "install_packages.R". Alternatively, make sure to have renv installed and directly run main.R in your R console, restore the project from the lockfile and packages will be installed with versions and dependencies as specified in r/renv.
+- R: The scripts run safely in R v4.3.1 / v4.2.1 with the package versions in r/requirements.txt. For their manual installation, run "install_packages.R". Alternatively, make sure to have renv installed, navigate to r, restore the project from the lockfile in R: This will install missing package versions and dependencies specified in r/renv. Afterwards, you can run main.R with Rscript.
+
+```console
+@PiNNs~:cd r
+@PiNNs/r~:R
+...
+> renv::restore()
+> quit()
+@PiNNs/r~:Rscript main.R
+```
 
 - Python: Package versions and dependencies are in environment.yml. Make sure you have conda module loaded and create the conda environment from environment.yml
 
@@ -41,9 +50,9 @@ The data, models and hyperparamters we used for our experiments are available at
 
 ## PRELES calibration and prediction
 
-If you want to use our data files and parameters, you can skip these steps. Otherwise: For the PRELES calibration and simulation, run main.R (in *r*). This will call install_packages.R, PRELES_predictions.R and conditional_via.R. In PRELES_predictions.R, we fit PRELES with BayesianTools (https://github.com/florianhartig/BayesianTools) in, make GPP predictions in all model scenarios, and evaluate them against observations. For inference, we run a conditional variable importance analysis in conditional_via.R. **Attention**: PRELES_predictions.R with the default sampling of 50000 per MCMC chain will take hours to run! If you want to conduct a test run, reduce sample size strongly. Running main.R will create a *results* subfolder in each predictive experiment folder. PRELES performances are written to .csv files and saved in *results*, whereas the neural network input data files, merged with PRELES predictions, are saved to *data*.
+If you want to use our data files, you can skip these steps and download the four listed files from the OSF repository. Otherwise: For the PRELES calibration and simulation, run main.R (in *r*). This will call PRELES_predictions.R and conditional_via.R. In PRELES_predictions.R, we fit PRELES with BayesianTools (https://github.com/florianhartig/BayesianTools) in, make GPP predictions in all model scenarios, and evaluate them against observations. For inference, we run a conditional variable importance analysis in conditional_via.R. **Attention**: PRELES_predictions.R with the default sampling of 50000 per MCMC chain will take hours to run! If you want to conduct a test run, reduce sample size strongly. Running main.R will create a *results* subfolder in each predictive experiment folder. PRELES performances are written to .csv files and saved in *results*, whereas the neural network input data files, merged with PRELES predictions, are saved to *data*, **if your flag save_data = TRUE**.
 
-We create four files in total. hyytiala files will be loaded with the temporal prediction scenario, allsites files will be loaded with the spatial and spatio_temoporal prediction scenario. The endings _sparse and _full indicate the data availablity scenario.
+We create four files in total. hyytiala files will be loaded with the temporal prediction scenario, allsites files will be loaded with the spatial and spatio_temoporal prediction scenario. The endings _sparse and _full indicate the data availablity scenario. 
 
 - hyytialaF_full.csv
 - hyytialaF_sparse.csv
