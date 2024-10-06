@@ -24,6 +24,8 @@ path_to_spatiotemporal <- create_results_folder(spatiotemporal_prediction)
 #set flags
 make_nas_data = FALSE
 ex_fit = FALSE
+plot_posterior_distributions = FALSE
+save_data = FALSE
 
 if (make_nas_data){create_nas_data()}
 if (ex_fit){example_fit()}  
@@ -137,7 +139,7 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
   if (save_data){
     hyytialaF <- rbind(hyytiala_train, hyytiala_test)
     write.csv(hyytialaF, 
-              file=paste0(path_to_data, paste0("/hyytiala_", data_use, ".csv")), 
+              file=paste0(path_to_data, paste0("/hyytialaF_", data_use, ".csv")), 
               row.names = FALSE)
     ## Generate files for prediction results ##
     save(gpp_train, file = paste0(path_to_data, "/GPPp_singlesite_train.Rdata"))
@@ -272,7 +274,7 @@ multisite_calibration <- function(data_use = 'sparse', scenario = 'exp2', fit = 
   if (save_data){
     allsitesF <- rbind(allsites_train, allsites_test)
     write.csv(allsitesF, 
-              file=paste0(path_to_data, "/allsites_", scenario, "_", data_use, ".csv"), 
+              file=paste0(path_to_data, "/allsitesF_", scenario, "_", data_use, ".csv"), 
               row.names = FALSE)
   }
   
@@ -317,13 +319,13 @@ multisite_calibration <- function(data_use = 'sparse', scenario = 'exp2', fit = 
 }
 
 
-singlesite_calibration(data_use = 'full', save_data=TRUE)
-singlesite_calibration(data_use = 'sparse', save_data=TRUE)
+singlesite_calibration(data_use = 'full', save_data=save_data)
+singlesite_calibration(data_use = 'sparse', save_data=save_data)
 
-multisite_calibration(data_use = 'full', scenario = 'exp2', fit = TRUE, save_data = TRUE)
-multisite_calibration(data_use = 'sparse', scenario = 'exp2', fit = TRUE, save_data = TRUE)
-multisite_calibration(data_use = 'full', scenario = 'exp3', fit = TRUE, save_data = TRUE)
-multisite_calibration(data_use = 'sparse', scenario = 'exp3', fit = TRUE,  save_data = TRUE)
+multisite_calibration(data_use = 'full', scenario = 'exp2', fit = TRUE, save_data = save_data)
+multisite_calibration(data_use = 'sparse', scenario = 'exp2', fit = TRUE, save_data = save_data)
+multisite_calibration(data_use = 'full', scenario = 'exp3', fit = TRUE, save_data = save_data)
+multisite_calibration(data_use = 'sparse', scenario = 'exp3', fit = TRUE,  save_data = save_data)
 
 #==============================#
 # Plot posterior distributions #
@@ -380,10 +382,11 @@ plot_posterior_multisite <- function(data_use, experiment, results_path, pars, p
   dev.off()
 }
 
-
-plot_posterior_singlesite(data_use = 'full')
-plot_posterior_singlesite(data_use = 'sparse')
-plot_posterior_multisite(data_use = 'full', experiment = 'exp2', results_path = path_to_spatial)
-plot_posterior_multisite(data_use = 'sparse', experiment = 'exp2',results_path = path_to_spatial)
-plot_posterior_multisite(data_use = 'full', experiment = 'exp3', results_path = path_to_spatiotemporal)
-plot_posterior_multisite(data_use = 'sparse', experiment = 'exp3', results_path = path_to_spatiotemporal)
+if (plot_posterior_distributions){
+  plot_posterior_singlesite(data_use = 'full')
+  plot_posterior_singlesite(data_use = 'sparse')
+  plot_posterior_multisite(data_use = 'full', experiment = 'exp2', results_path = path_to_spatial)
+  plot_posterior_multisite(data_use = 'sparse', experiment = 'exp2',results_path = path_to_spatial)
+  plot_posterior_multisite(data_use = 'full', experiment = 'exp3', results_path = path_to_spatiotemporal)
+  plot_posterior_multisite(data_use = 'sparse', experiment = 'exp3', results_path = path_to_spatiotemporal)
+}
