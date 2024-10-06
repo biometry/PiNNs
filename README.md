@@ -26,15 +26,13 @@ PRELES calibration is conducted in R with the BayesionTools package, while integ
 
 - R: The scripts run safely in R v4.3.1 / v4.2.1 with the package versions in requirements_r.txt. For installation, run "install_packages.R", or directly run main.R where packages will be installed on the fly. 
 
-- Python: Package versions and dependencies are in requirements.txt. Create a virtual environment with before installation, e.g. directly in your project directory with
+- Python: Package versions and dependencies are in environment.yml. Make sure you have conda module loaded and create the conda environment from environment.yml
 
 ```console
-@PiNNs~:python -m venv pinns
-@PiNNs~:source venv/bin/activate
-
-@PiNNs~:pip install -r requirements.txt
+@PiNNs~:conda env create -f environment.yml
+@PiNNs~:conda activate pinns
 ```
-After initializing the environment it is essential to create the PRELES pytorch c++ extension. Please proceed in folder *src* with the compilation of the PRELES source code.
+After initializing the environment it is essential to create the PRELES pytorch c++ extension. Please proceed in the folder *src* and follow the README file.
 
 ## Data, Models and Hyperparameters
 
