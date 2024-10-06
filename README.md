@@ -107,7 +107,11 @@ Model performances will be saved to the respective results folder, while model p
 
 ## Variable importance analysis
 
-Now that PiNNs are trained and evaluated, first inference steps are conducted with a conditional variable importance analysis. In each *analysis* folder, call *via_conditional.py*. This file requires the model structure selected in the NAS, taken from *NmlpHP_{data_use}.csv*. It also requires model state dictionaries (trained network weights and biases), saved during model training to e.g. *temporal/models*. The via_conditional.py script will analyse variable importances for each input variable separately at the seasonal mean of the other variables. 
+Now that PiNNs are trained and evaluated, first inference steps are conducted with a conditional variable importance analysis. In each *analysis* folder, call *via_conditional.py*. This file requires the model structure selected in the NAS, taken from *NmlpHP_{data_use}.csv*. It also requires model state dictionaries (trained network weights and biases), saved during model training to e.g. *temporal/models*. The via_conditional.py script will analyse variable importances for each input variable separately at the seasonal mean of the other variables. The flag -m defines the model to be analysed and the flag -d defines the data scenario. Proceed as
+```console
+@PiNNs~:cd temporal/analysis
+@PiNNs~:python via_conditional.py -m mlp -d full
+```
 
 ## Visualise results
 
