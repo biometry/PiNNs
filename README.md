@@ -98,7 +98,7 @@ Training and evaluation happen simulatenously when calling the model-specific ev
 ```console
 @PiNNs~:cd temporal/analysis
 @PiNNs~:mkdir results
-@PiNNs~:python evalmlp.py --d full
+@PiNNs~:python evalmlp.py -d full
 ```
 Model performances will be saved to the respective results folder, while model parameters will be saved to the folder *temporal/models*. Note that for the domain adaptation the parameter *N* in evalmlpDA.py must be the same as the flag -n in simulations.py and pretraining.py. Further note that eval2mlpDA.py requires the flag -a which we set in our experiments to 1. It defines which layers should be retrained with the empirical data, where -a 1 defines all layers to be retrained and -a 2 defines only last layers to be retrained.
 
