@@ -8,7 +8,7 @@ This repository contains the code that accompanies the article (DOI). The proces
 - pretrained NN (domain adapted) (*DA*)
 - physics embedding NN (*emb*)
 
-PINNs are evaluated (i) in temporal, spatial and spatio-temporal prediction scenarios (see folder structure) (i) and in data-rich and data-sparse regimes. The instructions below will walk you through the code if you want to reproduce our or create your own PINNs. Because of heavy ressource use during PiNN development, we strongly recommend you to work on an HPC and submit with bash scripts to your scheduling system during the neural architecture search and also consider it for the model training. <br/>
+PINNs are evaluated (i) in temporal, spatial and spatio-temporal prediction scenarios (see folder structure) (i) and in data-rich and data-sparse regimes. The instructions below will walk you through the code if you want to reproduce our or create your own PINNs. Because of heavy ressource use during PiNN development, **we strongly recommend you to work on an HPC with the below instructions** and submit them stepwise with bash scripts (for example, see my_bash_script.sh) to your scheduling system. This will be specifically required during the neural architecture search and the model training. <br/>
 
 The repository is structured as follows:
 - ./src: contains the source code of the model PRELES
@@ -24,7 +24,7 @@ C source code of the model PRELES in ./src can be found at: https://github.com/M
 
 PRELES calibration is conducted in R with the BayesionTools package, while integration with, neural network training and evaluation is conducted in Python. Therefore we need to setup both computing environments before results can be reproduced. In addition, we compile a python version of PRELES for reproducing results of the Physics Embedding. 
 
-- R: The scripts run safely in R v4.3.1 / v4.2.1 with the package versions in r/requirements.txt. For their manual installation, run "install_packages.R". Alternatively, make sure to have renv installed, navigate to r and run main.R with Rscript. This restores the project from the lockfile in R and installs missing package versions and dependencies specified in r/renv.
+- R: The scripts run safely in R v4.3.1 / v4.2.1 with the package versions in r/requirements.txt. For their manual installation, run "install_packages.R". Alternatively, make sure to have R loaded if you're working on your HPC. Navigate to r and run main.R with Rscript. This will install the renv package, if not allready installed, which will be used to restore the project from the lockfile in R. It installs missing package versions and dependencies specified in r/renv and afterwards conduct the analysis as specified in r/README.
 
 ```console
 @PiNNs~:cd r
@@ -34,7 +34,6 @@ PRELES calibration is conducted in R with the BayesionTools package, while integ
 - Python: Package versions and dependencies are in environment.yml. Make sure you have conda module loaded and create the conda environment from environment.yml
 
 ```console
-@PiNNs~:ml conda
 @PiNNs~:conda env create -f environment.yml
 @PiNNs~:conda activate pinns
 ```
