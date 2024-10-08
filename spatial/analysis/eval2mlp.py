@@ -27,9 +27,9 @@ args = parser.parse_args()
 
 def eval2mlp(data_use='full'):
     if data_use == 'sparse':
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, sparse=True,eval=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="data/", raw=True, sparse=True,eval=True)
     else:
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, eval=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="data/", raw=True, eval=True)
     xt.index = pd.DatetimeIndex(xt['date'])
     xt = xt.drop(['date', 'year', 'GPPp', 'SWp', 'ETp', 'GPP', 'ET', 'X'], axis=1)[1:]
     # select NAS data
@@ -55,7 +55,7 @@ def eval2mlp(data_use='full'):
     test_y = test_y.to_frame()
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
     # Load Architecture & HP
-    d = pd.read_csv(f"../nas/results/N2mlpHP_{data_use}.csv")
+    d = pd.read_csv(f"spatial/results/N2mlpHP_{data_use}.csv")
     a = d.loc[d.ind_mini.idxmin()]
     layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
     parms = np.array(np.matrix(a.parameters)).ravel()
@@ -70,13 +70,13 @@ def eval2mlp(data_use='full'):
       'batchsize': int(bs),
             'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "../models/"
+    data_dir = "spatial/models/"
     data = f"mlp_{data_use}"
 
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2)
-    pd.DataFrame.from_dict(td).to_csv(f'./results/2mlp_{data_use}_trainloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'./results/2mlp_{data_use}_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'./results/2mlp_{data_use}_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'spatial/results/2mlp_{data_use}_trainloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'spatial/results/2mlp_{data_use}_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'spatial/results/2mlp_{data_use}_vaeloss.csv')
     
     
      # Evaluation
@@ -119,8 +119,8 @@ def eval2mlp(data_use='full'):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/2mlp_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/2mlp_{data_use}_eval_preds_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'spatial/results/2mlp_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'spatial/results/2mlp_{data_use}_eval_preds_test.csv')
 
 
     

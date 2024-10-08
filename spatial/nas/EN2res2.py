@@ -15,12 +15,14 @@ parser = argparse.ArgumentParser(description='Define data usage')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
+APAR = 1
+PPAR = 1
 
 def EN2res2(data_use='full'):
     if data_use == 'sparse':
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, sparse=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="data/", raw=True, sparse=True)
     else:
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="data/", raw=True)
 
     yp = yp.drop(yp.columns.difference(['GPPp']), axis=1)
     yp.index = pd.DatetimeIndex(x.index)
@@ -31,7 +33,7 @@ def EN2res2(data_use='full'):
     splits = 5
     x.index, y.index, yp.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(yp))
 
-    arch_grid, par_grid = HP.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
+    arch_grid, par_grid = HP.NASSearchSpace(x.shape[1], y.shape[1], APAR, PPAR, 4)
     res = HP.NASSearch(arch_grid, par_grid, x, y, splits, "2hpres2",exp=2, ypreles=yp, hp=True)
 
     res.to_csv(f"./results/N2res2HP_{data_use}.csv")

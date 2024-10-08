@@ -26,9 +26,9 @@ args = parser.parse_args()
 
 def eval2res2(data_use='full'):
     if data_use == 'sparse':
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, sparse=True, eval=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="data/", raw=True, sparse=True, eval=True)
     else:
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, eval=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="data/", raw=True, eval=True)
     # select NAS data
     print(x.index)
     xt.index = pd.DatetimeIndex(xt['date'])
@@ -67,7 +67,7 @@ def eval2res2(data_use='full'):
     test_y = test_y.to_frame()
     train_x.index, train_y.index, yp_tr.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(yp_tr))
 
-    d = pd.read_csv(f"../nas/results/N2res2HP_{data_use}.csv")
+    d = pd.read_csv(f"spatial/results/N2res2HP_{data_use}.csv")
     a = d.loc[d.ind_mini.idxmin()]
     layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
     parms = np.array(np.matrix(a.parameters)).ravel()
@@ -82,12 +82,12 @@ def eval2res2(data_use='full'):
             'batchsize': int(bs),
             'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "../models/"
+    data_dir = "spatial/models/"
     data = f"res2_{data_use}"
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2, res=2, ypreles = yp_tr)
-    pd.DataFrame.from_dict(td).to_csv(f'./results/2res2_{data_use}_eval_tloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'./results/2res2_{data_use}_eval_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'./results/2res2_{data_use}_eval_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'spatial/results/2res2_{data_use}_eval_tloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'spatial/results/2res2_{data_use}_eval_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'spatial/results/2res2_{data_use}_eval_vaeloss.csv')
 
 
     # Evaluation
@@ -127,9 +127,9 @@ def eval2res2(data_use='full'):
                     'test_mae': test_mae}
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/2res2_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'./results/2res2_eval_preds_{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'./results/2res2_eval_preds_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'spatial/results/2res2_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'spatial/results/2res2_eval_preds_{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'spatial/results/2res2_eval_preds_{data_use}_test.csv')
 
 
 if __name__ == '__main__':

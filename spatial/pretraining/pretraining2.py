@@ -33,16 +33,16 @@ def pretraining2(data_use="full", exp="exp2", N=5000):
 
     # Load data for pretraining
     if data_use == 'full':
-        x, y, r  = utils.loaddata('simulations', 1, dir="./results/", exp=exp, n=N)
+        x, y, r  = utils.loaddata('simulations', 1, dir="spatial/results/", exp=exp, n=N)
     else:
-        x, y, r = utils.loaddata('simulations', 1, dir="./results/", sparse=True, exp=exp, n=N)
+        x, y, r = utils.loaddata('simulations', 1, dir="spatial/results/", sparse=True, exp=exp, n=N)
     y = y.to_frame()
     
     ## Split into training and test
     train_x, test_x, train_y, test_y = train_test_split(x, y)
     train_x.index, train_y.index, test_x.index, test_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y)), np.arange(0, len(test_x)), np.arange(0, len(test_y)) 
     
-    d = pd.read_csv(f"../nas/results/N2mlpHP_{data_use}.csv")
+    d = pd.read_csv(f"spatial/results/N2mlpHP_{data_use}.csv")
     a = d.loc[d.ind_mini.idxmin()]
     layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
     parms = np.array(np.matrix(a.parameters)).ravel()
@@ -59,7 +59,7 @@ def pretraining2(data_use="full", exp="exp2", N=5000):
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "../models/"
+    data_dir = "spatial/models/"
     data = f"mlpDA_pretrained_{data_use}_{exp}_{N}"
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, hp=False, exp=2)
     
@@ -101,13 +101,13 @@ def pretraining2(data_use="full", exp="exp2", N=5000):
         
     #print(preds_train)
     
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA2_pretrained_eval_performance_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA2_pretrained_eval_preds_train_{data_use}.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA2_pretrained_eval_preds_test_{data_use}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'spatial/results/mlpDA2_pretrained_eval_performance_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'spatial/results/mlpDA2_pretrained_eval_preds_train_{data_use}.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'spatial/results/mlpDA2_pretrained_eval_preds_test_{data_use}.csv')
     
-    pd.DataFrame.from_dict(td).to_csv(f'./results/mlpDA2_eval_tloss_{data_use}_{exp}.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'./results/mlpDA2_eval_vseloss_{data_use}_{exp}.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'./results/mlpDA2_eval_vaeloss_{data_use}_{exp}.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'spatial/results/mlpDA2_eval_tloss_{data_use}_{exp}.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'spatial/results/mlpDA2_eval_vseloss_{data_use}_{exp}.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'spatial/results/mlpDA2_eval_vaeloss_{data_use}_{exp}.csv')
 
 if __name__ == '__main__':
     pretraining2(data_use=args.d, N=args.n)
