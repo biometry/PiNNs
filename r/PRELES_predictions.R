@@ -24,8 +24,10 @@ path_to_spatiotemporal <- create_results_folder(spatiotemporal_prediction)
 #set flags
 make_nas_data = FALSE
 ex_fit = FALSE
-plot_posterior_distributions = FALSE
-save_data = FALSE
+plot_posterior_distributions = TRUE
+save_data = TRUE
+parallel = FALSE
+iterations = 5
 
 if (make_nas_data){create_nas_data()}
 if (ex_fit){example_fit()}  
@@ -89,8 +91,8 @@ singlesite_calibration <- function(data_use, save_data=FALSE){
       with(data, sum(dnorm(df$GPP, mean=PRELES(PAR=df$PAR, TAir=df$Tair, VPD=df$VPD, Precip=df$Precip, CO2=df$CO2, fAPAR=df$fapar , p=thispar)$GPP, sd=thispar[31], log=T)))
     }
     priors <- createUniformPrior(lower=pars$min[pars2tune], upper=pars$max[pars2tune], best=pars$def[pars2tune])
-    setup <- createBayesianSetup(likelihood=ell, prior=priors, parallel=T)
-    settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
+    setup <- createBayesianSetup(likelihood=ell, prior=priors, parallel=parallel)
+    settings <- list(iterations=iterations, adapt=T, nrChains=3, parallel=parallel) # runs 3 chains in parallel for each chain ...
     # run:
     fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
     save(fit, file = paste0(paste0(path_to_data, "/Psinglesite_fit_", year,"_", data_use, ".Rdata")))
@@ -222,8 +224,8 @@ multisite_calibration <- function(data_use = 'sparse', scenario = 'exp2', fit = 
         with(data, sum(dnorm(df$GPP, mean=PRELES(PAR=df$PAR, TAir=df$Tair, VPD=df$VPD, Precip=df$Precip, CO2=df$CO2, fAPAR=df$fapar , p=thispar)$GPP, sd=thispar[31], log=T)))
       }
       priors <- createUniformPrior(lower=pars$min[pars2tune], upper=pars$max[pars2tune], best=pars$def[pars2tune])
-      setup <- createBayesianSetup(likelihood=ell, prior=priors, parallel=T)
-      settings <- list(iterations=50000, adapt=T, nrChains=3, parallel=T) # runs 3 chains in parallel for each chain ...
+      setup <- createBayesianSetup(likelihood=ell, prior=priors, parallel=parallel)
+      settings <- list(iterations=iterations, adapt=T, nrChains=3, parallel=parallel) # runs 3 chains in parallel for each chain ...
       # run:
       fit <- runMCMC(bayesianSetup = setup, settings = settings, sampler = "DREAMzs")
       save(fit, file = paste0(path_to_data, paste0("/Pmultisite_fit_", s, "_", scenario, "_", data_use, ".Rdata")))
@@ -337,7 +339,7 @@ thispar <- pars$def
 names(thispar) <- pars$name
 
 
-plot_posterior_singlesite <- function(data_use){
+plot_posterior_singlesite <- function(data_use, pars2tune = c(5:11, 14:18, 31)){
   years <- c(2009,2010,2011,2012)
   ests <- NULL
   for (year in years){ # loop over years to load CV MCMC chain fits.
@@ -356,7 +358,7 @@ plot_posterior_singlesite <- function(data_use){
   dev.off()
 }
 
-plot_posterior_multisite <- function(data_use, experiment, results_path, pars, pars2tune){
+plot_posterior_multisite <- function(data_use, experiment, results_path, pars2tune = c(5:11, 14:18, 31) ){
   
   sites <- c('bz','co','ly','sr')
   ests <- NULL
@@ -364,7 +366,7 @@ plot_posterior_multisite <- function(data_use, experiment, results_path, pars, p
   # Loop over the sites
   for (site in sites) { 
     # Load the fit object for the specific site
-    load(paste0(results_path, "/Pmultisite_fit_", site, "_", experiment, "_", data_use, ".Rdata"))
+    load(paste0(path_to_data, "/Pmultisite_fit_", site, "_", experiment, "_", data_use, ".Rdata"))
     # Combine posterior samples for all chains
     ests <- rbind(ests, rbind(fit[[1]]$Z, fit[[2]]$Z, fit[[3]]$Z))
   }

@@ -1,9 +1,11 @@
 options(repos = c(CRAN = "https://cloud.r-project.org"))
 
 # set install.packages lib path to user specific library path on HPC, if necessary!
+lib_path = "/perm/pamw/R/library"
+.libPaths(c(lib_path, .libPaths()))
 
 if (!requireNamespace("renv", quietly = TRUE)) {
-  install.packages("renv")
+  install.packages("renv", lib = lib_path)
 }
 
 renv::restore()
