@@ -27,9 +27,9 @@ args = parser.parse_args()
 
 def eval3res(data_use='full'):
     if data_use == 'sparse':
-        x, y, xt = utils.loaddata('exp2p', 1, dir="../../data/", raw=True, sparse=True, eval=True)
+        x, y, xt = utils.loaddata('exp2p', 1, dir="data/", raw=True, sparse=True, eval=True)
     else:
-        x, y, xt = utils.loaddata('exp2p', 1, dir="../../data/", raw=True, eval=True)
+        x, y, xt = utils.loaddata('exp2p', 1, dir="data/", raw=True, eval=True)
 
 
     train_x = x[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
@@ -57,7 +57,7 @@ def eval3res(data_use='full'):
     test_y = test_y.to_frame()
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
         
-    d = pd.read_csv(f"../../spatial/nas/results/N2resHP_{data_use}.csv")
+    d = pd.read_csv(f"spatial/results/N2resHP_{data_use}.csv")
     a = d.loc[d.ind_mini.idxmin()]
     layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
     parms = np.array(np.matrix(a.parameters)).ravel()
@@ -70,15 +70,15 @@ def eval3res(data_use='full'):
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "../models/"
+    data_dir = "spatio_temporal/models/"
     data = f"3res_{data_use}"
     #print('DATA', train_x, train_y)
     #print('TX', train_x, train_y)
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2)
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'./results/3res_{data_use}_eval_tloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'./results/3res_{data_use}_eval_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'./results/3res_{data_use}_eval_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'spatio_temporal/results/3res_{data_use}_eval_tloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'spatio_temporal/results/3res_{data_use}_eval_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'spatio_temporal/results/3res_{data_use}_eval_vaeloss.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -120,9 +120,9 @@ def eval3res(data_use='full'):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/3res_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/3res_eval_preds_{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/3res_eval_preds_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'spatio_temporal/results/3res_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'spatio_temporal/results/3res_eval_preds_{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'spatio_temporal/results/3res_eval_preds_{data_use}_test.csv')
 
 
 if __name__ == '__main__':

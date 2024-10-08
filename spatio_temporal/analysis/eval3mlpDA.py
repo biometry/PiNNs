@@ -33,9 +33,9 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", N=5000):
     '''
 
     if data_use == 'sparse':
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, sparse=True, eval=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="data/", raw=True, sparse=True, eval=True)
     else:
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, eval=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="data/", raw=True, eval=True)
 
     # select NAS data
     train_x = x[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
@@ -63,7 +63,7 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", N=5000):
     test_y = test_y.to_frame()
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
 
-    d = pd.read_csv(f"../../spatial/nas/results/N2mlpHP_{data_use}.csv")
+    d = pd.read_csv(f"spatial/results/N2mlpHP_{data_use}.csv")
     a = d.loc[d.ind_mini.idxmin()]
     layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
     parms = np.array(np.matrix(a.parameters)).ravel()
@@ -79,15 +79,15 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", N=5000):
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "../models/"
+    data_dir = "spatio_temporal/models/"
     data = f"3mlpDA_pretrained_{data_use}_{exp}_{N}"
     
     td, se, ae  = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, domain_adaptation=1, reg=None, emb=False, hp=False, exp=2)
 
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'./results/3mlpDA_{data_use}_eval_tloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'./results/3mlpDA_{data_use}_eval_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'./results/3mlpDA_{data_use}_eval_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'spatio_temporal/results/3mlpDA_{data_use}_eval_tloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'spatio_temporal/results/3mlpDA_{data_use}_eval_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'spatio_temporal/results/3mlpDA_{data_use}_eval_vaeloss.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -129,8 +129,8 @@ def eval2mlpDA(data_use="full", da=1, exp = "exp2", N=5000):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/3mlpDA{da}_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/3mlpDA{da}_eval_preds_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'spatio_temporal/results/3mlpDA{da}_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'spatio_temporal/results/3mlpDA{da}_eval_preds_{data_use}_test.csv')
 
 
 

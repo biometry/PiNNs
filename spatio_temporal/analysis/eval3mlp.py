@@ -28,9 +28,9 @@ args = parser.parse_args()
 
 def eval3mlp(data_use='full'):
     if data_use == 'sparse':
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, sparse=True,eval=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="data/", raw=True, sparse=True,eval=True)
     else:
-        x, y, xt, yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, eval=True)
+        x, y, xt, yp = utils.loaddata('exp2', 1, dir="data/", raw=True, eval=True)
 
     # select NAS data
     train_x = x[(x.index.year == 2005) & ((x.site_x != "h") & (x.site_y != "h"))]
@@ -56,7 +56,7 @@ def eval3mlp(data_use='full'):
     test_y = test_y.to_frame()
     train_x.index, train_y.index = np.arange(0, len(train_x)), np.arange(0, len(train_y))
     
-    d = pd.read_csv(f"../../spatial/nas/results/N2mlpHP_{data_use}.csv")
+    d = pd.read_csv(f"spatial/results/N2mlpHP_{data_use}.csv")
     a = d.loc[d.ind_mini.idxmin()]
     layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
     parms = np.array(np.matrix(a.parameters)).ravel()
@@ -71,13 +71,13 @@ def eval3mlp(data_use='full'):
       'batchsize': int(bs),
             'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "../models/"
+    data_dir = "spatio_temporal/models/"
     data = f"3mlp_{data_use}"
 
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, exp=2)
-    pd.DataFrame.from_dict(td).to_csv(f'./results/3mlp_{data_use}_trainloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'./results/3mlp_{data_use}_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'./results/3mlp_{data_use}_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'spatio_temporal/results/3mlp_{data_use}_trainloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'spatio_temporal/results/3mlp_{data_use}_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'spatio_temporal/results/3mlp_{data_use}_vaeloss.csv')
     
     
      # Evaluation

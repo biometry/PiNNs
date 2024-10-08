@@ -29,10 +29,10 @@ args = parser.parse_args()
 def eval3emb(data_use="full"):
 
     if data_use == "sparse":
-       x,y,xt,yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, sparse=True, eval=True)
+       x,y,xt,yp = utils.loaddata('exp2', 1, dir="data/", raw=True, sparse=True, eval=True)
        d1 = ['2005-01-02']
     else:
-        x,y,xt,yp = utils.loaddata('exp2', 1, dir="../../data/", raw=True, sparse=False, eval=True)
+        x,y,xt,yp = utils.loaddata('exp2', 1, dir="data/", raw=True, sparse=False, eval=True)
         d1 = ['2005-01-01']
     y=y.to_frame()
     xt.index = pd.DatetimeIndex(xt['date'])
@@ -75,13 +75,13 @@ def eval3emb(data_use="full"):
     hp = {'epochs': 2,
                           'batchsize': batchsize,
                               'lr': lr}
-    data_dir = "../models/"
+    data_dir = "spatio_temporal/models/"
     data = f"3emb_{data_use}"
     td, se, ae = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=True, hp=False, raw=train_xt, exp=2)
     print(td, se, ae)
-    pd.DataFrame.from_dict(td).to_csv(f'./results/3emb_{data_use}_eval_tloss.csv')
-    pd.DataFrame.from_dict(se).to_csv(f'./results/3emb_{data_use}_eval_vseloss.csv')
-    pd.DataFrame.from_dict(ae).to_csv(f'./results/3emb_{data_use}_eval_vaeloss.csv')
+    pd.DataFrame.from_dict(td).to_csv(f'spatio_temporal/results/3emb_{data_use}_eval_tloss.csv')
+    pd.DataFrame.from_dict(se).to_csv(f'spatio_temporal/results/3emb_{data_use}_eval_vseloss.csv')
+    pd.DataFrame.from_dict(ae).to_csv(f'spatio_temporal/results/3emb_{data_use}_eval_vaeloss.csv')
 
 
     # Evaluation
@@ -122,9 +122,9 @@ def eval3emb(data_use="full"):
 
     print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/3emb_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/3emb_eval_preds_{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/3emb_eval_preds_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'spatio_temporal/results/3emb_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'spatio_temporal/results/3emb_eval_preds_{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'spatio_temporal/results/3emb_eval_preds_{data_use}_test.csv')
 
 
 if __name__ == "__main__":
