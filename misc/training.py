@@ -118,7 +118,7 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
                 if exp == 2 and data.startswith("m"):
                     model.load_state_dict(torch.load(os.path.join(data_dir, f"2{data}_model{i+1}.pth")))
                 elif exp == 2 and data.startswith("3"):
-                    model.load_state_dict(torch.load(os.path.join("../../spatial/models/", f"2{data[1:]}_model{i+1}.pth")))
+                    model.load_state_dict(torch.load(os.path.join("spatial/models/", f"2{data[1:]}_model{i+1}.pth")))
                 else:
                     model.load_state_dict(torch.load(os.path.join(data_dir, f"{data}_model{i+1}.pth")))
 
@@ -290,8 +290,8 @@ def train_cv(hparams, model_design, X, Y, data_dir, splits, data, domain_adaptat
             
             predstrain = {f"site{i}": y_hat_t.detach().flatten().numpy()}
             predstest = {f"site{i}": y_hat_val.detach().flatten().numpy()}
-            pd.DataFrame.from_dict(predstrain).to_csv(f'./results/2{data}train{i}.csv')
-            pd.DataFrame.from_dict(predstest).to_csv(f'./results/2{data}test{i}.csv')
+            pd.DataFrame.from_dict(predstrain).to_csv(os.path.join(data_dir, f'2{data}train{i}.csv'))
+            pd.DataFrame.from_dict(predstest).to_csv(os.path.join(data_dir, f'2{data}test{i}.csv'))
         if exp == 2:
             mae_v[i] = mae(y_hat_val, y_val)
             

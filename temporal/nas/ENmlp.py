@@ -36,6 +36,6 @@ def ENmlp(data_use="full", splits=2):
     arch_grid, par_grid = HP.NASSearchSpace(x.shape[1], y.shape[1], APAR, PPAR, 4)
     res = HP.NASSearch(arch_grid, par_grid, x, y, splits, "NASmlp", hp=True)
 
-    res.to_csv(f"./results/NmlpHP_{data_use}.csv")
+    res.to_csv(f"temporal/results/NmlpHP_{data_use}.csv")
 if __name__ == '__main__':
     ENmlp(args.d)

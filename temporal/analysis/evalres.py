@@ -30,11 +30,11 @@ def evalres(data_use='full'):
 
     if data_use == 'sparse':
         # Load hyytiala
-        x, y, xt = utils.loaddata('validation', 1, dir="../../data/", raw=True, sparse=True)
-        yp = pd.read_csv("../../data/hyytialaF_sparse.csv")        
+        x, y, xt = utils.loaddata('validation', 1, dir="data/", raw=True, sparse=True)
+        yp = pd.read_csv("data/hyytialaF_sparse.csv")        
     else:
-        x, y, xt = utils.loaddata('validation', 1, dir="../../data/", raw=True)
-        yp = pd.read_csv("../../data/hyytialaF_full.csv")
+        x, y, xt = utils.loaddata('validation', 1, dir="data/", raw=True)
+        yp = pd.read_csv("data/hyytialaF_full.csv")
         
     
     yp.index = pd.DatetimeIndex(yp['date'])
@@ -64,7 +64,7 @@ def evalres(data_use='full'):
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
     
     # Load results from NAS
-    d = pd.read_csv(f"../nas/results/NresHP_{data_use}.csv")
+    d = pd.read_csv(f"temporal/results/NresHP_{data_use}.csv")
     a = d.loc[d.ind_mini.idxmin()]
     layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
     parms = np.array(np.matrix(a.parameters)).ravel()
@@ -79,7 +79,7 @@ def evalres(data_use='full'):
     }
 
 
-    data_dir = "../models/"
+    data_dir = "temporal/models/"
     data = f"res_{data_use}"
 
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, ypreles=None)
@@ -95,7 +95,7 @@ def evalres(data_use='full'):
         t2.append(train_loss[1][i])
         t3.append(train_loss[2][i])
         t4.append(train_loss[3][i])
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'./results/res_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'temporal/results/res_trainloss_{data_use}.csv')
     v1 = []
     v2 = []
     v3 = []
@@ -106,7 +106,7 @@ def evalres(data_use='full'):
         v3.append(val_loss[2][i])
         v4.append(val_loss[3][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'./results/res_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'temporal/results/res_vloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -147,9 +147,9 @@ def evalres(data_use='full'):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/res_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_tr).to_csv(f'./results/res_eval_preds_{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_te).to_csv(f'./results/res_eval_preds_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'temporal/results/res_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_tr).to_csv(f'temporal/results/res_eval_preds_{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_te).to_csv(f'temporal/results/res_eval_preds_{data_use}_test.csv')
 
 if __name__ == '__main__':
     evalres(args.d)

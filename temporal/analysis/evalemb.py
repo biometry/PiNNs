@@ -29,9 +29,9 @@ args = parser.parse_args()
 def evalemb(data_use="full"):
 
     if data_use == 'sparse':
-           x, y, xt = utils.loaddata('validation', 1, dir="../../data/", raw=True, sparse=True)
+           x, y, xt = utils.loaddata('validation', 1, dir="data/", raw=True, sparse=True)
     else:
-           x, y, xt = utils.loaddata('validation', 1, dir="../../data/", raw=True)
+           x, y, xt = utils.loaddata('validation', 1, dir="data/", raw=True)
     y = y.to_frame()
 
     xt.index = pd.DatetimeIndex(xt.date)
@@ -61,7 +61,7 @@ def evalemb(data_use="full"):
            'lr': lr, 'eta':1}
     model_design = {'layersizes': layersizes}
 
-    data_dir = "../models/"
+    data_dir = "temporal/models/"
     data = f"emb_{data_use}"
 
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=True, hp=False, raw=train_xt)
@@ -87,8 +87,8 @@ def evalemb(data_use="full"):
         v3.append(val_loss[2][i])
         v4.append(val_loss[3][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'./results/emb_vloss_{data_use}.csv')
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'./results/emb_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'temporal/results/emb_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'temporal/results/emb_trainloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -143,9 +143,9 @@ def evalemb(data_use="full"):
 
     print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/emb_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/emb_eval_preds_{data_use}_train.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/emb_eval_preds_{data_use}_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'temporal/results/emb_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'temporal/results/emb_eval_preds_{data_use}_train.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'temporal/results/emb_eval_preds_{data_use}_test.csv')
 
 if __name__ == '__main__':
     evalemb(args.d)

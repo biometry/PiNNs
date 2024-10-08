@@ -19,20 +19,20 @@ args = parser.parse_args()
 def predict(test_x, test_y, m, data_use, yp, xt_test, current_dir='', N=5000, da=1):
     # Architecture
     if m == 'mlpDA':
-        res_as = pd.read_csv(f"../nas/results/NmlpHP_{data_use}.csv")
+        res_as = pd.read_csv(f"temporal/results/NmlpHP_{data_use}.csv")
         a = res_as.loc[res_as.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         model_design = {'layersizes': layersizes}
     elif m == 'emb':
         pass
     else:
-        res_as = pd.read_csv(f"../nas/results/N{m}HP_{data_use}.csv")
+        res_as = pd.read_csv(f"temporal/results/N{m}HP_{data_use}.csv")
         a = res_as.loc[res_as.ind_mini.idxmin()]
         layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
         model_design = {'layersizes': layersizes}
 
 
-    data_dir = "../models/"
+    data_dir = "temporal/models/"
     print("DATA",test_x, test_y, yp)
     test_x, test_y = torch.tensor(test_x.to_numpy(), dtype=torch.float32), torch.tensor(test_y.to_numpy(), dtype=torch.float32)
     if m == "res2":
@@ -79,8 +79,8 @@ def via(data_use, model, prediction_scenario, current_dir =''):
     else:
         make_sparse = False
 
-    x, y, xt, mn, std = utils.loaddata('validation', 1, dir='../../data/', raw=True, sparse=make_sparse, via=True)
-    yp = pd.read_csv(f"../../data/hyytialaF_{data_use}.csv")
+    x, y, xt, mn, std = utils.loaddata('validation', 1, dir='data/', raw=True, sparse=make_sparse, via=True)
+    yp = pd.read_csv(f"data/hyytialaF_{data_use}.csv")
     yp.index = pd.DatetimeIndex(yp['date'])
 
     thresholds = {'PAR': [yp['PAR'].min(), yp['PAR'].max()],
@@ -161,7 +161,7 @@ def via(data_use, model, prediction_scenario, current_dir =''):
 
                 out_i.append(ps)
 
-            pd.DataFrame(out_i).to_csv(f'./results/{model}_{data_use}_{v}_via_cond_{mon}.csv')
+            pd.DataFrame(out_i).to_csv(f'temporal/results/{model}_{data_use}_{v}_via_cond_{mon}.csv')
 
 
 if __name__ == '__main__':

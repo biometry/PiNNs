@@ -31,31 +31,31 @@ print(args)
 def pretraining(data_use="full", N=5000):
     if data_use == 'sparse':
         ## Load data for defining splits
-        x, y, xt = utils.loaddata('validation', 1, dir="../../data/", raw=True)
+        x, y, xt = utils.loaddata('validation', 1, dir="data/", raw=True)
         print(x.index.year.unique())
         train_x = x[~x.index.year.isin([2007,2008])]
         splits = len(train_x.index.year.unique())
 
         # Load data for pretraining
-        x, y, r  = utils.loaddata('simulations', 1, dir="./results/", sparse=True, n=N)
+        x, y, r  = utils.loaddata('simulations', 1, dir="temporal/results/", sparse=True, n=N)
         y = y.to_frame()
     
     else:
         ## Load data for defining splits
-        x, y, xt = utils.loaddata('validation', 1, dir="../../data/", raw=True)
+        x, y, xt = utils.loaddata('validation', 1, dir="data/", raw=True)
         print(x.index.year.unique())
         train_x = x[~x.index.year.isin([2007,2008])]
         splits = len(train_x.index.year.unique())
 
         # Load data for pretraining
         print(N)
-        x, y, r  = utils.loaddata('simulations', 1, dir="./results/", n=N)
+        x, y, r  = utils.loaddata('simulations', 1, dir="temporal/results/", n=N)
         y = y.to_frame()
     ## Split into training and test
 
     train_x, test_x, train_y, test_y = train_test_split(x, y)
     # Load MLP NAS
-    d = pd.read_csv(f"../nas/results/NmlpHP_{data_use}.csv")
+    d = pd.read_csv(f"temporal/results/NmlpHP_{data_use}.csv")
     a = d.loc[d.ind_mini.idxmin()]
     layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
     parms = np.array(np.matrix(a.parameters)).ravel()
@@ -70,7 +70,7 @@ def pretraining(data_use="full", N=5000):
           'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "../models/"
+    data_dir = "temporal/models/"
     data = f"mlpDA_pretrained_{data_use}_{N}"
     
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, hp=False)
@@ -95,8 +95,8 @@ def pretraining(data_use="full", N=5000):
         v3.append(val_loss[2][i])
         v4.append(val_loss[3][i])
         
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'./results/mlpDA_pretrained_vloss_{data_use}_{N}.csv')
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'./results/mlpDA_pretrained_trainloss_{data_use}_{N}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4": v4}).to_csv(f'temporal/results/mlpDA_pretrained_vloss_{data_use}_{N}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4": t4}).to_csv(f'temporal/results/mlpDA_pretrained_trainloss_{data_use}_{N}.csv')
     
     # Evaluation
     mse = nn.MSELoss()
@@ -135,9 +135,9 @@ def pretraining(data_use="full", N=5000):
     
     #print(preds_train)
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlpDA_pretrained_eval_performance_{data_use}_{N}.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlpDA_pretrained_eval_preds_train_{data_use}_{N}.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlpDA_pretrained_eval_preds_test_{data_use}_{N}.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'temporal/results/mlpDA_pretrained_eval_performance_{data_use}_{N}.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'temporal/results/mlpDA_pretrained_eval_preds_train_{data_use}_{N}.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'temporal/results/mlpDA_pretrained_eval_preds_test_{data_use}_{N}.csv')
 
 if __name__ == '__main__':
     pretraining(data_use=args.d, N=args.n)

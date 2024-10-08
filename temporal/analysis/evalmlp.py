@@ -31,9 +31,9 @@ args = parser.parse_args()
 def evalmlp(data_use='full'):
     if data_use == 'sparse':
         # Load hyytiala
-        x, y, xt = utils.loaddata('validation', 1, dir="../../data/", raw=True, sparse=True)
+        x, y, xt = utils.loaddata('validation', 1, dir="data/", raw=True, sparse=True)
     else:
-        x, y, xt = utils.loaddata('validation', 1, dir="../../data/", raw=True, sparse=False)
+        x, y, xt = utils.loaddata('validation', 1, dir="data/", raw=True, sparse=False)
 
     y = y.to_frame()
 
@@ -48,7 +48,7 @@ def evalmlp(data_use='full'):
     test_x.index, test_y.index = np.arange(0, len(test_x)), np.arange(0, len(test_y))
     
     # Architecture
-    d = pd.read_csv(f"../nas/results/NmlpHP_{data_use}.csv")
+    d = pd.read_csv(f"temporal/results/NmlpHP_{data_use}.csv")
     a = d.loc[d.ind_mini.idxmin()]
     layersizes = np.array(np.matrix(a.layersizes)).ravel().astype(int)
     parms = np.array(np.matrix(a.parameters)).ravel()
@@ -61,7 +61,7 @@ def evalmlp(data_use='full'):
       'batchsize': int(bs),
           'lr': lr}
     print('HYPERPARAMETERS', hp)
-    data_dir = "../models/"
+    data_dir = "temporal/models/"
     data = f"mlp_{data_use}"
     
     tloss = training.train_cv(hp, model_design, train_x, train_y, data_dir, splits, data, reg=None, emb=False, hp=False)
@@ -87,8 +87,8 @@ def evalmlp(data_use='full'):
         v3.append(val_loss[2][i])
         v4.append(val_loss[3][i])
 
-    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'./results/mlp_vloss_{data_use}.csv')
-    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'./results/mlp_trainloss_{data_use}.csv')
+    pd.DataFrame({"f1": v1, "f2": v2, "f3":v3, "f4":v4}).to_csv(f'temporal/results/mlp_vloss_{data_use}.csv')
+    pd.DataFrame({"f1": t1, "f2": t2, "f3":t3, "f4":t4}).to_csv(f'temporal/results/mlp_trainloss_{data_use}.csv')
 
     # Evaluation
     mse = nn.MSELoss()
@@ -130,9 +130,9 @@ def evalmlp(data_use='full'):
 
 
 
-    pd.DataFrame.from_dict(performance).to_csv(f'./results/mlp_eval_{data_use}_performance.csv')
-    pd.DataFrame.from_dict(preds_train).to_csv(f'./results/mlp_{data_use}_eval_preds_train.csv')
-    pd.DataFrame.from_dict(preds_test).to_csv(f'./results/mlp_{data_use}_eval_preds_test.csv')
+    pd.DataFrame.from_dict(performance).to_csv(f'temporal/results/mlp_eval_{data_use}_performance.csv')
+    pd.DataFrame.from_dict(preds_train).to_csv(f'temporal/results/mlp_{data_use}_eval_preds_train.csv')
+    pd.DataFrame.from_dict(preds_test).to_csv(f'temporal/results/mlp_{data_use}_eval_preds_test.csv')
 
 
 if __name__ == '__main__':

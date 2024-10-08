@@ -15,12 +15,15 @@ parser = argparse.ArgumentParser(description='Define data usage and splits')
 parser.add_argument('-d', metavar='data', type=str, help='define data usage: full vs sparse')
 args = parser.parse_args()
 
+APARS = 1
+PPARS = 1
+
 def ENres2(data_use='full'):
     print(os.getcwd())
     if data_use == 'sparse':
-        x, y, xt = utils.loaddata('NAS', 1, dir="../../data/", raw=True, sparse=True)
+        x, y, xt = utils.loaddata('NAS', 1, dir="data/", raw=True, sparse=True)
     else:
-        x, y, xt = utils.loaddata('NAS', 1, dir="../../data/", raw=True)
+        x, y, xt = utils.loaddata('NAS', 1, dir="data/", raw=True)
     ypreles = xt.drop(xt.columns.difference(['GPPp']), axis=1)[1:]
 
 
@@ -29,9 +32,9 @@ def ENres2(data_use='full'):
     y = y.to_frame()
     x.index, y.index, ypreles.index = np.arange(0, len(x)), np.arange(0, len(y)), np.arange(0, len(ypreles))
             
-    arch_grid, par_grid = HP.NASSearchSpace(x.shape[1], y.shape[1], 300, 300, 4)
+    arch_grid, par_grid = HP.NASSearchSpace(x.shape[1], y.shape[1], APARS, PPARS, 4)
     res = HP.NASSearch(arch_grid, par_grid, x, y, splits, "NASpres2", res=2, ypreles=ypreles, hp=True)
-    res.to_csv(f"./results/Nres2HP_{data_use}.csv")
+    res.to_csv(f"temporal/results/Nres2HP_{data_use}.csv")
 
 
 if __name__ == '__main__':

@@ -42,15 +42,15 @@ def climate_simulations(train_x, exp):
         print(X_new)
     
     #%% Predict to new data set
-    with open('./results/gamTair', 'rb') as f:
+    with open('temporal/results/gamTair', 'rb') as f:
         gamTair = pickle.load(f)
-    with open('./results/gamPrecip', 'rb') as f:
+    with open('temporal/results/gamPrecip', 'rb') as f:
         gamPrecip = pickle.load(f)
-    with open('./results/gamVPD', 'rb') as f:
+    with open('temporal/results/gamVPD', 'rb') as f:
         gamVPD = pickle.load(f)
-    with open('./results/gamPAR', 'rb') as f:
+    with open('temporal/results/gamPAR', 'rb') as f:
         gamPAR = pickle.load(f)    
-    with open('./results/gamfapar', 'rb') as f:
+    with open('temporal/results/gamfapar', 'rb') as f:
         gamfapar = pickle.load(f)
 
     Tair_hat = gamTair.predict(X_new)
@@ -111,7 +111,7 @@ def climate_simulations(train_x, exp):
     return(climsims)    
 
 
-def parameter_samples(n_samples, fix_pars = False, parameters = ['beta', 'chi', 'X[0]', 'gamma', 'alpha'], datadir = '../../data/'):
+def parameter_samples(n_samples, fix_pars = False, parameters = ['beta', 'chi', 'X[0]', 'gamma', 'alpha'], datadir = 'data/'):
 
     '''
     This function generates samples from the default parameter space of Preles in a LHS design.
@@ -158,15 +158,15 @@ def parameter_samples(n_samples, fix_pars = False, parameters = ['beta', 'chi', 
     return(d)
 
 
-def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir = '../../data/'):
+def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir = 'data/'):
 
     if exp == "exp2":
         if data_use == 'full':
             print("Load allsites in full version.")
-            x, y, xt, yp  = utils.loaddata('exp2', None, dir="../../data/", raw=True, doy=True)
+            x, y, xt, yp  = utils.loaddata('exp2', None, dir="data/", raw=True, doy=True)
         else:
             print("Load allsites in sparse version.")
-            x, y, xt, yp  = utils.loaddata('exp2', None, dir="../../data/", raw=True, doy=True, sparse=True)
+            x, y, xt, yp  = utils.loaddata('exp2', None, dir="data/", raw=True, doy=True, sparse=True)
         x = x.drop(['doy_sin', 'doy_cos'], axis=1)
         #doys = xt['DOY']
         #sites = xt['site']
@@ -184,10 +184,10 @@ def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir 
         exp = ''
         if data_use == 'full':
             print("Load hyytialaF in full version.")
-            x, y, xt = utils.loaddata('validation', None, dir="../../data/", raw=True, doy=False)
+            x, y, xt = utils.loaddata('validation', None, dir="data/", raw=True, doy=False)
         else:
             print("Load hyytialaF in sparse version.")
-            x, y, xt = utils.loaddata('validation', None, dir="../../data/", raw=True, doy=False, sparse=True)
+            x, y, xt = utils.loaddata('validation', None, dir="data/", raw=True, doy=False, sparse=True)
 
         y = y.to_frame()
         # Hold out a year as test data                                                                      
@@ -220,21 +220,21 @@ def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir 
         gamPAR = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['PAR'])
         gamfapar = GAM(s(0, by=1, n_splines=200, basis='cp')).fit(train_x[['DOY', 'year']],train_x['fapar'])
 
-    with open('./results/gamTair', 'wb') as f:
+    with open('temporal/results/gamTair', 'wb') as f:
         pickle.dump(gamTair, f)
-    with open('./results/gamPrecip', 'wb') as f:
+    with open('temporal/results/gamPrecip', 'wb') as f:
         pickle.dump(gamPrecip, f)
-    with open('./results/gamVPD', 'wb') as f:
+    with open('temporal/results/gamVPD', 'wb') as f:
         pickle.dump(gamVPD, f)
-    with open('./results/gamPAR', 'wb') as f:
+    with open('temporal/results/gamPAR', 'wb') as f:
         pickle.dump(gamPAR, f)
-    with open('./results/gamfapar', 'wb') as f:
+    with open('temporal/results/gamfapar', 'wb') as f:
         pickle.dump(gamfapar, f)
 
     #if not fix_pars:
     p = parameter_samples(n_samples = n, fix_pars = fix_pars)
     pdd = pd.DataFrame(p)
-    pdd.to_csv(f'./results/DA_parameter_samples_{n}.csv', index=False)
+    pdd.to_csv(f'temporal/results/DA_parameter_samples_{n}.csv', index=False)
     #np.savetext('parameter_simulations.csv', p, delimiter=';')
     pt = torch.tensor(p, dtype=torch.float64)
 
@@ -273,7 +273,7 @@ def gen_simulations(n, fix_pars = True, data_use = 'full', exp = None, data_dir 
         d.append(c)
 
     d = pd.concat(d)
-    d.to_csv(f'./results/simulations_{data_use}_{exp}_{n}.csv', index=False)
+    d.to_csv(f'temporal/results/simulations_{data_use}_{exp}_{n}.csv', index=False)
 
 
 
